@@ -1,0 +1,63 @@
+/* ===== Grid Styles ===== */
+.game-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    min-height: 0;
+}
+
+.grid-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow);
+    min-height: 0;
+}
+
+.grid-container {
+    display: grid;
+    gap: var(--spacing-xs);
+    width: 100%;
+    max-width: 350px;
+    aspect-ratio: 1;
+}
+
+.grid-cell {
+    background: var(--color-surface-light);
+    border-radius: var(--radius-sm);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.grid-cell.target {
+    background: var(--color-target);
+    border: 3px dashed var(--color-success);
+}
+
+.grid-cell.painted {
+    background: var(--color-warning);
+    animation: paintPop 0.3s ease;
+}
+
+.grid-cell.robot {
+    z-index: 10;
+}
+
+.robot-emoji {
+    font-size: 2rem;
+    transition: all var(--transition-normal);
+    animation: robotIdle 1s infinite;
+}
+
+.robot-emoji.moving {
+    animation: robotMove 0.3s ease;
+}

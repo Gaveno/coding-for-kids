@@ -1,0 +1,64 @@
+/* ===== Responsive Styles ===== */
+
+@media (max-height: 700px) {
+    .game-container {
+        gap: var(--spacing-sm);
+    }
+    
+    .game-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .logo {
+        font-size: 2rem;
+    }
+    
+    .command-btn {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .command-icon {
+        font-size: 1.8rem;
+    }
+    
+    .control-btn {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .play-btn {
+        width: 75px;
+        height: 75px;
+    }
+    
+    .control-icon {
+        font-size: 2rem;
+    }
+    
+    .play-btn .control-icon {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .command-btn {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .command-icon {
+        font-size: 1.6rem;
+    }
+    
+    .sequence-item {
+        font-size: 1.4rem;
+        padding: 6px 10px;
+    }
+}
+
+@media (min-width: 768px) {
+    .grid-container {
+        gap: var(--spacing-sm);
+    }
+}

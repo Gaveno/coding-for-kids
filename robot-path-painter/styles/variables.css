@@ -1,0 +1,64 @@
+/* ===== CSS Variables & Reset ===== */
+:root {
+    /* Colors */
+    --color-primary: #6C63FF;
+    --color-secondary: #FF6B6B;
+    --color-success: #4ECDC4;
+    --color-warning: #FFE66D;
+    --color-bg: #1a1a2e;
+    --color-surface: #16213e;
+    --color-surface-light: #0f3460;
+    --color-text: #ffffff;
+    --color-target: rgba(78, 205, 196, 0.3);
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-full: 50%;
+
+    /* Shadows */
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    overflow: hidden;
+}
+
+/* ===== Game Container ===== */
+.game-container {
+    width: 100%;
+    max-width: 500px;
+    height: 100vh;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    position: relative;
+}
