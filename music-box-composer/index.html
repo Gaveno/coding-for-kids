@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Music Box Composer</title>
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/blocks.css">
+    <link rel="stylesheet" href="styles/sequencer.css">
+    <link rel="stylesheet" href="styles/character.css">
+    <link rel="stylesheet" href="styles/controls.css">
+    <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body>
+    <main class="game-container">
+        <!-- Header -->
+        <header class="game-header">
+            <a href="../index.html" class="home-btn" aria-label="Back to Home">🏠</a>
+            <h1 class="game-title">🎵</h1>
+        </header>
+
+        <!-- Character Stage -->
+        <section class="stage" aria-label="Character Stage">
+            <div class="character" id="character">🐱</div>
+            <div class="stage-floor"></div>
+        </section>
+
+        <!-- Sequencer -->
+        <section class="sequencer-area" aria-label="Music Sequencer">
+            <div class="sequencer-header">
+                <span class="sequencer-label">🎼</span>
+                <button class="clear-btn" id="clearBtn" aria-label="Clear Sequence">🗑️</button>
+            </div>
+            <div class="sequencer-track" id="sequencerTrack">
+                <!-- Note blocks will be added here -->
+            </div>
+        </section>
+
+        <!-- Sound Blocks Palette -->
+        <section class="blocks-palette" aria-label="Sound Blocks">
+            <button class="sound-block" data-note="C4" data-color="red" aria-label="Red Note">
+                <span class="block-icon">🔴</span>
+            </button>
+            <button class="sound-block" data-note="D4" data-color="orange" aria-label="Orange Note">
+                <span class="block-icon">🟠</span>
+            </button>
+            <button class="sound-block" data-note="E4" data-color="yellow" aria-label="Yellow Note">
+                <span class="block-icon">🟡</span>
+            </button>
+            <button class="sound-block" data-note="F4" data-color="green" aria-label="Green Note">
+                <span class="block-icon">🟢</span>
+            </button>
+            <button class="sound-block" data-note="G4" data-color="blue" aria-label="Blue Note">
+                <span class="block-icon">🔵</span>
+            </button>
+            <button class="sound-block" data-note="A4" data-color="purple" aria-label="Purple Note">
+                <span class="block-icon">🟣</span>
+            </button>
+        </section>
+
+        <!-- Controls -->
+        <section class="controls" aria-label="Playback Controls">
+            <button class="control-btn play-btn" id="playBtn" aria-label="Play">
+                ▶️
+            </button>
+            <button class="control-btn stop-btn" id="stopBtn" aria-label="Stop">
+                ⏹️
+            </button>
+        </section>
+    </main>
+
+    <script src="js/Audio.js"></script>
+    <script src="js/Character.js"></script>
+    <script src="js/Sequencer.js"></script>
+    <script src="js/Game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

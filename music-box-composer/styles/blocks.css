@@ -1,0 +1,68 @@
+/* ===== Sound Blocks Palette ===== */
+.blocks-palette {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    flex-wrap: wrap;
+}
+
+/* ===== Sound Block Button ===== */
+.sound-block {
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: var(--shadow);
+}
+
+.sound-block:hover {
+    transform: scale(1.1);
+}
+
+.sound-block:active {
+    transform: scale(0.95);
+}
+
+.sound-block .block-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+/* Block Colors */
+.sound-block[data-color="red"] {
+    background: linear-gradient(135deg, var(--note-red) 0%, #e55555 100%);
+}
+
+.sound-block[data-color="orange"] {
+    background: linear-gradient(135deg, var(--note-orange) 0%, #e58833 100%);
+}
+
+.sound-block[data-color="yellow"] {
+    background: linear-gradient(135deg, var(--note-yellow) 0%, #e5cc55 100%);
+}
+
+.sound-block[data-color="green"] {
+    background: linear-gradient(135deg, var(--note-green) 0%, #3eb5aa 100%);
+}
+
+.sound-block[data-color="blue"] {
+    background: linear-gradient(135deg, var(--note-blue) 0%, #5550e5 100%);
+}
+
+.sound-block[data-color="purple"] {
+    background: linear-gradient(135deg, var(--note-purple) 0%, #8a4bc9 100%);
+}
+
+/* Playing state */
+.sound-block.playing {
+    animation: blockPulse 0.3s ease-out;
+}

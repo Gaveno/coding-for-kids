@@ -1,0 +1,52 @@
+/* ===== Reset & Base ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-sm);
+    overflow: hidden;
+}
+
+/* ===== Game Container ===== */
+.game-container {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+}
+
+/* ===== Header ===== */
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: var(--spacing-sm);
+}
+
+.home-btn {
+    position: absolute;
+    left: 0;
+    font-size: 2rem;
+    text-decoration: none;
+    transition: transform var(--transition-fast);
+}
+
+.home-btn:hover {
+    transform: scale(1.1);
+}
+
+.game-title {
+    font-size: 3rem;
+}

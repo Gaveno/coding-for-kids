@@ -1,0 +1,63 @@
+/* ===== Stage ===== */
+.stage {
+    background: linear-gradient(180deg, #2d1b4e 0%, #1a1a2e 100%);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Stage Floor */
+.stage-floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(180deg, #3d2b5e 0%, #2d1b4e 100%);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ===== Character ===== */
+.character {
+    font-size: 5rem;
+    line-height: 1;
+    z-index: 1;
+    transition: transform var(--transition-fast);
+}
+
+/* Dance Moves */
+.character.dance-jump {
+    animation: danceJump 0.4s ease-out;
+}
+
+.character.dance-spin {
+    animation: danceSpin 0.5s ease-out;
+}
+
+.character.dance-wiggle {
+    animation: danceWiggle 0.4s ease-out;
+}
+
+.character.dance-bounce {
+    animation: danceBounce 0.4s ease-out;
+}
+
+.character.dance-sway {
+    animation: danceSway 0.5s ease-out;
+}
+
+.character.dance-wave {
+    animation: danceWave 0.4s ease-out;
+}
+
+/* Idle animation */
+.character.idle {
+    animation: idle 2s ease-in-out infinite;
+}

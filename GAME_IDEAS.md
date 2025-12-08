@@ -30,7 +30,7 @@ A collection of visual, no-reading-required browser games to teach programming f
 
 **Skills taught:** Sequencing, patterns, abstraction (combining smaller pieces into bigger ones)
 
-**Status:** 📋 Planned
+**Status:** ✅ Playable POC
 
 ---
 

@@ -19,8 +19,12 @@ Guide a cute robot to paint patterns on a grid using movement commands.
 
 **[Play Now →](robot-path-painter/index.html)**
 
-### 🎵 Music Box Composer *(Coming Soon)*
-Stack colorful blocks to create music patterns.
+### 🎵 Music Box Composer
+Stack colorful blocks to create music patterns that a character dances to.
+
+**Skills taught:** Sequencing, patterns, abstraction
+
+**[Play Now →](music-box-composer/index.html)**
 
 ### 🌻 Magic Garden *(Coming Soon)*
 Create spell recipes to grow a magical garden.

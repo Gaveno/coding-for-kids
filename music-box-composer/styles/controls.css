@@ -1,0 +1,47 @@
+/* ===== Controls ===== */
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-md);
+}
+
+.control-btn {
+    width: 80px;
+    height: 80px;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 2.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: var(--shadow);
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.play-btn {
+    background: linear-gradient(135deg, var(--color-success) 0%, #3eb5aa 100%);
+}
+
+.play-btn.playing {
+    background: linear-gradient(135deg, var(--color-warning) 0%, #e5cc55 100%);
+}
+
+.stop-btn {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #e55555 100%);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
