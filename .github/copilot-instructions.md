@@ -8,13 +8,21 @@ This is an educational game suite designed to teach programming concepts to chil
 
 ## Core Principles
 
-### 1. Accessibility First
+### 1. Mobile-First Development (TOP PRIORITY)
+- **Touch is the primary input** - All games must work flawlessly on tablets and phones
+- **Design for fingers, not cursors** - Touch targets minimum 44x44px, prefer 48x48px+
+- **Test on real devices** - Emulators don't catch all touch interaction issues
+- **Support gestures** - Tap, drag, swipe where appropriate
+- **Handle touch AND mouse** - Support both for accessibility, but prioritize touch UX
+- **Responsive layouts** - Games must adapt to any screen size (phones, tablets, desktops)
+- **Performance on mobile** - Optimize for lower-powered devices
+
+### 2. Accessibility First
 - **No text reliance** - Use emojis, icons, and visual cues instead of words
 - **Large touch targets** - Minimum 44x44px for interactive elements
 - **High contrast colors** - Ensure visibility for all users
-- **Support both mouse and touch** - Mobile-friendly interactions
 
-### 2. Child-Friendly Design
+### 3. Child-Friendly Design
 - **Immediate feedback** - Every action should have a visual/audio response
 - **Safe to fail** - Mistakes are learning opportunities, never punishing
 - **Celebratory success** - Use animations and sounds for achievements
@@ -271,6 +279,83 @@ npm install --save-dev jest
 
 ---
 
+## Mobile & Touch Support (Critical)
+
+Since children primarily use tablets and phones, mobile support is essential.
+
+### Touch Event Handling
+
+```javascript
+// ✅ DO: Support both touch and mouse events
+element.addEventListener('pointerdown', handleInteraction);
+element.addEventListener('pointerup', handleInteraction);
+element.addEventListener('pointermove', handleInteraction);
+
+// ✅ DO: Prevent unwanted behaviors on touch
+element.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Prevent double-tap zoom, scrolling during drag
+}, { passive: false });
+
+// ✅ DO: Handle touch cancellation
+element.addEventListener('touchcancel', handleTouchCancel);
+
+// ❌ DON'T: Only use mouse events
+element.addEventListener('mousedown', handleClick); // Misses touch!
+```
+
+### Touch-Friendly CSS
+
+```css
+/* ✅ DO: Prevent text selection during gameplay */
+.game-area {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* ✅ DO: Prevent pull-to-refresh and overscroll */
+body {
+    overscroll-behavior: none;
+}
+
+/* ✅ DO: Disable tap highlight on mobile */
+button, .interactive {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ✅ DO: Large, finger-friendly buttons */
+.game-button {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 12px;
+}
+
+/* ✅ DO: Adequate spacing between touch targets */
+.button-row {
+    gap: 12px; /* Prevent accidental taps on adjacent buttons */
+}
+```
+
+### Responsive Viewport
+
+```html
+<!-- ✅ DO: Always include proper viewport meta -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+```
+
+### Testing Checklist for Mobile
+
+- [ ] Works on iOS Safari (iPhone & iPad)
+- [ ] Works on Android Chrome
+- [ ] Drag and drop works with touch
+- [ ] No accidental zooming during gameplay
+- [ ] No scrolling interferes with game controls
+- [ ] Buttons are large enough to tap accurately
+- [ ] Portrait and landscape orientations work
+- [ ] Audio plays correctly (may require user interaction first)
+
+---
+
 ## HTML Best Practices
 
 ### Semantic Structure
@@ -355,7 +440,10 @@ Before submitting code, verify:
 - [ ] All new logic has corresponding tests
 - [ ] Tests pass (`npm test`)
 - [ ] No console.log statements (except in debug mode)
-- [ ] Works on mobile (touch events)
+- [ ] **Tested on mobile device or tablet** (not just browser dev tools)
+- [ ] **Touch interactions work** (tap, drag, swipe)
+- [ ] **No zoom/scroll issues on mobile**
 - [ ] Animations respect `prefers-reduced-motion`
 - [ ] No hardcoded text (use emojis/icons)
 - [ ] CSS variables used for colors/spacing
+- [ ] Works in both portrait and landscape orientations
