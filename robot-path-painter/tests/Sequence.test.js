@@ -348,6 +348,76 @@ export function runSequenceTests() {
         assertEqual(seq.activeLoopIndex, null);
     }));
 
+    // Test: moveCommand reorders commands correctly
+    results.push(test('moveCommand moves command forward', () => {
+        const seq = new Sequence();
+        seq.addCommand('up');
+        seq.addCommand('right');
+        seq.addCommand('down');
+        
+        seq.moveCommand(0, 2); // Move 'up' to after 'right'
+        
+        assertEqual(seq.commands[0].direction, 'right');
+        assertEqual(seq.commands[1].direction, 'up');
+        assertEqual(seq.commands[2].direction, 'down');
+    }));
+
+    // Test: moveCommand moves command backward
+    results.push(test('moveCommand moves command backward', () => {
+        const seq = new Sequence();
+        seq.addCommand('up');
+        seq.addCommand('right');
+        seq.addCommand('down');
+        
+        seq.moveCommand(2, 0); // Move 'down' to start
+        
+        assertEqual(seq.commands[0].direction, 'down');
+        assertEqual(seq.commands[1].direction, 'up');
+        assertEqual(seq.commands[2].direction, 'right');
+    }));
+
+    // Test: insertAt inserts command at correct position
+    results.push(test('insertAt inserts at beginning', () => {
+        const seq = new Sequence();
+        seq.addCommand('up');
+        seq.addCommand('right');
+        
+        seq.insertAt({ type: 'move', direction: 'down' }, 0);
+        
+        assertEqual(seq.commands.length, 3);
+        assertEqual(seq.commands[0].direction, 'down');
+        assertEqual(seq.commands[1].direction, 'up');
+        assertEqual(seq.commands[2].direction, 'right');
+    }));
+
+    // Test: insertAt inserts at middle
+    results.push(test('insertAt inserts at middle', () => {
+        const seq = new Sequence();
+        seq.addCommand('up');
+        seq.addCommand('right');
+        
+        seq.insertAt({ type: 'move', direction: 'down' }, 1);
+        
+        assertEqual(seq.commands.length, 3);
+        assertEqual(seq.commands[0].direction, 'up');
+        assertEqual(seq.commands[1].direction, 'down');
+        assertEqual(seq.commands[2].direction, 'right');
+    }));
+
+    // Test: moveCommand adjusts activeLoopIndex when moving active loop
+    results.push(test('moveCommand adjusts activeLoopIndex correctly', () => {
+        const seq = new Sequence();
+        seq.addCommand('up');
+        seq.addLoop(2);
+        seq.addCommand('down');
+        seq.setActiveLoop(1);
+        
+        seq.moveCommand(1, 3); // Move loop to end
+        
+        assertEqual(seq.activeLoopIndex, 2);
+        assertEqual(seq.commands[2].type, 'loop');
+    }));
+
     return results;
 }
 

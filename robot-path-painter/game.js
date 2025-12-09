@@ -277,6 +277,36 @@ class Sequence {
         this.commands.splice(index, 1);
     }
 
+    moveCommand(fromIndex, toIndex) {
+        if (fromIndex < 0 || fromIndex >= this.commands.length) return;
+        if (toIndex < 0 || toIndex > this.commands.length) return;
+        
+        if (this.activeLoopIndex !== null) {
+            if (this.activeLoopIndex === fromIndex) {
+                if (toIndex > fromIndex) {
+                    this.activeLoopIndex = toIndex - 1;
+                } else {
+                    this.activeLoopIndex = toIndex;
+                }
+            } else if (fromIndex < this.activeLoopIndex && toIndex > this.activeLoopIndex) {
+                this.activeLoopIndex--;
+            } else if (fromIndex > this.activeLoopIndex && toIndex <= this.activeLoopIndex) {
+                this.activeLoopIndex++;
+            }
+        }
+        
+        const [command] = this.commands.splice(fromIndex, 1);
+        const adjustedTo = toIndex > fromIndex ? toIndex - 1 : toIndex;
+        this.commands.splice(adjustedTo, 0, command);
+    }
+
+    insertAt(cmd, index) {
+        if (this.activeLoopIndex !== null && index <= this.activeLoopIndex) {
+            this.activeLoopIndex++;
+        }
+        this.commands.splice(index, 0, cmd);
+    }
+
     clear() {
         this.commands = [];
         this.activeLoopIndex = null;
@@ -404,6 +434,371 @@ class Audio {
     }
 }
 
+// ===== DragDrop Class =====
+class DragDrop {
+    constructor(options) {
+        this.sequenceArea = options.sequenceArea;
+        this.trashZone = options.trashZone;
+        this.onAddCommand = options.onAddCommand;
+        this.onAddFireCommand = options.onAddFireCommand;
+        this.onReorder = options.onReorder;
+        this.onRemove = options.onRemove;
+        
+        this.dragState = null;
+        this.dragElement = null;
+        this.placeholder = null;
+        this.dragThreshold = 15;
+        this.longPressTime = 200;
+        
+        this.setupPaletteButtons();
+        this.setupSequenceArea();
+        this.setupTrashZone();
+    }
+
+    setupPaletteButtons() {
+        document.querySelectorAll('.command-btn').forEach(btn => {
+            this.addTouchDragOrTap(btn, 
+                () => ({ type: 'add', commandType: 'move', direction: btn.dataset.command }),
+                () => this.onAddCommand(btn.dataset.command)
+            );
+        });
+
+        document.querySelectorAll('.fire-btn').forEach(btn => {
+            this.addTouchDragOrTap(btn,
+                () => ({ type: 'add', commandType: 'fire', direction: btn.dataset.fire }),
+                () => this.onAddFireCommand(btn.dataset.fire)
+            );
+        });
+    }
+
+    setupSequenceArea() {
+        document.addEventListener('touchmove', (e) => {
+            if (!this.dragState) return;
+            e.preventDefault();
+            this.handleDragMove(e.touches[0]);
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (!this.dragState) return;
+            this.handleDrop();
+        });
+
+        document.addEventListener('touchcancel', () => {
+            this.cancelDrag();
+        });
+    }
+
+    setupTrashZone() {
+        if (!this.trashZone) return;
+        this.trashZone.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+    }
+
+    addTouchDragOrTap(element, getDataFn, onTap) {
+        let touchStartPos = null;
+        let touchStartTime = null;
+        let isDragging = false;
+
+        element.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            touchStartPos = { x: touch.clientX, y: touch.clientY };
+            touchStartTime = Date.now();
+            isDragging = false;
+        }, { passive: true });
+
+        element.addEventListener('touchmove', (e) => {
+            if (!touchStartPos) return;
+            
+            const touch = e.touches[0];
+            const dx = Math.abs(touch.clientX - touchStartPos.x);
+            const dy = Math.abs(touch.clientY - touchStartPos.y);
+            
+            if (!isDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
+                isDragging = true;
+                e.preventDefault();
+                this.startDrag(touch, element, getDataFn());
+            }
+            
+            if (isDragging && this.dragState) {
+                e.preventDefault();
+                this.handleDragMove(touch);
+            }
+        }, { passive: false });
+
+        element.addEventListener('touchend', () => {
+            const touchDuration = Date.now() - touchStartTime;
+            
+            if (isDragging && this.dragState) {
+                this.handleDrop();
+            } else if (touchStartPos && touchDuration < 300) {
+                onTap();
+            }
+            
+            touchStartPos = null;
+            touchStartTime = null;
+            isDragging = false;
+        });
+
+        element.addEventListener('touchcancel', () => {
+            touchStartPos = null;
+            touchStartTime = null;
+            isDragging = false;
+            this.cancelDrag();
+        });
+    }
+
+    makeItemsDraggable(items) {
+        items.forEach((item) => {
+            const index = parseInt(item.dataset.index);
+            if (isNaN(index)) return;
+            
+            let touchStartPos = null;
+            let isDragging = false;
+
+            item.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                touchStartPos = { x: touch.clientX, y: touch.clientY };
+                isDragging = false;
+            }, { passive: true });
+
+            item.addEventListener('touchmove', (e) => {
+                if (!touchStartPos) return;
+                
+                const touch = e.touches[0];
+                const dx = Math.abs(touch.clientX - touchStartPos.x);
+                const dy = Math.abs(touch.clientY - touchStartPos.y);
+                
+                if (!isDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
+                    isDragging = true;
+                    e.preventDefault();
+                    this.startDrag(touch, item, {
+                        type: 'reorder',
+                        index: index,
+                        element: item
+                    });
+                    item.classList.add('dragging');
+                }
+                
+                if (isDragging && this.dragState) {
+                    e.preventDefault();
+                    this.handleDragMove(touch);
+                }
+            }, { passive: false });
+
+            item.addEventListener('touchend', () => {
+                if (isDragging && this.dragState) {
+                    this.handleDrop();
+                }
+                touchStartPos = null;
+                isDragging = false;
+            });
+
+            item.addEventListener('touchcancel', () => {
+                touchStartPos = null;
+                isDragging = false;
+                this.cancelDrag();
+            });
+        });
+    }
+
+    startDrag(touch, sourceElement, data) {
+        this.dragState = {
+            data: data,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            currentX: touch.clientX,
+            currentY: touch.clientY
+        };
+
+        this.dragElement = document.createElement('div');
+        this.dragElement.className = 'drag-ghost';
+        this.dragElement.innerHTML = sourceElement.innerHTML;
+        this.dragElement.style.cssText = `
+            position: fixed;
+            left: ${touch.clientX - 30}px;
+            top: ${touch.clientY - 30}px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: var(--primary-color);
+            border-radius: var(--radius-md);
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.9;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            transform: scale(1.1);
+        `;
+        document.body.appendChild(this.dragElement);
+
+        this.sequenceArea.classList.add('drag-active');
+        if (this.trashZone) {
+            this.trashZone.classList.add('drag-active');
+        }
+
+        if (data.type === 'reorder') {
+            this.createPlaceholder();
+            data.element.style.opacity = '0.3';
+        }
+    }
+
+    handleDragMove(touch) {
+        if (!this.dragState || !this.dragElement) return;
+
+        this.dragState.currentX = touch.clientX;
+        this.dragState.currentY = touch.clientY;
+
+        this.dragElement.style.left = `${touch.clientX - 30}px`;
+        this.dragElement.style.top = `${touch.clientY - 30}px`;
+
+        if (this.trashZone && this.isOverElement(touch, this.trashZone)) {
+            this.trashZone.classList.add('drag-over');
+            this.sequenceArea.classList.remove('drag-over');
+        } else if (this.isOverElement(touch, this.sequenceArea)) {
+            this.sequenceArea.classList.add('drag-over');
+            if (this.trashZone) {
+                this.trashZone.classList.remove('drag-over');
+            }
+            
+            if (this.dragState.data.type === 'reorder' || this.dragState.data.type === 'add') {
+                this.updatePlaceholderPosition(touch);
+            }
+        } else {
+            this.sequenceArea.classList.remove('drag-over');
+            if (this.trashZone) {
+                this.trashZone.classList.remove('drag-over');
+            }
+        }
+    }
+
+    handleDrop() {
+        if (!this.dragState) return;
+
+        const touch = {
+            clientX: this.dragState.currentX,
+            clientY: this.dragState.currentY
+        };
+
+        if (this.trashZone && this.isOverElement(touch, this.trashZone)) {
+            if (this.dragState.data.type === 'reorder') {
+                this.onRemove(this.dragState.data.index);
+            }
+        } else if (this.isOverElement(touch, this.sequenceArea)) {
+            const data = this.dragState.data;
+            
+            if (data.type === 'add') {
+                const dropIndex = this.getDropIndex(touch);
+                if (data.commandType === 'fire') {
+                    this.onAddFireCommand(data.direction, dropIndex);
+                } else {
+                    this.onAddCommand(data.direction, dropIndex);
+                }
+            } else if (data.type === 'reorder') {
+                const dropIndex = this.getDropIndex(touch);
+                if (dropIndex !== data.index && dropIndex !== data.index + 1) {
+                    this.onReorder(data.index, dropIndex);
+                }
+            }
+        }
+
+        this.cleanupDrag();
+    }
+
+    cancelDrag() {
+        this.cleanupDrag();
+    }
+
+    cleanupDrag() {
+        if (this.dragElement) {
+            this.dragElement.remove();
+            this.dragElement = null;
+        }
+
+        if (this.placeholder) {
+            this.placeholder.remove();
+            this.placeholder = null;
+        }
+
+        if (this.dragState?.data?.element) {
+            this.dragState.data.element.style.opacity = '';
+            this.dragState.data.element.classList.remove('dragging');
+        }
+
+        this.sequenceArea.classList.remove('drag-active', 'drag-over');
+        if (this.trashZone) {
+            this.trashZone.classList.remove('drag-active', 'drag-over');
+        }
+
+        this.dragState = null;
+    }
+
+    isOverElement(touch, element) {
+        const rect = element.getBoundingClientRect();
+        return (
+            touch.clientX >= rect.left &&
+            touch.clientX <= rect.right &&
+            touch.clientY >= rect.top &&
+            touch.clientY <= rect.bottom
+        );
+    }
+
+    getDropIndex(touch) {
+        const items = this.sequenceArea.querySelectorAll('.sequence-item:not(.drag-ghost), .loop-block');
+        let dropIndex = 0;
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (this.dragState?.data?.element === item) continue;
+            
+            const rect = item.getBoundingClientRect();
+            const midX = rect.left + rect.width / 2;
+            
+            if (touch.clientX > midX) {
+                dropIndex = parseInt(item.dataset.index) + 1;
+            } else {
+                break;
+            }
+        }
+
+        return dropIndex;
+    }
+
+    createPlaceholder() {
+        this.placeholder = document.createElement('div');
+        this.placeholder.className = 'drop-placeholder';
+    }
+
+    updatePlaceholderPosition(touch) {
+        if (!this.placeholder) {
+            this.createPlaceholder();
+        }
+
+        const items = this.sequenceArea.querySelectorAll('.sequence-item:not(.dragging), .loop-block:not(.dragging)');
+        let insertBefore = null;
+
+        for (const item of items) {
+            if (this.dragState?.data?.element === item) continue;
+            
+            const rect = item.getBoundingClientRect();
+            const midX = rect.left + rect.width / 2;
+            
+            if (touch.clientX < midX) {
+                insertBefore = item;
+                break;
+            }
+        }
+
+        if (insertBefore) {
+            this.sequenceArea.insertBefore(this.placeholder, insertBefore);
+        } else {
+            this.sequenceArea.appendChild(this.placeholder);
+        }
+    }
+}
+
 // ===== Game Class =====
 class Game {
     constructor() {
@@ -432,6 +827,7 @@ class Game {
             sequenceArea: document.getElementById('sequenceArea'),
             sequencePlaceholder: document.getElementById('sequencePlaceholder'),
             savedFunctionsContainer: document.getElementById('savedFunctions'),
+            trashZone: document.getElementById('trashZone'),
             playBtn: document.getElementById('playBtn'),
             resetBtn: document.getElementById('resetBtn'),
             clearBtn: document.getElementById('clearBtn'),
@@ -444,6 +840,16 @@ class Game {
             helpOverlay: document.getElementById('helpOverlay'),
             levelNum: document.getElementById('levelNum')
         };
+        
+        // Initialize drag and drop for touch devices
+        this.dragDrop = new DragDrop({
+            sequenceArea: this.elements.sequenceArea,
+            trashZone: this.elements.trashZone,
+            onAddCommand: (direction, index) => this.addCommandAt(direction, index),
+            onAddFireCommand: (direction, index) => this.addFireCommandAt(direction, index),
+            onReorder: (from, to) => this.reorderCommand(from, to),
+            onRemove: (index) => this.removeCommand(index)
+        });
     }
 
     loadLevel(levelNum) {
@@ -528,6 +934,10 @@ class Game {
                 this.elements.sequenceArea.appendChild(item);
             }
         });
+        
+        // Make sequence items draggable for touch reordering
+        const sequenceItems = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
+        this.dragDrop.makeItemsDraggable(sequenceItems);
     }
 
     createLoopBlock(cmd, index, isActive) {
@@ -652,9 +1062,46 @@ class Game {
         this.audio.play('click');
     }
 
+    addCommandAt(direction, index) {
+        if (this.isPlaying) return;
+        
+        const cmd = { type: 'move', direction };
+        if (this.sequence.activeLoopIndex !== null) {
+            this.sequence.addCommand(direction);
+        } else if (index !== undefined && index < this.sequence.commands.length) {
+            this.sequence.insertAt(cmd, index);
+        } else {
+            this.sequence.addCommand(direction);
+        }
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
     addFireCommand(direction) {
         if (this.isPlaying) return;
         this.sequence.addFireCommand(direction);
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
+    addFireCommandAt(direction, index) {
+        if (this.isPlaying) return;
+        
+        const cmd = { type: 'fire', direction };
+        if (this.sequence.activeLoopIndex !== null) {
+            this.sequence.addFireCommand(direction);
+        } else if (index !== undefined && index < this.sequence.commands.length) {
+            this.sequence.insertAt(cmd, index);
+        } else {
+            this.sequence.addFireCommand(direction);
+        }
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
+    reorderCommand(fromIndex, toIndex) {
+        if (this.isPlaying) return;
+        this.sequence.moveCommand(fromIndex, toIndex);
         this.renderSequence();
         this.audio.play('click');
     }
@@ -697,6 +1144,7 @@ class Game {
         if (this.isPlaying) return;
         this.sequence.removeAt(index);
         this.renderSequence();
+        this.audio.play('click');
     }
 
     clearSequence() {
@@ -1038,12 +1486,12 @@ class Game {
             btn.addEventListener('click', () => this.addCommand(btn.dataset.command));
             btn.addEventListener('dragstart', (e) => { e.dataTransfer.setData('command', btn.dataset.command); btn.classList.add('dragging'); });
             btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.addCommand(btn.dataset.command); });
+            // Note: Touch drag is handled by DragDrop class
         });
 
         document.querySelectorAll('.fire-btn').forEach(btn => {
             btn.addEventListener('click', () => this.addFireCommand(btn.dataset.fire));
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.addFireCommand(btn.dataset.fire); });
+            // Note: Touch drag is handled by DragDrop class
         });
 
         this.elements.sequenceArea.addEventListener('dragover', (e) => { e.preventDefault(); this.elements.sequenceArea.classList.add('drag-over'); });

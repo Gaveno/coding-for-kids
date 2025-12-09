@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🤖 Robot Path Painter</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -32,7 +32,8 @@
             <section class="sequence-section" aria-label="Command Sequence">
                 <div class="sequence-header">
                     <div class="sequence-label" aria-hidden="true">📝</div>
-                    <button class="clear-btn" id="clearBtn" aria-label="Clear sequence">🗑️</button>
+                    <div class="trash-zone" id="trashZone" aria-label="Drag here to delete">🗑️</div>
+                    <button class="clear-btn" id="clearBtn" aria-label="Clear sequence">🧹</button>
                 </div>
                 <div class="sequence-area" id="sequenceArea" role="list">
                     <div class="sequence-placeholder" id="sequencePlaceholder" aria-hidden="true">

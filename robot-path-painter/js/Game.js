@@ -7,6 +7,7 @@ import { Grid } from './Grid.js';
 import { Sequence } from './Sequence.js';
 import { Audio } from './Audio.js';
 import { Renderer } from './Renderer.js';
+import { DragDrop } from './DragDrop.js';
 import { getLevel, getTotalLevels } from './Levels.js';
 
 export class Game {
@@ -36,6 +37,7 @@ export class Game {
             sequenceArea: document.getElementById('sequenceArea'),
             sequencePlaceholder: document.getElementById('sequencePlaceholder'),
             savedFunctionsContainer: document.getElementById('savedFunctions'),
+            trashZone: document.getElementById('trashZone'),
             playBtn: document.getElementById('playBtn'),
             resetBtn: document.getElementById('resetBtn'),
             clearBtn: document.getElementById('clearBtn'),
@@ -50,6 +52,16 @@ export class Game {
         };
 
         this.renderer = new Renderer(this.elements);
+        
+        // Initialize drag and drop for touch devices
+        this.dragDrop = new DragDrop({
+            sequenceArea: this.elements.sequenceArea,
+            trashZone: this.elements.trashZone,
+            onAddCommand: (direction, index) => this.addCommandAt(direction, index),
+            onAddFireCommand: (direction, index) => this.addFireCommandAt(direction, index),
+            onReorder: (from, to) => this.reorderCommand(from, to),
+            onRemove: (index) => this.removeCommand(index)
+        });
     }
 
     loadLevel(levelNum) {
@@ -66,17 +78,28 @@ export class Game {
 
     render() {
         this.grid.render(this.elements.gridContainer, this.robot.position);
+        this.renderSequence();
+        this.renderer.renderSavedFunctions(
+            this.sequence.savedFunctions,
+            (index) => this.deleteFunction(index),
+            (index) => this.addFunctionToSequence(index)
+        );
+    }
+
+    /**
+     * Render sequence and setup drag/drop on items
+     */
+    renderSequence() {
         this.renderer.renderSequence(
             this.sequence,
             (index) => this.selectLoop(index),
             (index, iterations) => this.updateLoopIterations(index, iterations),
             (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
         );
-        this.renderer.renderSavedFunctions(
-            this.sequence.savedFunctions,
-            (index) => this.deleteFunction(index),
-            (index) => this.addFunctionToSequence(index)
-        );
+        
+        // Make sequence items draggable for touch reordering
+        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
+        this.dragDrop.makeItemsDraggable(items);
     }
 
     // ===== Command Management =====
@@ -85,12 +108,28 @@ export class Game {
         if (this.isPlaying) return;
         
         this.sequence.addCommand(direction);
-        this.renderer.renderSequence(
-            this.sequence,
-            (index) => this.selectLoop(index),
-            (index, iterations) => this.updateLoopIterations(index, iterations),
-            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
-        );
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
+    /**
+     * Add command at specific index (for drag & drop)
+     * @param {string} direction - Command direction
+     * @param {number} index - Index to insert at
+     */
+    addCommandAt(direction, index) {
+        if (this.isPlaying) return;
+        
+        const cmd = { type: 'move', direction };
+        if (this.sequence.activeLoopIndex !== null) {
+            // If a loop is active, add to the loop instead
+            this.sequence.addCommand(direction);
+        } else if (index !== undefined && index < this.sequence.commands.length) {
+            this.sequence.insertAt(cmd, index);
+        } else {
+            this.sequence.addCommand(direction);
+        }
+        this.renderSequence();
         this.audio.play('click');
     }
 
@@ -98,12 +137,40 @@ export class Game {
         if (this.isPlaying) return;
         
         this.sequence.addFireCommand(direction);
-        this.renderer.renderSequence(
-            this.sequence,
-            (index) => this.selectLoop(index),
-            (index, iterations) => this.updateLoopIterations(index, iterations),
-            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
-        );
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
+    /**
+     * Add fire command at specific index (for drag & drop)
+     * @param {string} direction - Fire direction
+     * @param {number} index - Index to insert at
+     */
+    addFireCommandAt(direction, index) {
+        if (this.isPlaying) return;
+        
+        const cmd = { type: 'fire', direction };
+        if (this.sequence.activeLoopIndex !== null) {
+            this.sequence.addFireCommand(direction);
+        } else if (index !== undefined && index < this.sequence.commands.length) {
+            this.sequence.insertAt(cmd, index);
+        } else {
+            this.sequence.addFireCommand(direction);
+        }
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
+    /**
+     * Reorder command from one position to another
+     * @param {number} fromIndex - Source index
+     * @param {number} toIndex - Destination index
+     */
+    reorderCommand(fromIndex, toIndex) {
+        if (this.isPlaying) return;
+        
+        this.sequence.moveCommand(fromIndex, toIndex);
+        this.renderSequence();
         this.audio.play('click');
     }
 
@@ -113,12 +180,7 @@ export class Game {
         this.sequence.addLoop(2);
         // Auto-select the new loop for editing
         this.sequence.setActiveLoop(this.sequence.commands.length - 1);
-        this.renderer.renderSequence(
-            this.sequence,
-            (index) => this.selectLoop(index),
-            (index, iterations) => this.updateLoopIterations(index, iterations),
-            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
-        );
+        this.renderSequence();
         this.audio.play('click');
     }
 
@@ -126,48 +188,28 @@ export class Game {
         if (this.isPlaying) return;
         
         this.sequence.setActiveLoop(index);
-        this.renderer.renderSequence(
-            this.sequence,
-            (i) => this.selectLoop(i),
-            (i, iterations) => this.updateLoopIterations(i, iterations),
-            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
-        );
+        this.renderSequence();
     }
 
     updateLoopIterations(index, iterations) {
         if (this.isPlaying) return;
         
         this.sequence.updateLoopIterations(index, iterations);
-        this.renderer.renderSequence(
-            this.sequence,
-            (i) => this.selectLoop(i),
-            (i, iter) => this.updateLoopIterations(i, iter),
-            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
-        );
+        this.renderSequence();
     }
 
     removeFromLoop(loopIndex, cmdIndex) {
         if (this.isPlaying) return;
         
         this.sequence.removeFromLoop(loopIndex, cmdIndex);
-        this.renderer.renderSequence(
-            this.sequence,
-            (i) => this.selectLoop(i),
-            (i, iterations) => this.updateLoopIterations(i, iterations),
-            (li, ci) => this.removeFromLoop(li, ci)
-        );
+        this.renderSequence();
     }
 
     addFunctionToSequence(functionIndex) {
         if (this.isPlaying) return;
         
         this.sequence.addFunctionCall(functionIndex);
-        this.renderer.renderSequence(
-            this.sequence,
-            (index) => this.selectLoop(index),
-            (index, iterations) => this.updateLoopIterations(index, iterations),
-            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
-        );
+        this.renderSequence();
         this.audio.play('click');
     }
 
@@ -175,24 +217,15 @@ export class Game {
         if (this.isPlaying) return;
         
         this.sequence.removeAt(index);
-        this.renderer.renderSequence(
-            this.sequence,
-            (i) => this.selectLoop(i),
-            (i, iterations) => this.updateLoopIterations(i, iterations),
-            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
-        );
+        this.renderSequence();
+        this.audio.play('click');
     }
 
     clearSequence() {
         if (this.isPlaying) return;
         
         this.sequence.clear();
-        this.renderer.renderSequence(
-            this.sequence,
-            (index) => this.selectLoop(index),
-            (index, iterations) => this.updateLoopIterations(index, iterations),
-            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
-        );
+        this.renderSequence();
         this.audio.play('clear');
     }
 
@@ -497,11 +530,7 @@ export class Game {
                 btn.classList.remove('dragging');
             });
 
-            // Touch support
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.addCommand(btn.dataset.command);
-            });
+            // Note: Touch drag is handled by DragDrop module
         });
 
         // Fire buttons
@@ -510,11 +539,7 @@ export class Game {
                 this.addFireCommand(btn.dataset.fire);
             });
 
-            // Touch support
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.addFireCommand(btn.dataset.fire);
-            });
+            // Note: Touch drag is handled by DragDrop module
         });
 
         // Sequence area - drop zone and click to remove

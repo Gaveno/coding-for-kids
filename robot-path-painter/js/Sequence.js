@@ -117,6 +117,50 @@ export class Sequence {
     }
 
     /**
+     * Move command from one index to another
+     * @param {number} fromIndex - Source index
+     * @param {number} toIndex - Destination index (where it will be inserted)
+     */
+    moveCommand(fromIndex, toIndex) {
+        if (fromIndex < 0 || fromIndex >= this.commands.length) return;
+        if (toIndex < 0 || toIndex > this.commands.length) return;
+        
+        // Adjust active loop index
+        if (this.activeLoopIndex !== null) {
+            if (this.activeLoopIndex === fromIndex) {
+                // Moving the active loop itself
+                if (toIndex > fromIndex) {
+                    this.activeLoopIndex = toIndex - 1;
+                } else {
+                    this.activeLoopIndex = toIndex;
+                }
+            } else if (fromIndex < this.activeLoopIndex && toIndex > this.activeLoopIndex) {
+                this.activeLoopIndex--;
+            } else if (fromIndex > this.activeLoopIndex && toIndex <= this.activeLoopIndex) {
+                this.activeLoopIndex++;
+            }
+        }
+        
+        const [command] = this.commands.splice(fromIndex, 1);
+        // Adjust toIndex if removing from before it
+        const adjustedTo = toIndex > fromIndex ? toIndex - 1 : toIndex;
+        this.commands.splice(adjustedTo, 0, command);
+    }
+
+    /**
+     * Insert command at specific index
+     * @param {object} cmd - Command object
+     * @param {number} index - Index to insert at
+     */
+    insertAt(cmd, index) {
+        // Adjust active loop index if inserting before it
+        if (this.activeLoopIndex !== null && index <= this.activeLoopIndex) {
+            this.activeLoopIndex++;
+        }
+        this.commands.splice(index, 0, cmd);
+    }
+
+    /**
      * Clear all commands
      */
     clear() {
