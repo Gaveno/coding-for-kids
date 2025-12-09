@@ -203,33 +203,83 @@ class Sequence {
     constructor() {
         this.commands = [];
         this.savedFunctions = [];
+        this.activeLoopIndex = null;
     }
 
     addCommand(direction) {
-        this.commands.push({ type: 'move', direction });
+        const cmd = { type: 'move', direction };
+        if (this.activeLoopIndex !== null) {
+            this.commands[this.activeLoopIndex].commands.push(cmd);
+        } else {
+            this.commands.push(cmd);
+        }
     }
 
     addFireCommand(direction) {
-        this.commands.push({ type: 'fire', direction });
+        const cmd = { type: 'fire', direction };
+        if (this.activeLoopIndex !== null) {
+            this.commands[this.activeLoopIndex].commands.push(cmd);
+        } else {
+            this.commands.push(cmd);
+        }
+    }
+
+    addLoop(iterations = 2) {
+        this.commands.push({
+            type: 'loop',
+            iterations: iterations,
+            commands: []
+        });
+    }
+
+    setActiveLoop(index) {
+        if (index !== null && this.commands[index]?.type === 'loop') {
+            this.activeLoopIndex = index;
+        } else {
+            this.activeLoopIndex = null;
+        }
+    }
+
+    updateLoopIterations(loopIndex, iterations) {
+        if (this.commands[loopIndex]?.type === 'loop') {
+            this.commands[loopIndex].iterations = Math.max(1, Math.min(9, iterations));
+        }
+    }
+
+    removeFromLoop(loopIndex, cmdIndex) {
+        if (this.commands[loopIndex]?.type === 'loop') {
+            this.commands[loopIndex].commands.splice(cmdIndex, 1);
+        }
     }
 
     addFunctionCall(functionIndex) {
         const func = this.savedFunctions[functionIndex];
         if (func) {
-            this.commands.push({
+            const cmd = {
                 type: 'function',
                 id: functionIndex + 1,
                 commands: [...func.commands]
-            });
+            };
+            if (this.activeLoopIndex !== null) {
+                this.commands[this.activeLoopIndex].commands.push(cmd);
+            } else {
+                this.commands.push(cmd);
+            }
         }
     }
 
     removeAt(index) {
+        if (this.activeLoopIndex === index) {
+            this.activeLoopIndex = null;
+        } else if (this.activeLoopIndex !== null && index < this.activeLoopIndex) {
+            this.activeLoopIndex--;
+        }
         this.commands.splice(index, 1);
     }
 
     clear() {
         this.commands = [];
+        this.activeLoopIndex = null;
     }
 
     saveAsFunction() {
@@ -245,13 +295,20 @@ class Sequence {
 
     flatten() {
         const flat = [];
-        for (const cmd of this.commands) {
-            if (cmd.type === 'function') {
-                flat.push(...cmd.commands);
-            } else {
-                flat.push(cmd);
+        const expandCommands = (cmds) => {
+            for (const cmd of cmds) {
+                if (cmd.type === 'function') {
+                    expandCommands(cmd.commands);
+                } else if (cmd.type === 'loop') {
+                    for (let i = 0; i < cmd.iterations; i++) {
+                        expandCommands(cmd.commands);
+                    }
+                } else {
+                    flat.push(cmd);
+                }
             }
-        }
+        };
+        expandCommands(this.commands);
         return flat;
     }
 
@@ -379,6 +436,7 @@ class Game {
             resetBtn: document.getElementById('resetBtn'),
             clearBtn: document.getElementById('clearBtn'),
             saveBtn: document.getElementById('saveBtn'),
+            loopBtn: document.getElementById('loopBtn'),
             helpBtn: document.getElementById('helpBtn'),
             closeHelpBtn: document.getElementById('closeHelpBtn'),
             nextBtn: document.getElementById('nextBtn'),
@@ -446,25 +504,122 @@ class Game {
     }
 
     renderSequence() {
-        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item');
+        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
         items.forEach(item => item.remove());
         this.elements.sequencePlaceholder.style.display = this.sequence.isEmpty() ? 'block' : 'none';
 
         this.sequence.commands.forEach((cmd, index) => {
-            const item = document.createElement('div');
-            item.className = 'sequence-item';
-            if (cmd.type === 'function') {
-                item.classList.add('function-call');
-                item.innerHTML = `📦${cmd.id}`;
-            } else if (cmd.type === 'fire') {
-                item.classList.add('fire-command');
-                item.textContent = Sequence.getFireEmoji(cmd.direction);
+            if (cmd.type === 'loop') {
+                const loopBlock = this.createLoopBlock(cmd, index, this.sequence.activeLoopIndex === index);
+                this.elements.sequenceArea.appendChild(loopBlock);
             } else {
-                item.textContent = Sequence.getDirectionEmoji(cmd.direction);
+                const item = document.createElement('div');
+                item.className = 'sequence-item';
+                if (cmd.type === 'function') {
+                    item.classList.add('function-call');
+                    item.innerHTML = `📦${cmd.id}`;
+                } else if (cmd.type === 'fire') {
+                    item.classList.add('fire-command');
+                    item.textContent = Sequence.getFireEmoji(cmd.direction);
+                } else {
+                    item.textContent = Sequence.getDirectionEmoji(cmd.direction);
+                }
+                item.dataset.index = index;
+                this.elements.sequenceArea.appendChild(item);
             }
-            item.dataset.index = index;
-            this.elements.sequenceArea.appendChild(item);
         });
+    }
+
+    createLoopBlock(cmd, index, isActive) {
+        const loopBlock = document.createElement('div');
+        loopBlock.className = 'loop-block' + (isActive ? ' active' : '');
+        loopBlock.dataset.index = index;
+
+        // Loop header with iteration controls
+        const header = document.createElement('div');
+        header.className = 'loop-header';
+        
+        const loopIcon = document.createElement('span');
+        loopIcon.className = 'loop-icon';
+        loopIcon.textContent = '🔄';
+        header.appendChild(loopIcon);
+
+        // Iteration controls
+        const iterControls = document.createElement('div');
+        iterControls.className = 'loop-iteration-controls';
+
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'iter-btn minus-btn';
+        minusBtn.textContent = '➖';
+        minusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.updateLoopIterations(index, cmd.iterations - 1);
+        });
+
+        const iterCount = document.createElement('span');
+        iterCount.className = 'iter-count';
+        iterCount.textContent = cmd.iterations;
+
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'iter-btn plus-btn';
+        plusBtn.textContent = '➕';
+        plusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.updateLoopIterations(index, cmd.iterations + 1);
+        });
+
+        iterControls.appendChild(minusBtn);
+        iterControls.appendChild(iterCount);
+        iterControls.appendChild(plusBtn);
+        header.appendChild(iterControls);
+
+        loopBlock.appendChild(header);
+
+        // Loop body - container for commands
+        const body = document.createElement('div');
+        body.className = 'loop-body';
+
+        if (cmd.commands.length === 0) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'loop-placeholder';
+            placeholder.textContent = '👆';
+            body.appendChild(placeholder);
+        } else {
+            cmd.commands.forEach((innerCmd, cmdIndex) => {
+                const item = document.createElement('div');
+                item.className = 'sequence-item loop-item';
+                
+                if (innerCmd.type === 'function') {
+                    item.classList.add('function-call');
+                    item.innerHTML = `📦${innerCmd.id}`;
+                } else if (innerCmd.type === 'fire') {
+                    item.classList.add('fire-command');
+                    item.textContent = Sequence.getFireEmoji(innerCmd.direction);
+                } else {
+                    item.textContent = Sequence.getDirectionEmoji(innerCmd.direction);
+                }
+                
+                item.dataset.loopIndex = index;
+                item.dataset.cmdIndex = cmdIndex;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.removeFromLoop(index, cmdIndex);
+                });
+                body.appendChild(item);
+            });
+        }
+
+        loopBlock.appendChild(body);
+
+        // Click on loop block to select/deselect
+        loopBlock.addEventListener('click', (e) => {
+            if (e.target === loopBlock || e.target === header || e.target === body || 
+                e.target === loopIcon || e.target.classList.contains('loop-placeholder')) {
+                this.selectLoop(isActive ? null : index);
+            }
+        });
+
+        return loopBlock;
     }
 
     renderSavedFunctions() {
@@ -502,6 +657,33 @@ class Game {
         this.sequence.addFireCommand(direction);
         this.renderSequence();
         this.audio.play('click');
+    }
+
+    addLoop() {
+        if (this.isPlaying) return;
+        this.sequence.addLoop(2);
+        // Auto-select the new loop for editing
+        this.sequence.setActiveLoop(this.sequence.commands.length - 1);
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
+    selectLoop(index) {
+        if (this.isPlaying) return;
+        this.sequence.setActiveLoop(index);
+        this.renderSequence();
+    }
+
+    updateLoopIterations(index, iterations) {
+        if (this.isPlaying) return;
+        this.sequence.updateLoopIterations(index, iterations);
+        this.renderSequence();
+    }
+
+    removeFromLoop(loopIndex, cmdIndex) {
+        if (this.isPlaying) return;
+        this.sequence.removeFromLoop(loopIndex, cmdIndex);
+        this.renderSequence();
     }
 
     addFunctionToSequence(functionIndex) {
@@ -615,13 +797,17 @@ class Game {
 
     highlightCommand(flatIndex) {
         this.clearHighlights();
-        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item');
+        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
         let count = 0;
         for (let i = 0; i < this.sequence.commands.length; i++) {
             const cmd = this.sequence.commands[i];
             if (cmd.type === 'function') {
                 if (count + cmd.commands.length > flatIndex) { items[i]?.classList.add('executing'); return; }
                 count += cmd.commands.length;
+            } else if (cmd.type === 'loop') {
+                const loopTotal = cmd.commands.length * cmd.iterations;
+                if (count + loopTotal > flatIndex) { items[i]?.classList.add('executing'); return; }
+                count += loopTotal;
             } else {
                 if (count === flatIndex) { items[i]?.classList.add('executing'); return; }
                 count++;
@@ -630,7 +816,7 @@ class Game {
     }
 
     clearHighlights() {
-        this.elements.sequenceArea.querySelectorAll('.sequence-item').forEach(item => item.classList.remove('executing'));
+        this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block').forEach(item => item.classList.remove('executing'));
     }
 
     animateRobotMove() {
@@ -869,14 +1055,18 @@ class Game {
             if (command) this.addCommand(command);
         });
         this.elements.sequenceArea.addEventListener('click', (e) => {
-            const item = e.target.closest('.sequence-item');
-            if (item && item.dataset.index !== undefined) this.removeCommand(parseInt(item.dataset.index));
+            const item = e.target.closest('.sequence-item:not(.loop-item)');
+            const loopBlock = e.target.closest('.loop-block');
+            if (item && item.dataset.index !== undefined && !loopBlock) {
+                this.removeCommand(parseInt(item.dataset.index));
+            }
         });
 
         this.elements.playBtn.addEventListener('click', () => this.play());
         this.elements.resetBtn.addEventListener('click', () => this.resetLevel());
         this.elements.clearBtn.addEventListener('click', () => this.clearSequence());
         this.elements.saveBtn.addEventListener('click', () => this.saveFunction());
+        this.elements.loopBtn.addEventListener('click', () => this.addLoop());
 
         this.elements.helpBtn.addEventListener('click', () => this.elements.helpOverlay.classList.add('active'));
         this.elements.closeHelpBtn.addEventListener('click', () => this.elements.helpOverlay.classList.remove('active'));

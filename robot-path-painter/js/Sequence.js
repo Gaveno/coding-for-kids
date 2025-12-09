@@ -6,22 +6,79 @@ export class Sequence {
     constructor() {
         this.commands = [];
         this.savedFunctions = [];
+        this.activeLoopIndex = null; // Track which loop is being edited
     }
 
     /**
-     * Add a movement command to the sequence
+     * Add a movement command to the sequence (or active loop)
      * @param {string} direction - 'up', 'down', 'left', or 'right'
      */
     addCommand(direction) {
-        this.commands.push({ type: 'move', direction });
+        const cmd = { type: 'move', direction };
+        if (this.activeLoopIndex !== null) {
+            this.commands[this.activeLoopIndex].commands.push(cmd);
+        } else {
+            this.commands.push(cmd);
+        }
     }
 
     /**
-     * Add a fire command to the sequence
+     * Add a fire command to the sequence (or active loop)
      * @param {string} direction - 'up', 'down', 'left', or 'right'
      */
     addFireCommand(direction) {
-        this.commands.push({ type: 'fire', direction });
+        const cmd = { type: 'fire', direction };
+        if (this.activeLoopIndex !== null) {
+            this.commands[this.activeLoopIndex].commands.push(cmd);
+        } else {
+            this.commands.push(cmd);
+        }
+    }
+
+    /**
+     * Add a loop block to the sequence
+     * @param {number} iterations - Number of times to repeat (default 2)
+     */
+    addLoop(iterations = 2) {
+        this.commands.push({
+            type: 'loop',
+            iterations: iterations,
+            commands: []
+        });
+    }
+
+    /**
+     * Set the active loop for editing
+     * @param {number|null} index - Index of the loop or null to deselect
+     */
+    setActiveLoop(index) {
+        if (index !== null && this.commands[index]?.type === 'loop') {
+            this.activeLoopIndex = index;
+        } else {
+            this.activeLoopIndex = null;
+        }
+    }
+
+    /**
+     * Update loop iterations
+     * @param {number} loopIndex - Index of the loop
+     * @param {number} iterations - New iteration count
+     */
+    updateLoopIterations(loopIndex, iterations) {
+        if (this.commands[loopIndex]?.type === 'loop') {
+            this.commands[loopIndex].iterations = Math.max(1, Math.min(9, iterations));
+        }
+    }
+
+    /**
+     * Remove command from inside a loop
+     * @param {number} loopIndex - Index of the loop
+     * @param {number} cmdIndex - Index of command within the loop
+     */
+    removeFromLoop(loopIndex, cmdIndex) {
+        if (this.commands[loopIndex]?.type === 'loop') {
+            this.commands[loopIndex].commands.splice(cmdIndex, 1);
+        }
     }
 
     /**
@@ -31,11 +88,16 @@ export class Sequence {
     addFunctionCall(functionIndex) {
         const func = this.savedFunctions[functionIndex];
         if (func) {
-            this.commands.push({
+            const cmd = {
                 type: 'function',
                 id: functionIndex + 1,
                 commands: [...func.commands]
-            });
+            };
+            if (this.activeLoopIndex !== null) {
+                this.commands[this.activeLoopIndex].commands.push(cmd);
+            } else {
+                this.commands.push(cmd);
+            }
         }
     }
 
@@ -44,6 +106,13 @@ export class Sequence {
      * @param {number} index - Index to remove
      */
     removeAt(index) {
+        // If removing the active loop, deselect it
+        if (this.activeLoopIndex === index) {
+            this.activeLoopIndex = null;
+        } else if (this.activeLoopIndex !== null && index < this.activeLoopIndex) {
+            // Adjust active loop index if removing before it
+            this.activeLoopIndex--;
+        }
         this.commands.splice(index, 1);
     }
 
@@ -52,6 +121,7 @@ export class Sequence {
      */
     clear() {
         this.commands = [];
+        this.activeLoopIndex = null;
     }
 
     /**
@@ -79,18 +149,25 @@ export class Sequence {
     }
 
     /**
-     * Get flattened sequence with functions expanded
+     * Get flattened sequence with functions and loops expanded
      * @returns {object[]} Array of move commands
      */
     flatten() {
         const flat = [];
-        for (const cmd of this.commands) {
-            if (cmd.type === 'function') {
-                flat.push(...cmd.commands);
-            } else {
-                flat.push(cmd);
+        const expandCommands = (cmds) => {
+            for (const cmd of cmds) {
+                if (cmd.type === 'function') {
+                    expandCommands(cmd.commands);
+                } else if (cmd.type === 'loop') {
+                    for (let i = 0; i < cmd.iterations; i++) {
+                        expandCommands(cmd.commands);
+                    }
+                } else {
+                    flat.push(cmd);
+                }
             }
-        }
+        };
+        expandCommands(this.commands);
         return flat;
     }
 

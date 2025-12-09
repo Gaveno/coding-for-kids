@@ -40,6 +40,7 @@ export class Game {
             resetBtn: document.getElementById('resetBtn'),
             clearBtn: document.getElementById('clearBtn'),
             saveBtn: document.getElementById('saveBtn'),
+            loopBtn: document.getElementById('loopBtn'),
             helpBtn: document.getElementById('helpBtn'),
             closeHelpBtn: document.getElementById('closeHelpBtn'),
             nextBtn: document.getElementById('nextBtn'),
@@ -65,7 +66,12 @@ export class Game {
 
     render() {
         this.grid.render(this.elements.gridContainer, this.robot.position);
-        this.renderer.renderSequence(this.sequence);
+        this.renderer.renderSequence(
+            this.sequence,
+            (index) => this.selectLoop(index),
+            (index, iterations) => this.updateLoopIterations(index, iterations),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
         this.renderer.renderSavedFunctions(
             this.sequence.savedFunctions,
             (index) => this.deleteFunction(index),
@@ -79,7 +85,12 @@ export class Game {
         if (this.isPlaying) return;
         
         this.sequence.addCommand(direction);
-        this.renderer.renderSequence(this.sequence);
+        this.renderer.renderSequence(
+            this.sequence,
+            (index) => this.selectLoop(index),
+            (index, iterations) => this.updateLoopIterations(index, iterations),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
         this.audio.play('click');
     }
 
@@ -87,15 +98,76 @@ export class Game {
         if (this.isPlaying) return;
         
         this.sequence.addFireCommand(direction);
-        this.renderer.renderSequence(this.sequence);
+        this.renderer.renderSequence(
+            this.sequence,
+            (index) => this.selectLoop(index),
+            (index, iterations) => this.updateLoopIterations(index, iterations),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
         this.audio.play('click');
+    }
+
+    addLoop() {
+        if (this.isPlaying) return;
+        
+        this.sequence.addLoop(2);
+        // Auto-select the new loop for editing
+        this.sequence.setActiveLoop(this.sequence.commands.length - 1);
+        this.renderer.renderSequence(
+            this.sequence,
+            (index) => this.selectLoop(index),
+            (index, iterations) => this.updateLoopIterations(index, iterations),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
+        this.audio.play('click');
+    }
+
+    selectLoop(index) {
+        if (this.isPlaying) return;
+        
+        this.sequence.setActiveLoop(index);
+        this.renderer.renderSequence(
+            this.sequence,
+            (i) => this.selectLoop(i),
+            (i, iterations) => this.updateLoopIterations(i, iterations),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
+    }
+
+    updateLoopIterations(index, iterations) {
+        if (this.isPlaying) return;
+        
+        this.sequence.updateLoopIterations(index, iterations);
+        this.renderer.renderSequence(
+            this.sequence,
+            (i) => this.selectLoop(i),
+            (i, iter) => this.updateLoopIterations(i, iter),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
+    }
+
+    removeFromLoop(loopIndex, cmdIndex) {
+        if (this.isPlaying) return;
+        
+        this.sequence.removeFromLoop(loopIndex, cmdIndex);
+        this.renderer.renderSequence(
+            this.sequence,
+            (i) => this.selectLoop(i),
+            (i, iterations) => this.updateLoopIterations(i, iterations),
+            (li, ci) => this.removeFromLoop(li, ci)
+        );
     }
 
     addFunctionToSequence(functionIndex) {
         if (this.isPlaying) return;
         
         this.sequence.addFunctionCall(functionIndex);
-        this.renderer.renderSequence(this.sequence);
+        this.renderer.renderSequence(
+            this.sequence,
+            (index) => this.selectLoop(index),
+            (index, iterations) => this.updateLoopIterations(index, iterations),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
         this.audio.play('click');
     }
 
@@ -103,14 +175,24 @@ export class Game {
         if (this.isPlaying) return;
         
         this.sequence.removeAt(index);
-        this.renderer.renderSequence(this.sequence);
+        this.renderer.renderSequence(
+            this.sequence,
+            (i) => this.selectLoop(i),
+            (i, iterations) => this.updateLoopIterations(i, iterations),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
     }
 
     clearSequence() {
         if (this.isPlaying) return;
         
         this.sequence.clear();
-        this.renderer.renderSequence(this.sequence);
+        this.renderer.renderSequence(
+            this.sequence,
+            (index) => this.selectLoop(index),
+            (index, iterations) => this.updateLoopIterations(index, iterations),
+            (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex)
+        );
         this.audio.play('clear');
     }
 
@@ -466,6 +548,7 @@ export class Game {
         this.elements.resetBtn.addEventListener('click', () => this.resetLevel());
         this.elements.clearBtn.addEventListener('click', () => this.clearSequence());
         this.elements.saveBtn.addEventListener('click', () => this.saveFunction());
+        this.elements.loopBtn.addEventListener('click', () => this.addLoop());
 
         // Help overlay
         this.elements.helpBtn.addEventListener('click', () => this.renderer.showHelp());

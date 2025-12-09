@@ -13,12 +13,15 @@ export class Renderer {
     /**
      * Render the command sequence
      * @param {Sequence} sequence - Sequence instance
+     * @param {function} onLoopClick - Callback when loop is clicked
+     * @param {function} onLoopIterationChange - Callback for loop iteration change
+     * @param {function} onLoopCommandRemove - Callback to remove command from loop
      */
-    renderSequence(sequence) {
+    renderSequence(sequence, onLoopClick, onLoopIterationChange, onLoopCommandRemove) {
         const { sequenceArea, sequencePlaceholder } = this.elements;
         
         // Clear existing items
-        const items = sequenceArea.querySelectorAll('.sequence-item');
+        const items = sequenceArea.querySelectorAll('.sequence-item, .loop-block');
         items.forEach(item => item.remove());
 
         // Show/hide placeholder
@@ -26,22 +29,136 @@ export class Renderer {
 
         // Render each command
         sequence.commands.forEach((cmd, index) => {
-            const item = document.createElement('div');
-            item.className = 'sequence-item';
-            
-            if (cmd.type === 'function') {
-                item.classList.add('function-call');
-                item.innerHTML = `📦${cmd.id}`;
-            } else if (cmd.type === 'fire') {
-                item.classList.add('fire-command');
-                item.textContent = Sequence.getFireEmoji(cmd.direction);
+            if (cmd.type === 'loop') {
+                const loopBlock = this.createLoopBlock(
+                    cmd, 
+                    index, 
+                    sequence.activeLoopIndex === index,
+                    onLoopClick,
+                    onLoopIterationChange,
+                    onLoopCommandRemove
+                );
+                sequenceArea.appendChild(loopBlock);
             } else {
-                item.textContent = Sequence.getDirectionEmoji(cmd.direction);
+                const item = document.createElement('div');
+                item.className = 'sequence-item';
+                
+                if (cmd.type === 'function') {
+                    item.classList.add('function-call');
+                    item.innerHTML = `📦${cmd.id}`;
+                } else if (cmd.type === 'fire') {
+                    item.classList.add('fire-command');
+                    item.textContent = Sequence.getFireEmoji(cmd.direction);
+                } else {
+                    item.textContent = Sequence.getDirectionEmoji(cmd.direction);
+                }
+                
+                item.dataset.index = index;
+                sequenceArea.appendChild(item);
             }
-            
-            item.dataset.index = index;
-            sequenceArea.appendChild(item);
         });
+    }
+
+    /**
+     * Create a loop block element
+     * @param {object} cmd - Loop command object
+     * @param {number} index - Index in sequence
+     * @param {boolean} isActive - Whether this loop is being edited
+     * @param {function} onLoopClick - Callback when loop is clicked
+     * @param {function} onLoopIterationChange - Callback for iteration change
+     * @param {function} onLoopCommandRemove - Callback to remove command from loop
+     * @returns {HTMLElement}
+     */
+    createLoopBlock(cmd, index, isActive, onLoopClick, onLoopIterationChange, onLoopCommandRemove) {
+        const loopBlock = document.createElement('div');
+        loopBlock.className = 'loop-block' + (isActive ? ' active' : '');
+        loopBlock.dataset.index = index;
+
+        // Loop header with iteration controls
+        const header = document.createElement('div');
+        header.className = 'loop-header';
+        
+        const loopIcon = document.createElement('span');
+        loopIcon.className = 'loop-icon';
+        loopIcon.textContent = '🔄';
+        header.appendChild(loopIcon);
+
+        // Iteration controls
+        const iterControls = document.createElement('div');
+        iterControls.className = 'loop-iteration-controls';
+
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'iter-btn minus-btn';
+        minusBtn.textContent = '➖';
+        minusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onLoopIterationChange(index, cmd.iterations - 1);
+        });
+
+        const iterCount = document.createElement('span');
+        iterCount.className = 'iter-count';
+        iterCount.textContent = cmd.iterations;
+
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'iter-btn plus-btn';
+        plusBtn.textContent = '➕';
+        plusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onLoopIterationChange(index, cmd.iterations + 1);
+        });
+
+        iterControls.appendChild(minusBtn);
+        iterControls.appendChild(iterCount);
+        iterControls.appendChild(plusBtn);
+        header.appendChild(iterControls);
+
+        loopBlock.appendChild(header);
+
+        // Loop body - container for commands
+        const body = document.createElement('div');
+        body.className = 'loop-body';
+
+        if (cmd.commands.length === 0) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'loop-placeholder';
+            placeholder.textContent = '👆';
+            body.appendChild(placeholder);
+        } else {
+            cmd.commands.forEach((innerCmd, cmdIndex) => {
+                const item = document.createElement('div');
+                item.className = 'sequence-item loop-item';
+                
+                if (innerCmd.type === 'function') {
+                    item.classList.add('function-call');
+                    item.innerHTML = `📦${innerCmd.id}`;
+                } else if (innerCmd.type === 'fire') {
+                    item.classList.add('fire-command');
+                    item.textContent = Sequence.getFireEmoji(innerCmd.direction);
+                } else {
+                    item.textContent = Sequence.getDirectionEmoji(innerCmd.direction);
+                }
+                
+                item.dataset.loopIndex = index;
+                item.dataset.cmdIndex = cmdIndex;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    onLoopCommandRemove(index, cmdIndex);
+                });
+                body.appendChild(item);
+            });
+        }
+
+        loopBlock.appendChild(body);
+
+        // Click on loop block to select/deselect
+        loopBlock.addEventListener('click', (e) => {
+            if (e.target === loopBlock || e.target === header || e.target === body || 
+                e.target === loopIcon || e.target.classList.contains('loop-placeholder')) {
+                onLoopClick(isActive ? null : index);
+            }
+        });
+
+        return loopBlock;
     }
 
     /**

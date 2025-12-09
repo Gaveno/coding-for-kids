@@ -81,3 +81,106 @@
     background: var(--color-warning);
     border: 3px solid #e6b800;
 }
+
+/* ===== Loop Block Styles ===== */
+.loop-block {
+    display: flex;
+    flex-direction: column;
+    background: rgba(78, 205, 196, 0.15);
+    border: 3px dashed var(--color-success);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    animation: popIn 0.2s ease;
+    min-width: 80px;
+}
+
+.loop-block.active {
+    border-style: solid;
+    background: rgba(78, 205, 196, 0.3);
+    box-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
+}
+
+.loop-block:hover {
+    background: rgba(78, 205, 196, 0.25);
+}
+
+.loop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid rgba(78, 205, 196, 0.3);
+    margin-bottom: var(--spacing-xs);
+}
+
+.loop-icon {
+    font-size: 1.2rem;
+}
+
+.loop-iteration-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.iter-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-light);
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all var(--transition-fast);
+}
+
+.iter-btn:hover {
+    background: var(--color-primary);
+    transform: scale(1.1);
+}
+
+.iter-btn:active {
+    transform: scale(0.9);
+}
+
+.iter-count {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--color-success);
+    min-width: 24px;
+    text-align: center;
+}
+
+.loop-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    min-height: 40px;
+    padding: var(--spacing-xs);
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.loop-placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 1.2rem;
+    width: 100%;
+    text-align: center;
+}
+
+.loop-item {
+    font-size: 1.4rem !important;
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+}
+
+.loop-block.executing {
+    animation: pulse 0.5s ease;
+    background: rgba(78, 205, 196, 0.5);
+    border-style: solid;
+}

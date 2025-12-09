@@ -201,6 +201,153 @@ export function runSequenceTests() {
         assertEqual(Sequence.getFireEmoji('invalid'), '🚀');
     }));
 
+    // ===== Loop Tests =====
+
+    // Test: Sequence adds loop
+    results.push(test('Sequence adds loop block', () => {
+        const seq = new Sequence();
+        seq.addLoop(3);
+        
+        assertEqual(seq.commands.length, 1);
+        assertEqual(seq.commands[0].type, 'loop');
+        assertEqual(seq.commands[0].iterations, 3);
+        assertEqual(seq.commands[0].commands.length, 0);
+    }));
+
+    // Test: Sequence sets active loop
+    results.push(test('Sequence sets and unsets active loop', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        
+        assertEqual(seq.activeLoopIndex, null);
+        
+        seq.setActiveLoop(0);
+        assertEqual(seq.activeLoopIndex, 0);
+        
+        seq.setActiveLoop(null);
+        assertEqual(seq.activeLoopIndex, null);
+    }));
+
+    // Test: Commands added to active loop
+    results.push(test('Commands are added to active loop', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        seq.addCommand('up');
+        seq.addCommand('right');
+        
+        assertEqual(seq.commands.length, 1); // Only the loop
+        assertEqual(seq.commands[0].commands.length, 2);
+        assertEqual(seq.commands[0].commands[0].direction, 'up');
+        assertEqual(seq.commands[0].commands[1].direction, 'right');
+    }));
+
+    // Test: Fire commands added to active loop
+    results.push(test('Fire commands are added to active loop', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        seq.addFireCommand('up');
+        
+        assertEqual(seq.commands[0].commands.length, 1);
+        assertEqual(seq.commands[0].commands[0].type, 'fire');
+    }));
+
+    // Test: Loop iterations update
+    results.push(test('Loop iterations can be updated', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        
+        seq.updateLoopIterations(0, 5);
+        assertEqual(seq.commands[0].iterations, 5);
+        
+        // Test min/max bounds
+        seq.updateLoopIterations(0, 0);
+        assertEqual(seq.commands[0].iterations, 1);
+        
+        seq.updateLoopIterations(0, 20);
+        assertEqual(seq.commands[0].iterations, 9);
+    }));
+
+    // Test: Remove command from loop
+    results.push(test('Commands can be removed from loop', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        seq.addCommand('up');
+        seq.addCommand('right');
+        seq.addCommand('down');
+        
+        seq.removeFromLoop(0, 1);
+        
+        assertEqual(seq.commands[0].commands.length, 2);
+        assertEqual(seq.commands[0].commands[0].direction, 'up');
+        assertEqual(seq.commands[0].commands[1].direction, 'down');
+    }));
+
+    // Test: Flatten expands loops
+    results.push(test('Flatten expands loop commands correctly', () => {
+        const seq = new Sequence();
+        seq.addLoop(3);
+        seq.setActiveLoop(0);
+        seq.addCommand('up');
+        seq.addCommand('right');
+        
+        const flat = seq.flatten();
+        
+        // 2 commands repeated 3 times = 6 total
+        assertEqual(flat.length, 6);
+        assertEqual(flat[0].direction, 'up');
+        assertEqual(flat[1].direction, 'right');
+        assertEqual(flat[2].direction, 'up');
+        assertEqual(flat[5].direction, 'right');
+    }));
+
+    // Test: Flatten handles nested functions in loops
+    results.push(test('Flatten handles functions inside loops', () => {
+        const seq = new Sequence();
+        seq.addCommand('up');
+        seq.saveAsFunction();
+        seq.clear();
+        
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        seq.addFunctionCall(0);
+        seq.addCommand('down');
+        
+        const flat = seq.flatten();
+        
+        // Function (1 cmd) + down, repeated 2 times = 4 total
+        assertEqual(flat.length, 4);
+        assertEqual(flat[0].direction, 'up');
+        assertEqual(flat[1].direction, 'down');
+        assertEqual(flat[2].direction, 'up');
+        assertEqual(flat[3].direction, 'down');
+    }));
+
+    // Test: Clear resets activeLoopIndex
+    results.push(test('Clear resets activeLoopIndex', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        
+        seq.clear();
+        
+        assertEqual(seq.activeLoopIndex, null);
+        assertTrue(seq.isEmpty());
+    }));
+
+    // Test: Removing active loop resets activeLoopIndex
+    results.push(test('Removing active loop resets activeLoopIndex', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        
+        seq.removeAt(0);
+        
+        assertEqual(seq.activeLoopIndex, null);
+    }));
+
     return results;
 }
 

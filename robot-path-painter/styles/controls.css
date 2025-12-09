@@ -45,6 +45,42 @@
     font-size: 2.2rem;
 }
 
+/* ===== Loop Block Button ===== */
+.loop-blocks {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.loop-btn {
+    width: 80px;
+    height: 60px;
+    border: 3px dashed var(--color-success);
+    border-radius: var(--radius-md);
+    background: rgba(78, 205, 196, 0.2);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow);
+}
+
+.loop-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: var(--shadow-lg);
+    background: rgba(78, 205, 196, 0.4);
+    border-style: solid;
+}
+
+.loop-btn:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.loop-btn-icon {
+    font-size: 2rem;
+}
+
 /* ===== Saved Functions ===== */
 .saved-functions {
     display: flex;
