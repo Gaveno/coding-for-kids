@@ -153,6 +153,8 @@ body {
     font-size: 1.8rem;
     transition: all 0.3s ease;
     position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
 }
 
 .grid-cell.target {
