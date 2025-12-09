@@ -115,6 +115,62 @@ export function runLevelsTests() {
         assertEqual(level1b.gridSize, 5);
     }));
 
+    // Test: getLevel returns obstacles array
+    results.push(test('getLevel returns obstacles array', () => {
+        const level = getLevel(9); // First level with obstacles
+        assertTrue(Array.isArray(level.obstacles));
+        assertTrue(level.obstacles.length > 0);
+    }));
+
+    // Test: Levels without obstacles get empty array
+    results.push(test('Levels without obstacles get empty array', () => {
+        const level = getLevel(1); // No obstacles
+        assertTrue(Array.isArray(level.obstacles));
+        assertEqual(level.obstacles.length, 0);
+    }));
+
+    // Test: All levels have valid obstacle positions
+    results.push(test('All levels have valid obstacle positions', () => {
+        for (let i = 1; i <= getTotalLevels(); i++) {
+            const level = getLevel(i);
+            if (level.obstacles && level.obstacles.length > 0) {
+                level.obstacles.forEach((obstacle, j) => {
+                    const [x, y] = obstacle.split(',').map(Number);
+                    assertTrue(x >= 0, `Level ${i} obstacle ${j} x is negative`);
+                    assertTrue(x < level.gridSize, `Level ${i} obstacle ${j} x out of bounds`);
+                    assertTrue(y >= 0, `Level ${i} obstacle ${j} y is negative`);
+                    assertTrue(y < level.gridSize, `Level ${i} obstacle ${j} y out of bounds`);
+                });
+            }
+        }
+    }));
+
+    // Test: validateLevel detects out of bounds obstacles
+    results.push(test('validateLevel detects out of bounds obstacles', () => {
+        const invalidLevel = {
+            gridSize: 5,
+            start: { x: 0, y: 0 },
+            targets: ['1,1'],
+            obstacles: ['5,5', '6,6']
+        };
+        const result = validateLevel(invalidLevel);
+        assertFalse(result.valid);
+        assertTrue(result.errors.length >= 2);
+    }));
+
+    // Test: validateLevel detects obstacle at start position
+    results.push(test('validateLevel detects obstacle at start position', () => {
+        const invalidLevel = {
+            gridSize: 5,
+            start: { x: 2, y: 2 },
+            targets: ['1,1'],
+            obstacles: ['2,2']
+        };
+        const result = validateLevel(invalidLevel);
+        assertFalse(result.valid);
+        assertTrue(result.errors.some(e => e.includes('start')));
+    }));
+
     return results;
 }
 

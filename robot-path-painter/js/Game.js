@@ -13,6 +13,7 @@ export class Game {
     constructor() {
         this.currentLevel = 1;
         this.isPlaying = false;
+        this.initialObstacles = []; // Store for reset
 
         this.initializeComponents();
         this.initializeElements();
@@ -23,9 +24,10 @@ export class Game {
     initializeComponents() {
         const levelData = getLevel(1);
         this.robot = new Robot(levelData.start);
-        this.grid = new Grid(levelData.gridSize, levelData.targets);
+        this.grid = new Grid(levelData.gridSize, levelData.targets, levelData.obstacles);
         this.sequence = new Sequence();
         this.audio = new Audio();
+        this.initialObstacles = levelData.obstacles || [];
     }
 
     initializeElements() {
@@ -53,7 +55,8 @@ export class Game {
         const levelData = getLevel(levelNum);
         
         this.robot.setStartPosition(levelData.start);
-        this.grid.configure(levelData.gridSize, levelData.targets);
+        this.grid.configure(levelData.gridSize, levelData.targets, levelData.obstacles);
+        this.initialObstacles = levelData.obstacles || [];
         this.sequence.clear();
         
         this.renderer.updateLevel(levelNum);
@@ -76,6 +79,14 @@ export class Game {
         if (this.isPlaying) return;
         
         this.sequence.addCommand(direction);
+        this.renderer.renderSequence(this.sequence);
+        this.audio.play('click');
+    }
+
+    addFireCommand(direction) {
+        if (this.isPlaying) return;
+        
+        this.sequence.addFireCommand(direction);
         this.renderer.renderSequence(this.sequence);
         this.audio.play('click');
     }
@@ -142,6 +153,7 @@ export class Game {
         // Reset state
         this.robot.reset();
         this.grid.clearPaint();
+        this.grid.resetObstacles(this.initialObstacles);
         this.render();
 
         const flatSequence = this.sequence.flatten();
@@ -151,6 +163,25 @@ export class Game {
             
             this.highlightCommand(i);
             
+            if (cmd.type === 'fire') {
+                await this.executeFireCommand(cmd.direction);
+                await this.delay(300);
+                continue;
+            }
+
+            // Check if next position has an obstacle
+            const nextPos = this.getNextPosition(cmd.direction);
+            const nextKey = `${nextPos.x},${nextPos.y}`;
+            
+            if (this.grid.hasObstacle(nextKey)) {
+                // Robot crashed into obstacle
+                this.audio.play('error');
+                this.renderer.showFeedback('💥🪨');
+                await this.delay(500);
+                this.resetLevel();
+                return;
+            }
+
             await this.executeMove(cmd.direction);
 
             if (this.robot.isOutOfBounds(this.grid.size)) {
@@ -179,6 +210,130 @@ export class Game {
         this.isPlaying = false;
         this.renderer.setPlayButtonDisabled(false);
         this.renderer.clearHighlights();
+    }
+
+    /**
+     * Get next position without moving the robot
+     * @param {string} direction - Direction to check
+     * @returns {object} Next position {x, y}
+     */
+    getNextPosition(direction) {
+        const deltas = {
+            'up': { x: 0, y: -1 },
+            'down': { x: 0, y: 1 },
+            'left': { x: -1, y: 0 },
+            'right': { x: 1, y: 0 }
+        };
+        const delta = deltas[direction] || { x: 0, y: 0 };
+        return {
+            x: this.robot.position.x + delta.x,
+            y: this.robot.position.y + delta.y
+        };
+    }
+
+    /**
+     * Execute a fire command - launch projectile and animate
+     * @param {string} direction - Direction to fire
+     */
+    async executeFireCommand(direction) {
+        const deltas = {
+            'up': { x: 0, y: -1 },
+            'down': { x: 0, y: 1 },
+            'left': { x: -1, y: 0 },
+            'right': { x: 1, y: 0 }
+        };
+        const delta = deltas[direction];
+        
+        let projectilePos = { ...this.robot.position };
+        this.audio.play('fire');
+        
+        // Animate projectile moving until it hits something
+        while (true) {
+            projectilePos.x += delta.x;
+            projectilePos.y += delta.y;
+            
+            const posKey = `${projectilePos.x},${projectilePos.y}`;
+            
+            // Check if out of bounds - explode at edge
+            if (projectilePos.x < 0 || projectilePos.x >= this.grid.size ||
+                projectilePos.y < 0 || projectilePos.y >= this.grid.size) {
+                await this.showExplosion(projectilePos.x - delta.x, projectilePos.y - delta.y);
+                break;
+            }
+            
+            // Show projectile at current position
+            await this.showProjectile(projectilePos.x, projectilePos.y, direction);
+            await this.delay(100);
+            
+            // Check if hit obstacle
+            if (this.grid.hasObstacle(posKey)) {
+                this.grid.removeObstacle(posKey);
+                await this.showExplosion(projectilePos.x, projectilePos.y);
+                this.audio.play('explosion');
+                this.grid.render(this.elements.gridContainer, this.robot.position);
+                break;
+            }
+        }
+        
+        // Clear any lingering projectile
+        this.clearProjectile();
+    }
+
+    /**
+     * Show projectile at a grid position
+     */
+    async showProjectile(x, y, direction) {
+        this.clearProjectile();
+        
+        const cell = this.elements.gridContainer.querySelector(
+            `[data-x="${x}"][data-y="${y}"]`
+        );
+        
+        if (cell) {
+            const projectile = document.createElement('span');
+            projectile.className = 'projectile';
+            projectile.id = 'activeProjectile';
+            
+            // Rotate rocket based on direction (rocket emoji points at 45deg by default)
+            const rotations = {
+                'up': '-45deg',
+                'right': '45deg',
+                'down': '135deg',
+                'left': '-135deg'
+            };
+            projectile.style.transform = `rotate(${rotations[direction]})`;
+            projectile.textContent = '🚀';
+            cell.appendChild(projectile);
+        }
+    }
+
+    /**
+     * Clear projectile from grid
+     */
+    clearProjectile() {
+        const existing = document.getElementById('activeProjectile');
+        if (existing) existing.remove();
+    }
+
+    /**
+     * Show explosion animation at position
+     */
+    async showExplosion(x, y) {
+        this.clearProjectile();
+        
+        const cell = this.elements.gridContainer.querySelector(
+            `[data-x="${x}"][data-y="${y}"]`
+        );
+        
+        if (cell) {
+            const explosion = document.createElement('span');
+            explosion.className = 'explosion';
+            explosion.textContent = '💥';
+            cell.appendChild(explosion);
+            
+            await this.delay(400);
+            explosion.remove();
+        }
     }
 
     highlightCommand(flatIndex) {
@@ -216,6 +371,7 @@ export class Game {
     resetLevel() {
         this.robot.reset();
         this.grid.clearPaint();
+        this.grid.resetObstacles(this.initialObstacles);
         this.isPlaying = false;
         this.renderer.setPlayButtonDisabled(false);
         this.render();
@@ -263,6 +419,19 @@ export class Game {
             btn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 this.addCommand(btn.dataset.command);
+            });
+        });
+
+        // Fire buttons
+        document.querySelectorAll('.fire-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.addFireCommand(btn.dataset.fire);
+            });
+
+            // Touch support
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.addFireCommand(btn.dataset.fire);
             });
         });
 

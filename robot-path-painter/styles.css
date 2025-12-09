@@ -62,6 +62,16 @@ body {
     box-shadow: var(--shadow);
 }
 
+.home-btn {
+    font-size: 1.8rem;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.home-btn:hover {
+    transform: scale(1.1);
+}
+
 .logo {
     font-size: 2.5rem;
     animation: bounce 2s infinite;
@@ -131,6 +141,7 @@ body {
     width: 100%;
     max-width: 350px;
     aspect-ratio: 1;
+    position: relative;
 }
 
 .grid-cell {
@@ -166,7 +177,22 @@ body {
 
 .robot-emoji {
     font-size: 2rem;
-    transition: all 0.3s ease;
+    animation: robotIdle 1s infinite;
+}
+
+/* Smooth-moving robot overlay */
+.robot-overlay {
+    position: absolute;
+    font-size: 2rem;
+    z-index: 20;
+    transition: left 0.25s ease-out, top 0.25s ease-out;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.robot-overlay.idle {
     animation: robotIdle 1s infinite;
 }
 
@@ -182,6 +208,54 @@ body {
 @keyframes robotMove {
     0% { transform: scale(1.2); }
     100% { transform: scale(1); }
+}
+
+/* ===== Obstacles ===== */
+.grid-cell.obstacle {
+    background: rgba(139, 90, 43, 0.3);
+}
+
+.obstacle-emoji {
+    font-size: 1.8rem;
+    animation: rockWiggle 3s ease-in-out infinite;
+}
+
+@keyframes rockWiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-2deg); }
+    75% { transform: rotate(2deg); }
+}
+
+/* ===== Projectiles ===== */
+.projectile {
+    position: absolute;
+    font-size: 1.5rem;
+    z-index: 25;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: left 0.08s linear, top 0.08s linear;
+    animation: projectileGlow 0.2s ease infinite;
+}
+
+@keyframes projectileGlow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+/* ===== Explosion ===== */
+.explosion {
+    font-size: 2.5rem;
+    position: absolute;
+    z-index: 25;
+    animation: explode 0.4s ease-out forwards;
+}
+
+@keyframes explode {
+    0% { transform: scale(0.5); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
 }
 
 /* ===== Sequence Section ===== */
@@ -263,6 +337,12 @@ body {
     border: 3px solid #e6b800;
 }
 
+.sequence-item.fire-command {
+    background: var(--secondary-color);
+    border: 2px solid #ff5252;
+    font-size: 1.2rem;
+}
+
 @keyframes popIn {
     0% { transform: scale(0); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
@@ -313,6 +393,42 @@ body {
 
 .command-icon {
     font-size: 2.2rem;
+}
+
+/* ===== Fire Buttons ===== */
+.fire-blocks {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.fire-btn {
+    width: 60px;
+    height: 50px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--secondary-color);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow);
+}
+
+.fire-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: var(--shadow-lg);
+    background: #ff5252;
+}
+
+.fire-btn:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.fire-icon {
+    font-size: 1.2rem;
 }
 
 /* ===== Saved Functions ===== */
@@ -545,6 +661,220 @@ body {
 }
 
 /* ===== Responsive ===== */
+
+/* Landscape / Wide screen layout */
+@media (orientation: landscape) and (max-height: 600px),
+       (min-aspect-ratio: 4/3) and (max-height: 700px) {
+    body {
+        padding: 8px;
+        align-items: stretch;
+        overflow: hidden;
+    }
+    
+    .game-container {
+        max-width: 100%;
+        width: 100%;
+        max-height: 100vh;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .game-header {
+        padding: 6px 12px;
+        flex-shrink: 0;
+    }
+    
+    .logo {
+        font-size: 1.8rem;
+    }
+    
+    .level-indicator {
+        padding: 4px 12px;
+    }
+    
+    .star, .level-num {
+        font-size: 1.2rem;
+    }
+    
+    /* Main area: grid left, controls right */
+    .game-main {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        min-height: 0;
+        overflow: hidden;
+    }
+    
+    /* Left: Grid takes height-based size */
+    .grid-section {
+        flex: 0 0 auto;
+        padding: 10px;
+        height: 100%;
+        width: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .grid-container {
+        max-width: none;
+        width: auto;
+        height: 100%;
+        max-height: 100%;
+        aspect-ratio: 1;
+    }
+    
+    /* Middle: Sequence area */
+    .sequence-section {
+        flex: 1;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        min-width: 100px;
+        overflow: hidden;
+    }
+    
+    .sequence-header {
+        flex-shrink: 0;
+    }
+    
+    .sequence-area {
+        min-height: 40px;
+        flex: 1;
+        overflow-y: auto;
+    }
+    
+    /* Command palette hidden in main - moved to bottom */
+    .command-palette {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px;
+        background: var(--surface-color);
+        border-radius: var(--radius-lg);
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .command-blocks {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 0;
+    }
+    
+    .command-btn {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .command-icon {
+        font-size: 1.3rem;
+    }
+    
+    .fire-blocks {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 0;
+    }
+    
+    .fire-btn {
+        width: 40px;
+        height: 36px;
+    }
+    
+    .fire-icon {
+        font-size: 0.8rem;
+    }
+    
+    .saved-functions {
+        display: none;
+    }
+    
+    /* Control section becomes the bottom bar with all buttons */
+    .control-section {
+        flex-shrink: 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px;
+        background: var(--surface-color);
+        border-radius: var(--radius-lg);
+    }
+    
+    .control-btn {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .play-btn {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .control-icon {
+        font-size: 1.4rem;
+    }
+    
+    .play-btn .control-icon {
+        font-size: 1.6rem;
+    }
+}
+
+/* Very wide landscape: show command palette on right side */
+@media (orientation: landscape) and (min-width: 900px) and (max-height: 600px),
+       (min-aspect-ratio: 4/3) and (min-width: 900px) and (max-height: 700px) {
+    .game-main {
+        flex: 1;
+    }
+    
+    .command-palette {
+        flex-direction: column;
+        padding: 10px;
+        justify-content: center;
+        flex-shrink: 0;
+        width: auto;
+        border-radius: var(--radius-lg);
+    }
+    
+    .command-blocks {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+    
+    .command-btn {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .command-icon {
+        font-size: 1.4rem;
+    }
+    
+    .fire-blocks {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        margin-bottom: 0;
+    }
+    
+    .fire-btn {
+        width: 44px;
+        height: 36px;
+    }
+    
+    .fire-icon {
+        font-size: 0.85rem;
+    }
+}
+
 @media (max-height: 700px) {
     .game-container {
         gap: 8px;

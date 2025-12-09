@@ -17,6 +17,14 @@ export class Sequence {
     }
 
     /**
+     * Add a fire command to the sequence
+     * @param {string} direction - 'up', 'down', 'left', or 'right'
+     */
+    addFireCommand(direction) {
+        this.commands.push({ type: 'fire', direction });
+    }
+
+    /**
      * Add a saved function call to the sequence
      * @param {number} functionIndex - Index of the saved function
      */
@@ -115,5 +123,20 @@ export class Sequence {
             'right': '➡️'
         };
         return emojis[direction] || '❓';
+    }
+
+    /**
+     * Get emoji for a fire command
+     * @param {string} direction - Direction string
+     * @returns {string} Emoji representation
+     */
+    static getFireEmoji(direction) {
+        const emojis = {
+            'up': '🚀⬆️',
+            'down': '🚀⬇️',
+            'left': '🚀⬅️',
+            'right': '🚀➡️'
+        };
+        return emojis[direction] || '🚀';
     }
 }

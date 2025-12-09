@@ -32,6 +32,9 @@ export class Renderer {
             if (cmd.type === 'function') {
                 item.classList.add('function-call');
                 item.innerHTML = `📦${cmd.id}`;
+            } else if (cmd.type === 'fire') {
+                item.classList.add('fire-command');
+                item.textContent = Sequence.getFireEmoji(cmd.direction);
             } else {
                 item.textContent = Sequence.getDirectionEmoji(cmd.direction);
             }

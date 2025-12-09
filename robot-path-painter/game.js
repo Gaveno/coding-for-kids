@@ -51,10 +51,11 @@ class Robot {
 
 // ===== Grid Class =====
 class Grid {
-    constructor(size, targetCells = []) {
+    constructor(size, targetCells = [], obstacles = []) {
         this.size = size;
         this.targetCells = new Set(targetCells);
         this.paintedCells = new Set();
+        this.obstacles = new Set(obstacles);
     }
 
     paintCell(positionKey) {
@@ -67,6 +68,18 @@ class Grid {
 
     isTarget(positionKey) {
         return this.targetCells.has(positionKey);
+    }
+
+    hasObstacle(positionKey) {
+        return this.obstacles.has(positionKey);
+    }
+
+    removeObstacle(positionKey) {
+        return this.obstacles.delete(positionKey);
+    }
+
+    resetObstacles(obstacles = []) {
+        this.obstacles = new Set(obstacles);
     }
 
     allTargetsPainted() {
@@ -82,13 +95,18 @@ class Grid {
         this.paintedCells.clear();
     }
 
-    configure(size, targets) {
+    configure(size, targets, obstacles = []) {
         this.size = size;
         this.targetCells = new Set(targets);
         this.paintedCells.clear();
+        this.obstacles = new Set(obstacles);
     }
 
     render(container, robotPosition) {
+        // Preserve overlays (robot, projectile)
+        const robotOverlay = document.getElementById('robotOverlay');
+        const projectileOverlay = document.getElementById('activeProjectile');
+        
         container.innerHTML = '';
         container.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
 
@@ -107,35 +125,73 @@ class Grid {
                 if (this.isPainted(key)) {
                     cell.classList.add('painted');
                 }
-                if (x === robotPosition.x && y === robotPosition.y) {
-                    cell.classList.add('robot');
-                    const robot = document.createElement('span');
-                    robot.className = 'robot-emoji';
-                    robot.textContent = '🤖';
-                    cell.appendChild(robot);
+                if (this.hasObstacle(key)) {
+                    cell.classList.add('obstacle');
+                    const obstacle = document.createElement('span');
+                    obstacle.className = 'obstacle-emoji';
+                    obstacle.textContent = '🪨';
+                    cell.appendChild(obstacle);
                 }
 
                 container.appendChild(cell);
             }
         }
+        
+        // Re-add overlays
+        if (robotOverlay) container.appendChild(robotOverlay);
+        if (projectileOverlay) container.appendChild(projectileOverlay);
+    }
+
+    // Get cell position for smooth animations
+    getCellPosition(container, x, y) {
+        const cell = container.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+        if (!cell) return null;
+        const containerRect = container.getBoundingClientRect();
+        const cellRect = cell.getBoundingClientRect();
+        return {
+            left: cellRect.left - containerRect.left + cellRect.width / 2,
+            top: cellRect.top - containerRect.top + cellRect.height / 2,
+            width: cellRect.width,
+            height: cellRect.height
+        };
     }
 }
 
 // ===== Levels Data =====
 const LEVELS = [
+    // Level 1: Simple horizontal line (intro - no obstacles)
     { gridSize: 5, start: { x: 0, y: 2 }, targets: ['1,2', '2,2'] },
+    // Level 2: L-shape (learning turns - no obstacles)
     { gridSize: 5, start: { x: 0, y: 0 }, targets: ['1,0', '2,0', '2,1', '2,2'] },
-    { gridSize: 5, start: { x: 0, y: 2 }, targets: ['1,2', '1,1', '2,1', '2,2', '3,2'] },
-    { gridSize: 5, start: { x: 1, y: 1 }, targets: ['2,1', '3,1', '3,2', '3,3', '2,3', '1,3', '1,2'] },
+    // Level 3: Intro to obstacles - rock visible but doesn't block path
+    { gridSize: 5, start: { x: 0, y: 2 }, targets: ['1,2', '2,2', '3,2'], obstacles: ['2,1'] },
+    // Level 4: Navigate around obstacles
+    { gridSize: 5, start: { x: 0, y: 2 }, targets: ['1,2', '1,1', '2,1', '2,2', '3,2'], obstacles: ['0,1', '3,1'] },
+    // Level 5: More obstacles to navigate around
+    { gridSize: 5, start: { x: 1, y: 1 }, targets: ['2,1', '3,1', '3,2', '3,3', '2,3', '1,3', '1,2'], obstacles: ['2,2', '0,2'] },
+    // Level 6: First REQUIRED shooting - obstacle blocks the only path
+    { gridSize: 5, start: { x: 0, y: 2 }, targets: ['1,2', '2,2', '3,2', '4,2'], obstacles: ['2,2'] },
+    // Level 7: Larger grid perimeter
     { gridSize: 6, start: { x: 0, y: 0 }, targets: ['1,0', '2,0', '3,0', '4,0', '4,1', '4,2', '4,3', '4,4', '3,4', '2,4', '1,4', '0,4', '0,3', '0,2', '0,1'] },
+    // Level 8: Diagonal staircase
     { gridSize: 6, start: { x: 0, y: 5 }, targets: ['0,4', '1,4', '1,3', '2,3', '2,2', '3,2', '3,1', '4,1', '4,0', '5,0'] },
-    { gridSize: 7, start: { x: 3, y: 0 }, targets: ['3,1', '3,2', '3,3', '3,4', '3,5', '3,6', '0,3', '1,3', '2,3', '4,3', '5,3', '6,3'] },
-    { gridSize: 7, start: { x: 0, y: 0 }, targets: ['1,0', '2,0', '3,0', '4,0', '5,0', '6,0', '6,1', '6,2', '6,3', '6,4', '6,5', '6,6', '5,6', '4,6', '3,6', '2,6', '1,6', '0,6', '0,5', '0,4', '0,3', '0,2', '0,1'] }
+    // Level 9: Cross pattern - shoot obstacle in center
+    { gridSize: 7, start: { x: 3, y: 0 }, targets: ['3,1', '3,2', '3,3', '3,4', '3,5', '3,6', '0,3', '1,3', '2,3', '4,3', '5,3', '6,3'], obstacles: ['3,3'] },
+    // Level 10: Large perimeter
+    { gridSize: 7, start: { x: 0, y: 0 }, targets: ['1,0', '2,0', '3,0', '4,0', '5,0', '6,0', '6,1', '6,2', '6,3', '6,4', '6,5', '6,6', '5,6', '4,6', '3,6', '2,6', '1,6', '0,6', '0,5', '0,4', '0,3', '0,2', '0,1'] },
+    // Level 11: Shoot multiple obstacles
+    { gridSize: 6, start: { x: 0, y: 2 }, targets: ['1,2', '2,2', '3,2', '4,2', '5,2'], obstacles: ['2,2', '4,2'] },
+    // Level 12: Complex path with obstacles
+    { gridSize: 6, start: { x: 0, y: 0 }, targets: ['1,0', '2,0', '3,0', '3,1', '3,2', '3,3', '3,4', '3,5'], obstacles: ['3,2', '2,3'] }
 ];
 
 function getLevel(levelNum) {
     const index = Math.min(levelNum - 1, LEVELS.length - 1);
-    return { ...LEVELS[Math.max(0, index)] };
+    const level = LEVELS[Math.max(0, index)];
+    return { 
+        ...level,
+        obstacles: level.obstacles ? [...level.obstacles] : []
+    };
 }
 
 function getTotalLevels() {
@@ -151,6 +207,10 @@ class Sequence {
 
     addCommand(direction) {
         this.commands.push({ type: 'move', direction });
+    }
+
+    addFireCommand(direction) {
+        this.commands.push({ type: 'fire', direction });
     }
 
     addFunctionCall(functionIndex) {
@@ -203,6 +263,11 @@ class Sequence {
         const emojis = { 'up': '⬆️', 'down': '⬇️', 'left': '⬅️', 'right': '➡️' };
         return emojis[direction] || '❓';
     }
+
+    static getFireEmoji(direction) {
+        const emojis = { 'up': '🚀⬆️', 'down': '🚀⬇️', 'left': '🚀⬅️', 'right': '🚀➡️' };
+        return emojis[direction] || '🚀';
+    }
 }
 
 // ===== Audio Class =====
@@ -241,7 +306,9 @@ class Audio {
                 'error': { freq: 200, duration: 0.3, type: 'sawtooth' },
                 'clear': { freq: 300, duration: 0.2, type: 'triangle' },
                 'save': { freq: 700, duration: 0.2, type: 'sine' },
-                'incomplete': { freq: 350, duration: 0.4, type: 'sine' }
+                'incomplete': { freq: 350, duration: 0.4, type: 'sine' },
+                'fire': { freq: 150, duration: 0.2, type: 'sawtooth' },
+                'explosion': { freq: 80, duration: 0.4, type: 'square' }
             };
 
             const sound = sounds[type] || sounds.click;
@@ -285,6 +352,7 @@ class Game {
     constructor() {
         this.currentLevel = 1;
         this.isPlaying = false;
+        this.initialObstacles = [];
         this.initializeComponents();
         this.initializeElements();
         this.setupFeedbackStyle();
@@ -295,9 +363,10 @@ class Game {
     initializeComponents() {
         const levelData = getLevel(1);
         this.robot = new Robot(levelData.start);
-        this.grid = new Grid(levelData.gridSize, levelData.targets);
+        this.grid = new Grid(levelData.gridSize, levelData.targets, levelData.obstacles);
         this.sequence = new Sequence();
         this.audio = new Audio();
+        this.initialObstacles = levelData.obstacles || [];
     }
 
     initializeElements() {
@@ -322,16 +391,58 @@ class Game {
     loadLevel(levelNum) {
         const levelData = getLevel(levelNum);
         this.robot.setStartPosition(levelData.start);
-        this.grid.configure(levelData.gridSize, levelData.targets);
+        this.grid.configure(levelData.gridSize, levelData.targets, levelData.obstacles);
+        this.initialObstacles = levelData.obstacles || [];
         this.sequence.clear();
         this.elements.levelNum.textContent = levelNum;
         this.render();
+        this.updateRobotOverlay(false);
     }
 
     render() {
         this.grid.render(this.elements.gridContainer, this.robot.position);
         this.renderSequence();
         this.renderSavedFunctions();
+    }
+
+    // Create or update robot overlay for smooth movement
+    updateRobotOverlay(animate = true) {
+        let robotOverlay = document.getElementById('robotOverlay');
+        
+        if (!robotOverlay) {
+            robotOverlay = document.createElement('div');
+            robotOverlay.id = 'robotOverlay';
+            robotOverlay.className = 'robot-overlay idle';
+            robotOverlay.textContent = '🤖';
+            this.elements.gridContainer.appendChild(robotOverlay);
+        }
+
+        // Need to wait for grid to render before getting positions
+        requestAnimationFrame(() => {
+            const pos = this.grid.getCellPosition(
+                this.elements.gridContainer,
+                this.robot.position.x,
+                this.robot.position.y
+            );
+            
+            if (pos) {
+                if (!animate) {
+                    robotOverlay.style.transition = 'none';
+                }
+                robotOverlay.style.left = `${pos.left}px`;
+                robotOverlay.style.top = `${pos.top}px`;
+                robotOverlay.style.width = `${pos.width}px`;
+                robotOverlay.style.height = `${pos.height}px`;
+                robotOverlay.style.marginLeft = `-${pos.width / 2}px`;
+                robotOverlay.style.marginTop = `-${pos.height / 2}px`;
+                
+                if (!animate) {
+                    // Force reflow then restore transition
+                    robotOverlay.offsetHeight;
+                    robotOverlay.style.transition = '';
+                }
+            }
+        });
     }
 
     renderSequence() {
@@ -345,6 +456,9 @@ class Game {
             if (cmd.type === 'function') {
                 item.classList.add('function-call');
                 item.innerHTML = `📦${cmd.id}`;
+            } else if (cmd.type === 'fire') {
+                item.classList.add('fire-command');
+                item.textContent = Sequence.getFireEmoji(cmd.direction);
             } else {
                 item.textContent = Sequence.getDirectionEmoji(cmd.direction);
             }
@@ -379,6 +493,13 @@ class Game {
     addCommand(direction) {
         if (this.isPlaying) return;
         this.sequence.addCommand(direction);
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
+    addFireCommand(direction) {
+        if (this.isPlaying) return;
+        this.sequence.addFireCommand(direction);
         this.renderSequence();
         this.audio.play('click');
     }
@@ -426,7 +547,9 @@ class Game {
 
         this.robot.reset();
         this.grid.clearPaint();
+        this.grid.resetObstacles(this.initialObstacles);
         this.render();
+        this.updateRobotOverlay(false);
 
         const flatSequence = this.sequence.flatten();
 
@@ -434,12 +557,30 @@ class Game {
             const cmd = flatSequence[i];
             this.highlightCommand(i);
             
+            if (cmd.type === 'fire') {
+                await this.executeFireCommand(cmd.direction);
+                await this.delay(300);
+                continue;
+            }
+
+            // Check if next position has an obstacle
+            const nextPos = this.getNextPosition(cmd.direction);
+            const nextKey = `${nextPos.x},${nextPos.y}`;
+            
+            if (this.grid.hasObstacle(nextKey)) {
+                this.audio.play('error');
+                this.showFeedback('💥🪨');
+                await this.delay(500);
+                this.resetLevel();
+                return;
+            }
+            
             this.robot.move(cmd.direction);
-            this.grid.render(this.elements.gridContainer, this.robot.position);
-            this.audio.play('move');
-            this.animateRobotMove();
 
             if (this.robot.isOutOfBounds(this.grid.size)) {
+                // Animate to out of bounds position then show error
+                this.updateRobotOverlay(true);
+                await this.delay(250);
                 this.audio.play('error');
                 this.showFeedback('💥');
                 await this.delay(500);
@@ -447,10 +588,16 @@ class Game {
                 return;
             }
 
+            // Smooth movement animation
+            this.updateRobotOverlay(true);
+            this.audio.play('move');
+            await this.delay(250);
+
             this.grid.paintCell(this.robot.getPositionKey());
             this.grid.render(this.elements.gridContainer, this.robot.position);
+            this.updateRobotOverlay(false); // Reposition without animation after paint
             this.audio.play('paint');
-            await this.delay(400);
+            await this.delay(200);
         }
 
         if (this.grid.allTargetsPainted()) {
@@ -497,10 +644,164 @@ class Game {
     resetLevel() {
         this.robot.reset();
         this.grid.clearPaint();
+        this.grid.resetObstacles(this.initialObstacles);
         this.isPlaying = false;
         this.elements.playBtn.disabled = false;
         this.render();
+        this.updateRobotOverlay(false);
         this.clearHighlights();
+    }
+
+    getNextPosition(direction) {
+        const deltas = {
+            'up': { x: 0, y: -1 },
+            'down': { x: 0, y: 1 },
+            'left': { x: -1, y: 0 },
+            'right': { x: 1, y: 0 }
+        };
+        const delta = deltas[direction] || { x: 0, y: 0 };
+        return {
+            x: this.robot.position.x + delta.x,
+            y: this.robot.position.y + delta.y
+        };
+    }
+
+    async executeFireCommand(direction) {
+        const deltas = {
+            'up': { x: 0, y: -1 },
+            'down': { x: 0, y: 1 },
+            'left': { x: -1, y: 0 },
+            'right': { x: 1, y: 0 }
+        };
+        const delta = deltas[direction];
+        
+        let projectilePos = { ...this.robot.position };
+        this.audio.play('fire');
+        
+        // Create projectile at robot position
+        await this.createProjectile(projectilePos.x, projectilePos.y, direction);
+        
+        while (true) {
+            projectilePos.x += delta.x;
+            projectilePos.y += delta.y;
+            
+            const posKey = `${projectilePos.x},${projectilePos.y}`;
+            
+            if (projectilePos.x < 0 || projectilePos.x >= this.grid.size ||
+                projectilePos.y < 0 || projectilePos.y >= this.grid.size) {
+                // Animate to edge then explode
+                await this.moveProjectileTo(projectilePos.x - delta.x, projectilePos.y - delta.y);
+                await this.showExplosion(projectilePos.x - delta.x, projectilePos.y - delta.y);
+                break;
+            }
+            
+            // Smooth movement to next cell
+            await this.moveProjectileTo(projectilePos.x, projectilePos.y);
+            await this.delay(80);
+            
+            if (this.grid.hasObstacle(posKey)) {
+                this.grid.removeObstacle(posKey);
+                await this.showExplosion(projectilePos.x, projectilePos.y);
+                this.audio.play('explosion');
+                this.grid.render(this.elements.gridContainer, this.robot.position);
+                this.updateRobotOverlay(false); // Reposition after obstacle removal
+                break;
+            }
+        }
+        
+        this.clearProjectile();
+    }
+
+    async createProjectile(x, y, direction) {
+        this.clearProjectile();
+        
+        const projectile = document.createElement('div');
+        projectile.className = 'projectile';
+        projectile.id = 'activeProjectile';
+        
+        const rotations = {
+            'up': '-45deg',
+            'right': '45deg',
+            'down': '135deg',
+            'left': '-135deg'
+        };
+        projectile.style.transform = `rotate(${rotations[direction]})`;
+        projectile.textContent = '🚀';
+        
+        this.elements.gridContainer.appendChild(projectile);
+        
+        // Position at starting cell
+        const pos = this.grid.getCellPosition(this.elements.gridContainer, x, y);
+        if (pos) {
+            projectile.style.transition = 'none';
+            projectile.style.left = `${pos.left}px`;
+            projectile.style.top = `${pos.top}px`;
+            projectile.style.width = `${pos.width}px`;
+            projectile.style.height = `${pos.height}px`;
+            projectile.style.marginLeft = `-${pos.width / 2}px`;
+            projectile.style.marginTop = `-${pos.height / 2}px`;
+            projectile.offsetHeight; // Force reflow
+            projectile.style.transition = '';
+        }
+    }
+
+    async moveProjectileTo(x, y) {
+        const projectile = document.getElementById('activeProjectile');
+        if (!projectile) return;
+        
+        const pos = this.grid.getCellPosition(this.elements.gridContainer, x, y);
+        if (pos) {
+            projectile.style.left = `${pos.left}px`;
+            projectile.style.top = `${pos.top}px`;
+        }
+    }
+
+    async showProjectile(x, y, direction) {
+        // Legacy method - now using createProjectile and moveProjectileTo
+        this.clearProjectile();
+        
+        const cell = this.elements.gridContainer.querySelector(
+            `[data-x="${x}"][data-y="${y}"]`
+        );
+        
+        if (cell) {
+            const projectile = document.createElement('span');
+            projectile.className = 'projectile';
+            projectile.id = 'activeProjectile';
+            
+            const rotations = {
+                'up': '-45deg',
+                'right': '45deg',
+                'down': '135deg',
+                'left': '-135deg'
+            };
+            projectile.style.transform = `rotate(${rotations[direction]})`;
+            projectile.textContent = '🚀';
+            cell.appendChild(projectile);
+        }
+    }
+
+    clearProjectile() {
+        const existing = document.getElementById('activeProjectile');
+        if (existing) existing.remove();
+    }
+
+    async showExplosion(x, y) {
+        this.clearProjectile();
+        
+        const cell = this.elements.gridContainer.querySelector(
+            `[data-x="${x}"][data-y="${y}"]`
+        );
+        
+        if (cell) {
+            const explosion = document.createElement('span');
+            explosion.className = 'explosion';
+            explosion.textContent = '💥';
+            cell.appendChild(explosion);
+            
+            await this.delay(400);
+            explosion.remove();
+        }
     }
 
     nextLevel() {
@@ -552,6 +853,11 @@ class Game {
             btn.addEventListener('dragstart', (e) => { e.dataTransfer.setData('command', btn.dataset.command); btn.classList.add('dragging'); });
             btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
             btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.addCommand(btn.dataset.command); });
+        });
+
+        document.querySelectorAll('.fire-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.addFireCommand(btn.dataset.fire));
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.addFireCommand(btn.dataset.fire); });
         });
 
         this.elements.sequenceArea.addEventListener('dragover', (e) => { e.preventDefault(); this.elements.sequenceArea.classList.add('drag-over'); });

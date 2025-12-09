@@ -70,7 +70,9 @@ export class Audio {
             'error': { freq: 200, duration: 0.3, type: 'sawtooth' },
             'clear': { freq: 300, duration: 0.2, type: 'triangle' },
             'save': { freq: 700, duration: 0.2, type: 'sine' },
-            'incomplete': { freq: 350, duration: 0.4, type: 'sine' }
+            'incomplete': { freq: 350, duration: 0.4, type: 'sine' },
+            'fire': { freq: 150, duration: 0.2, type: 'sawtooth' },
+            'explosion': { freq: 80, duration: 0.4, type: 'square' }
         };
 
         return sounds[type] || sounds.click;

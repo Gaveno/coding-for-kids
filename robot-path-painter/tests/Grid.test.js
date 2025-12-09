@@ -103,6 +103,58 @@ export function runGridTests() {
         assertTrue(grid.allTargetsPainted());
     }));
 
+    // Test: Grid initializes with obstacles
+    results.push(test('Grid initializes with obstacles', () => {
+        const grid = new Grid(5, ['1,1'], ['2,2', '3,3']);
+        assertTrue(grid.hasObstacle('2,2'));
+        assertTrue(grid.hasObstacle('3,3'));
+        assertFalse(grid.hasObstacle('1,1'));
+        assertFalse(grid.hasObstacle('0,0'));
+    }));
+
+    // Test: Grid removes obstacles
+    results.push(test('Grid removes obstacles', () => {
+        const grid = new Grid(5, [], ['2,2']);
+        assertTrue(grid.hasObstacle('2,2'));
+        
+        const removed = grid.removeObstacle('2,2');
+        
+        assertTrue(removed);
+        assertFalse(grid.hasObstacle('2,2'));
+    }));
+
+    // Test: Grid removeObstacle returns false for non-existent
+    results.push(test('Grid removeObstacle returns false for non-existent', () => {
+        const grid = new Grid(5, [], ['2,2']);
+        const removed = grid.removeObstacle('0,0');
+        assertFalse(removed);
+    }));
+
+    // Test: Grid configure with obstacles
+    results.push(test('Grid configure updates obstacles', () => {
+        const grid = new Grid(5, [], ['1,1']);
+        assertTrue(grid.hasObstacle('1,1'));
+        
+        grid.configure(6, ['0,0'], ['3,3', '4,4']);
+        
+        assertFalse(grid.hasObstacle('1,1'));
+        assertTrue(grid.hasObstacle('3,3'));
+        assertTrue(grid.hasObstacle('4,4'));
+    }));
+
+    // Test: Grid resetObstacles
+    results.push(test('Grid resetObstacles restores initial state', () => {
+        const grid = new Grid(5, [], ['2,2', '3,3']);
+        
+        grid.removeObstacle('2,2');
+        assertFalse(grid.hasObstacle('2,2'));
+        
+        grid.resetObstacles(['2,2', '3,3']);
+        
+        assertTrue(grid.hasObstacle('2,2'));
+        assertTrue(grid.hasObstacle('3,3'));
+    }));
+
     return results;
 }
 

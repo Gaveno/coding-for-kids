@@ -1,12 +1,13 @@
 /**
  * Grid class - Manages grid state and rendering
- * Single responsibility: Handle grid cells, painting, and target tracking
+ * Single responsibility: Handle grid cells, painting, obstacles, and target tracking
  */
 export class Grid {
-    constructor(size, targetCells = []) {
+    constructor(size, targetCells = [], obstacles = []) {
         this.size = size;
         this.targetCells = new Set(targetCells);
         this.paintedCells = new Set();
+        this.obstacles = new Set(obstacles);
     }
 
     /**
@@ -33,6 +34,24 @@ export class Grid {
      */
     isTarget(positionKey) {
         return this.targetCells.has(positionKey);
+    }
+
+    /**
+     * Check if a cell has an obstacle
+     * @param {string} positionKey - Cell position as "x,y"
+     * @returns {boolean}
+     */
+    hasObstacle(positionKey) {
+        return this.obstacles.has(positionKey);
+    }
+
+    /**
+     * Remove an obstacle from the grid
+     * @param {string} positionKey - Cell position as "x,y"
+     * @returns {boolean} True if obstacle was removed
+     */
+    removeObstacle(positionKey) {
+        return this.obstacles.delete(positionKey);
     }
 
     /**
@@ -76,11 +95,21 @@ export class Grid {
      * Update grid configuration
      * @param {number} size - New grid size
      * @param {string[]} targets - New target cells
+     * @param {string[]} obstacles - Obstacle cell positions
      */
-    configure(size, targets) {
+    configure(size, targets, obstacles = []) {
         this.size = size;
         this.targetCells = new Set(targets);
         this.paintedCells.clear();
+        this.obstacles = new Set(obstacles);
+    }
+
+    /**
+     * Reset obstacles to initial state
+     * @param {string[]} obstacles - Initial obstacle positions
+     */
+    resetObstacles(obstacles = []) {
+        this.obstacles = new Set(obstacles);
     }
 
     /**
@@ -108,6 +137,14 @@ export class Grid {
 
                 if (this.isPainted(key)) {
                     cell.classList.add('painted');
+                }
+
+                if (this.hasObstacle(key)) {
+                    cell.classList.add('obstacle');
+                    const obstacle = document.createElement('span');
+                    obstacle.className = 'obstacle-emoji';
+                    obstacle.textContent = '🪨';
+                    cell.appendChild(obstacle);
                 }
 
                 if (x === robotPosition.x && y === robotPosition.y) {

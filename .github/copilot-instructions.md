@@ -312,6 +312,10 @@ npm install --save-dev jest
 3. Build minimal game class to pass tests
 4. Add UI layer
 5. Add polish (animations, sounds)
+6. **Include a home button** in the header linking back to `../index.html`:
+   ```html
+   <a href="../index.html" class="home-btn" aria-label="Back to Home">🏠</a>
+   ```
 
 ### Level Design Checklist
 

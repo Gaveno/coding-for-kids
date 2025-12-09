@@ -164,6 +164,43 @@ export function runSequenceTests() {
         assertEqual(seq.savedFunctions[1].commands.length, 2);
     }));
 
+    // Test: Sequence adds fire commands
+    results.push(test('Sequence adds fire commands', () => {
+        const seq = new Sequence();
+        seq.addFireCommand('up');
+        seq.addFireCommand('right');
+        
+        assertEqual(seq.commands.length, 2);
+        assertEqual(seq.commands[0].type, 'fire');
+        assertEqual(seq.commands[0].direction, 'up');
+        assertEqual(seq.commands[1].type, 'fire');
+        assertEqual(seq.commands[1].direction, 'right');
+    }));
+
+    // Test: Fire commands in flatten
+    results.push(test('Fire commands are included in flatten', () => {
+        const seq = new Sequence();
+        seq.addCommand('up');
+        seq.addFireCommand('right');
+        seq.addCommand('down');
+        
+        const flat = seq.flatten();
+        
+        assertEqual(flat.length, 3);
+        assertEqual(flat[0].type, 'move');
+        assertEqual(flat[1].type, 'fire');
+        assertEqual(flat[2].type, 'move');
+    }));
+
+    // Test: Static getFireEmoji works
+    results.push(test('getFireEmoji returns correct emojis', () => {
+        assertEqual(Sequence.getFireEmoji('up'), '🚀⬆️');
+        assertEqual(Sequence.getFireEmoji('down'), '🚀⬇️');
+        assertEqual(Sequence.getFireEmoji('left'), '🚀⬅️');
+        assertEqual(Sequence.getFireEmoji('right'), '🚀➡️');
+        assertEqual(Sequence.getFireEmoji('invalid'), '🚀');
+    }));
+
     return results;
 }
 
