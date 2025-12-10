@@ -1,0 +1,153 @@
+/* ===== Responsive Styles ===== */
+
+/* Small phones */
+@media (max-height: 600px) {
+    .game-header {
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .logo {
+        font-size: 1.5rem;
+    }
+    
+    .crane-rail {
+        height: 40px;
+    }
+    
+    .crane-arm {
+        font-size: 1.5rem;
+    }
+    
+    .grid-cell {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .sequence-area {
+        min-height: 44px;
+    }
+    
+    .command-btn {
+        min-width: 50px;
+        min-height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .control-btn {
+        min-width: 56px;
+        min-height: 56px;
+        font-size: 1.5rem;
+    }
+}
+
+/* Tablets and larger phones in landscape */
+@media (min-width: 600px) {
+    .game-container {
+        max-width: 600px;
+    }
+    
+    .build-grid {
+        max-width: 400px;
+    }
+    
+    .command-btn {
+        min-width: 70px;
+        min-height: 70px;
+        font-size: 1.8rem;
+    }
+    
+    .control-btn {
+        min-width: 72px;
+        min-height: 72px;
+        font-size: 2rem;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+    .game-container {
+        max-width: 700px;
+    }
+    
+    .crane-rail {
+        height: 55px;
+    }
+    
+    .crane-arm {
+        font-size: 2.2rem;
+    }
+    
+    .grid-cell {
+        width: 52px;
+        height: 52px;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .game-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+        max-width: 100%;
+        max-height: 100%;
+        gap: var(--spacing-sm);
+    }
+    
+    .game-header {
+        width: 100%;
+        order: 1;
+    }
+    
+    .game-main {
+        flex-direction: row;
+        width: 100%;
+        order: 2;
+    }
+    
+    .crane-section {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+    
+    .build-section {
+        flex: 1;
+        min-height: auto;
+    }
+    
+    .supply-section,
+    .sequence-section {
+        flex: 0 0 auto;
+    }
+    
+    .command-palette,
+    .control-section {
+        width: auto;
+        order: 3;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --color-target: rgba(255, 159, 28, 0.5);
+    }
+    
+    .grid-cell.target {
+        border-width: 3px;
+    }
+    
+    .command-btn {
+        border-width: 4px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

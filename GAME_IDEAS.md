@@ -72,7 +72,7 @@ A collection of visual, no-reading-required browser games to teach programming f
 
 **Skills taught:** Sequencing, decomposition, reusable procedures
 
-**Status:** 📋 Planned
+**Status:** 🚧 In Development
 
 ---
 

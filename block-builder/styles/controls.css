@@ -1,0 +1,118 @@
+/* ===== Command Palette ===== */
+.command-palette {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+.command-blocks {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.command-btn {
+    min-width: 56px;
+    min-height: 56px;
+    font-size: 1.4rem;
+    background: var(--color-surface-light);
+    border: 3px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    touch-action: manipulation;
+}
+
+/* Hook command buttons - stacked layout */
+.command-btn.command-hook {
+    flex-direction: column;
+    gap: 0;
+    padding: var(--spacing-xs);
+}
+
+.command-hook-icon {
+    font-size: 0.9rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.command-arrow {
+    font-size: 1.2rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.command-btn:hover {
+    background: var(--color-primary);
+    transform: scale(1.05);
+}
+
+.command-btn:active {
+    transform: scale(0.95);
+}
+
+.command-btn.dragging {
+    opacity: 0.5;
+}
+
+.command-icon {
+    pointer-events: none;
+}
+
+/* ===== Control Section ===== */
+.control-section {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+.control-btn {
+    min-width: 56px;
+    min-height: 56px;
+    font-size: 1.6rem;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow);
+}
+
+.play-btn {
+    background: var(--color-success);
+}
+
+.play-btn:hover {
+    background: #3dbdb5;
+}
+
+.play-btn:disabled {
+    background: var(--color-surface-light);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.reset-btn {
+    background: var(--color-secondary);
+}
+
+.reset-btn:hover {
+    background: #27a99d;
+}
+
+.control-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.control-icon {
+    pointer-events: none;
+}

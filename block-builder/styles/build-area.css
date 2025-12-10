@@ -1,0 +1,105 @@
+/* ===== Build Area Styles ===== */
+.build-area {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: var(--spacing-xs);
+    flex: 1;
+}
+
+.build-grid {
+    display: grid;
+    gap: 3px;
+    background: var(--color-surface-light);
+    padding: 3px;
+    border-radius: var(--radius-sm);
+}
+
+/* Individual grid cell */
+.grid-cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    background: var(--color-bg);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background var(--transition-fast);
+}
+
+/* Target cell - shows where blocks should go */
+.grid-cell.target {
+    background: var(--color-target);
+    border: 2px dashed var(--color-primary);
+}
+
+/* Target ghost shows the expected block type */
+.grid-cell.target::after {
+    content: attr(data-target);
+    font-size: 1rem;
+    opacity: 0.4;
+}
+
+/* Cell with placed block */
+.grid-cell.has-block {
+    background: var(--color-bg);
+}
+
+.grid-cell .cell-block {
+    width: 100%;
+    height: 100%;
+    background: var(--color-block);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Hide ghost when block is placed */
+.grid-cell.has-block::after {
+    display: none;
+}
+
+/* Target matched (correct block placement) */
+.grid-cell.target.matched {
+    border-color: var(--color-success);
+    background: rgba(78, 205, 196, 0.2);
+}
+
+/* Column indicator for crane position */
+.grid-cell.crane-column {
+    box-shadow: inset 0 0 0 2px var(--color-warning);
+}
+
+/* Ground row styling */
+.grid-cell.ground {
+    background: var(--color-surface-light);
+}
+
+.grid-cell.ground::before {
+    content: '▓';
+    color: var(--color-surface);
+    font-size: 1.5rem;
+}
+
+/* Block placement animation */
+.grid-cell .cell-block.placing {
+    animation: blockPlace 0.3s ease;
+}
+
+@keyframes blockPlace {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

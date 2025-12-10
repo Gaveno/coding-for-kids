@@ -62,6 +62,37 @@ applyTo: "**/*.css"
 }
 ```
 
+## Smooth Movement Animations (Required)
+
+All game elements that move between cells/positions MUST animate smoothly rather than snapping instantly.
+
+```css
+/* ✅ DO: Smooth transitions between positions */
+.game-piece {
+    transition: transform var(--transition-normal) ease-out;
+    /* Or use left/top with will-change for position-based movement */
+    will-change: transform;
+}
+
+/* ✅ DO: Define animation timing variables */
+:root {
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    --move-duration: 0.3s;  /* Standard movement between cells */
+}
+
+/* ✅ DO: Use easing for natural movement */
+.crane {
+    transition: left var(--move-duration) ease-out;
+}
+
+/* ❌ DON'T: Instant position changes without transition */
+.robot {
+    /* Missing transition = jarring snap */
+}
+```
+
 ## Touch-Friendly Styles (Critical)
 
 ```css

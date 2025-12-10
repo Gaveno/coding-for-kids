@@ -1,0 +1,172 @@
+/* ===== Crane Workspace ===== */
+.crane-workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ===== Crane Rail ===== */
+.crane-rail {
+    height: var(--crane-height);
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Rail bar background */
+.crane-rail::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(to bottom, #555, #333);
+    border-radius: 4px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Rail Position Markers ===== */
+.rail-markers {
+    position: absolute;
+    top: 24px;
+    left: 0;
+    right: 0;
+    height: 20px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.rail-marker {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.rail-marker-line {
+    width: 2px;
+    height: 12px;
+    background: #666;
+    border-radius: 1px;
+}
+
+/* Supply column markers (solid) */
+.rail-marker.supply .rail-marker-line {
+    background: var(--color-warning);
+    opacity: 0.6;
+}
+
+/* Build column markers (solid) */
+.rail-marker.build .rail-marker-line {
+    background: var(--color-secondary);
+    opacity: 0.6;
+}
+
+/* ===== Crane Trolley ===== */
+.crane-trolley {
+    position: absolute;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: left var(--transition-normal) ease-out;
+    z-index: 10;
+    width: var(--cell-size);
+    transform: translateX(-50%);
+}
+
+.trolley-body {
+    font-size: 1.8rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    z-index: 2;
+}
+
+/* ===== Crane String ===== */
+.crane-string {
+    width: var(--string-width);
+    height: 10px; /* Default retracted height */
+    background: var(--color-string);
+    transition: height 0.4s ease-in-out;
+    position: relative;
+    box-shadow: 0 0 4px rgba(255, 230, 109, 0.5);
+}
+
+/* Extended string states */
+.crane-trolley.lowering .crane-string,
+.crane-trolley.lowered .crane-string {
+    /* Height set dynamically by JS based on target */
+}
+
+/* ===== Crane Hook ===== */
+.crane-hook {
+    font-size: 1rem;
+    line-height: 1;
+    transition: transform var(--transition-fast);
+    position: relative;
+}
+
+/* Hook with block attached */
+.crane-trolley.holding .crane-hook {
+    transform: scale(1.1);
+}
+
+/* ===== Held Block ===== */
+.held-block {
+    font-size: 1.3rem;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+    /* Block hangs directly below the hook */
+    margin-top: -2px;
+}
+
+.crane-trolley.holding .held-block {
+    opacity: 1;
+}
+
+/* ===== Work Area (Below Rail) ===== */
+.work-area {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacing-sm);
+    min-height: 0;
+}
+
+/* ===== Crane Animation States ===== */
+.crane-trolley.lowering .crane-string {
+    transition: height 0.4s ease-in;
+}
+
+.crane-trolley.raising .crane-string {
+    transition: height 0.35s ease-out;
+}
+
+/* Grabbing feedback */
+.crane-trolley.grabbing .crane-hook {
+    animation: hookGrab 0.2s ease;
+}
+
+@keyframes hookGrab {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+}
+
+/* Release feedback */
+.crane-trolley.releasing .crane-hook {
+    animation: hookRelease 0.2s ease;
+}
+
+@keyframes hookRelease {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.8); }
+}

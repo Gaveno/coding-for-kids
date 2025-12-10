@@ -20,6 +20,35 @@ async executeSequence(commands) {
 // ❌ DON'T: var, nested callbacks, function keyword for simple functions
 ```
 
+## Smooth Movement & Animations (Required)
+
+All movements between grid cells or positions MUST be animated smoothly. Never snap instantly.
+
+```javascript
+// ✅ DO: Wait for animation to complete before next action
+async executeSequence(commands) {
+    for (const cmd of commands) {
+        await this.executeCommand(cmd);
+        await this.delay(300); // Match CSS transition duration
+    }
+}
+
+// ✅ DO: Use CSS transitions, triggered by class/style changes
+renderPosition() {
+    // CSS handles the smooth animation via transition property
+    this.element.style.transform = `translate(${x}px, ${y}px)`;
+}
+
+// ✅ DO: Coordinate timing with CSS
+const MOVE_DURATION = 300; // Match --move-duration in CSS
+await this.delay(MOVE_DURATION);
+
+// ❌ DON'T: Move without waiting for animation
+for (const cmd of commands) {
+    this.move(cmd); // Instant, no delay = no visible animation
+}
+```
+
 ## Naming Conventions
 
 - Use descriptive, self-documenting names

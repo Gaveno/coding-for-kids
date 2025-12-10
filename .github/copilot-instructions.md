@@ -25,6 +25,13 @@ Educational game suite teaching programming concepts to **pre-literate children*
 - **Celebratory success** - Animations and sounds for achievements
 - **Progressive difficulty** - Start simple, add complexity gradually
 
+### 4. Smooth Animations (Required)
+- **No instant snapping** - All movements between cells/positions must animate smoothly
+- **Use CSS transitions** - Prefer `transform` with `transition` for GPU acceleration
+- **Coordinate timing** - JS must `await` animation duration before next action
+- **Standard duration** - Use 300ms (0.3s) for movement animations
+- **Easing functions** - Use `ease-out` for natural deceleration
+
 ---
 
 ## Key Constraints

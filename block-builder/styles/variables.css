@@ -1,0 +1,47 @@
+/* ===== CSS Variables ===== */
+:root {
+    /* Colors */
+    --color-primary: #FF9F1C;
+    --color-secondary: #2EC4B6;
+    --color-success: #4ECDC4;
+    --color-warning: #FFE66D;
+    --color-danger: #FF6B6B;
+    --color-bg: #1a1a2e;
+    --color-surface: #16213e;
+    --color-surface-light: #0f3460;
+    --color-text: #ffffff;
+    --color-target: rgba(255, 159, 28, 0.3);
+    --color-block: #E76F51;
+    --color-block-alt: #F4A261;
+    --color-string: #FFE66D;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-full: 50%;
+
+    /* Shadows */
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
+    /* Dimensions */
+    --cell-size: 44px;
+    --crane-height: 50px;
+    --hook-size: 24px;
+    --string-width: 3px;
+    --total-columns: 7; /* 3 supply + 4 build */
+}

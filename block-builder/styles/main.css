@@ -1,0 +1,103 @@
+/* ===== Reset & Base Styles ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+/* ===== Game Container ===== */
+.game-container {
+    width: 100%;
+    max-width: 500px;
+    height: 100vh;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    position: relative;
+}
+
+/* ===== Header ===== */
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
+    flex-shrink: 0;
+}
+
+.home-btn,
+.help-btn {
+    font-size: 1.5rem;
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    transition: transform var(--transition-fast);
+    min-width: 48px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-btn:hover,
+.help-btn:hover {
+    transform: scale(1.1);
+}
+
+.logo {
+    font-size: 2rem;
+}
+
+.level-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--color-text);
+}
+
+.level-num {
+    min-width: 24px;
+    text-align: center;
+}
+
+/* ===== Main Game Area ===== */
+.game-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ===== Touch-Friendly Styles ===== */
+.game-container {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+button, .interactive {
+    -webkit-tap-highlight-color: transparent;
+}
