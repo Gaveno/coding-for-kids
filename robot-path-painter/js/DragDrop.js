@@ -1,6 +1,7 @@
 /**
  * DragDrop - Touch-friendly drag and drop for command blocks
  * Handles dragging from palette to sequence, reordering, and deleting
+ * Note: Tap/click is handled by Game.js - this only handles drag gestures
  */
 export class DragDrop {
     constructor(options) {
@@ -14,8 +15,7 @@ export class DragDrop {
         this.dragState = null;
         this.dragElement = null;
         this.placeholder = null;
-        this.dragThreshold = 15; // Pixels to move before it becomes a drag
-        this.longPressTime = 200; // ms to hold before drag starts
+        this.dragThreshold = 15;
         
         this.setupPaletteButtons();
         this.setupSequenceArea();
@@ -26,25 +26,15 @@ export class DragDrop {
      * Setup drag events for command palette buttons
      */
     setupPaletteButtons() {
-        // Movement command buttons
         document.querySelectorAll('.command-btn').forEach(btn => {
-            this.addTouchDragOrTap(btn, 
-                () => ({ type: 'add', commandType: 'move', direction: btn.dataset.command }),
-                () => {
-                    // Tap action - add at end
-                    this.onAddCommand(btn.dataset.command);
-                }
+            this.addTouchDragOnly(btn, 
+                () => ({ type: 'add', commandType: 'move', direction: btn.dataset.command })
             );
         });
 
-        // Fire command buttons
         document.querySelectorAll('.fire-btn').forEach(btn => {
-            this.addTouchDragOrTap(btn,
-                () => ({ type: 'add', commandType: 'fire', direction: btn.dataset.fire }),
-                () => {
-                    // Tap action - add at end
-                    this.onAddFireCommand(btn.dataset.fire);
-                }
+            this.addTouchDragOnly(btn,
+                () => ({ type: 'add', commandType: 'fire', direction: btn.dataset.fire })
             );
         });
     }
@@ -53,7 +43,6 @@ export class DragDrop {
      * Setup the sequence area for receiving drops and reordering
      */
     setupSequenceArea() {
-        // Global touch move handler for when dragging
         document.addEventListener('touchmove', (e) => {
             if (!this.dragState) return;
             e.preventDefault();
@@ -75,27 +64,23 @@ export class DragDrop {
      */
     setupTrashZone() {
         if (!this.trashZone) return;
-        
         this.trashZone.addEventListener('touchmove', (e) => {
             e.preventDefault();
         }, { passive: false });
     }
 
     /**
-     * Add touch capability that distinguishes between tap and drag
-     * @param {HTMLElement} element - Element to make interactive
+     * Add touch drag capability (taps fall through to click handlers)
+     * @param {HTMLElement} element - Element to make draggable
      * @param {function} getDataFn - Function that returns drag data
-     * @param {function} onTap - Function to call on tap (no drag)
      */
-    addTouchDragOrTap(element, getDataFn, onTap) {
+    addTouchDragOnly(element, getDataFn) {
         let touchStartPos = null;
-        let touchStartTime = null;
         let isDragging = false;
 
         element.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
             touchStartPos = { x: touch.clientX, y: touch.clientY };
-            touchStartTime = Date.now();
             isDragging = false;
         }, { passive: true });
 
@@ -106,7 +91,6 @@ export class DragDrop {
             const dx = Math.abs(touch.clientX - touchStartPos.x);
             const dy = Math.abs(touch.clientY - touchStartPos.y);
             
-            // Start dragging if moved beyond threshold
             if (!isDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
                 isDragging = true;
                 e.preventDefault();
@@ -120,23 +104,18 @@ export class DragDrop {
         }, { passive: false });
 
         element.addEventListener('touchend', (e) => {
-            const touchDuration = Date.now() - touchStartTime;
-            
             if (isDragging && this.dragState) {
+                e.preventDefault();
                 this.handleDrop();
-            } else if (touchStartPos && touchDuration < 300) {
-                // Short tap - call tap handler
-                onTap();
             }
+            // If not dragging, let the click event fire naturally
             
             touchStartPos = null;
-            touchStartTime = null;
             isDragging = false;
         });
 
         element.addEventListener('touchcancel', () => {
             touchStartPos = null;
-            touchStartTime = null;
             isDragging = false;
             this.cancelDrag();
         });
@@ -144,7 +123,6 @@ export class DragDrop {
 
     /**
      * Make sequence items draggable for reordering
-     * Called by Renderer when sequence is re-rendered
      * @param {NodeList} items - Sequence item elements
      */
     makeItemsDraggable(items) {
@@ -153,13 +131,11 @@ export class DragDrop {
             if (isNaN(index)) return;
             
             let touchStartPos = null;
-            let touchStartTime = null;
             let isDragging = false;
 
             item.addEventListener('touchstart', (e) => {
                 const touch = e.touches[0];
                 touchStartPos = { x: touch.clientX, y: touch.clientY };
-                touchStartTime = Date.now();
                 isDragging = false;
             }, { passive: true });
 
@@ -170,7 +146,6 @@ export class DragDrop {
                 const dx = Math.abs(touch.clientX - touchStartPos.x);
                 const dy = Math.abs(touch.clientY - touchStartPos.y);
                 
-                // Start dragging if moved beyond threshold
                 if (!isDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
                     isDragging = true;
                     e.preventDefault();
@@ -192,28 +167,18 @@ export class DragDrop {
                 if (isDragging && this.dragState) {
                     this.handleDrop();
                 }
-                // Note: Tap to remove is handled by click event in Game.js
-                
                 touchStartPos = null;
-                touchStartTime = null;
                 isDragging = false;
             });
 
             item.addEventListener('touchcancel', () => {
                 touchStartPos = null;
-                touchStartTime = null;
                 isDragging = false;
                 this.cancelDrag();
             });
         });
     }
 
-    /**
-     * Start a drag operation
-     * @param {Touch} touch - Touch event data
-     * @param {HTMLElement} sourceElement - Element being dragged
-     * @param {object} data - Drag data
-     */
     startDrag(touch, sourceElement, data) {
         this.dragState = {
             data: data,
@@ -223,7 +188,6 @@ export class DragDrop {
             currentY: touch.clientY
         };
 
-        // Create floating drag element
         this.dragElement = document.createElement('div');
         this.dragElement.className = 'drag-ghost';
         this.dragElement.innerHTML = sourceElement.innerHTML;
@@ -237,7 +201,7 @@ export class DragDrop {
             align-items: center;
             justify-content: center;
             font-size: 2rem;
-            background: var(--color-primary);
+            background: var(--primary-color);
             border-radius: var(--radius-md);
             pointer-events: none;
             z-index: 1000;
@@ -247,34 +211,26 @@ export class DragDrop {
         `;
         document.body.appendChild(this.dragElement);
 
-        // Show visual feedback
         this.sequenceArea.classList.add('drag-active');
         if (this.trashZone) {
             this.trashZone.classList.add('drag-active');
         }
 
-        // Create placeholder if reordering
         if (data.type === 'reorder') {
             this.createPlaceholder();
             data.element.style.opacity = '0.3';
         }
     }
 
-    /**
-     * Handle drag movement
-     * @param {Touch} touch - Touch event data
-     */
     handleDragMove(touch) {
         if (!this.dragState || !this.dragElement) return;
 
         this.dragState.currentX = touch.clientX;
         this.dragState.currentY = touch.clientY;
 
-        // Update drag element position
         this.dragElement.style.left = `${touch.clientX - 30}px`;
         this.dragElement.style.top = `${touch.clientY - 30}px`;
 
-        // Check if over trash zone
         if (this.trashZone && this.isOverElement(touch, this.trashZone)) {
             this.trashZone.classList.add('drag-over');
             this.sequenceArea.classList.remove('drag-over');
@@ -284,7 +240,6 @@ export class DragDrop {
                 this.trashZone.classList.remove('drag-over');
             }
             
-            // Update placeholder position for reordering
             if (this.dragState.data.type === 'reorder' || this.dragState.data.type === 'add') {
                 this.updatePlaceholderPosition(touch);
             }
@@ -296,9 +251,6 @@ export class DragDrop {
         }
     }
 
-    /**
-     * Handle drop at end of drag
-     */
     handleDrop() {
         if (!this.dragState) return;
 
@@ -307,19 +259,14 @@ export class DragDrop {
             clientY: this.dragState.currentY
         };
 
-        // Check if dropped on trash
         if (this.trashZone && this.isOverElement(touch, this.trashZone)) {
             if (this.dragState.data.type === 'reorder') {
                 this.onRemove(this.dragState.data.index);
             }
-            // If adding from palette to trash, just ignore
-        }
-        // Check if dropped on sequence area
-        else if (this.isOverElement(touch, this.sequenceArea)) {
+        } else if (this.isOverElement(touch, this.sequenceArea)) {
             const data = this.dragState.data;
             
             if (data.type === 'add') {
-                // Adding new command
                 const dropIndex = this.getDropIndex(touch);
                 if (data.commandType === 'fire') {
                     this.onAddFireCommand(data.direction, dropIndex);
@@ -327,7 +274,6 @@ export class DragDrop {
                     this.onAddCommand(data.direction, dropIndex);
                 }
             } else if (data.type === 'reorder') {
-                // Reordering existing command
                 const dropIndex = this.getDropIndex(touch);
                 if (dropIndex !== data.index && dropIndex !== data.index + 1) {
                     this.onReorder(data.index, dropIndex);
@@ -338,18 +284,10 @@ export class DragDrop {
         this.cleanupDrag();
     }
 
-    /**
-     * Cancel drag operation
-     */
     cancelDrag() {
-        clearTimeout(this.touchStartTimer);
-        this.touchStartTimer = null;
         this.cleanupDrag();
     }
 
-    /**
-     * Clean up after drag operation
-     */
     cleanupDrag() {
         if (this.dragElement) {
             this.dragElement.remove();
@@ -374,12 +312,6 @@ export class DragDrop {
         this.dragState = null;
     }
 
-    /**
-     * Check if touch point is over an element
-     * @param {Touch|object} touch - Touch or coordinate object
-     * @param {HTMLElement} element - Element to check
-     * @returns {boolean}
-     */
     isOverElement(touch, element) {
         const rect = element.getBoundingClientRect();
         return (
@@ -390,18 +322,12 @@ export class DragDrop {
         );
     }
 
-    /**
-     * Get drop index based on touch position
-     * @param {Touch|object} touch - Touch or coordinate object
-     * @returns {number} Index where item should be inserted
-     */
     getDropIndex(touch) {
         const items = this.sequenceArea.querySelectorAll('.sequence-item:not(.drag-ghost), .loop-block');
         let dropIndex = 0;
 
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            // Skip the item being dragged
             if (this.dragState?.data?.element === item) continue;
             
             const rect = item.getBoundingClientRect();
@@ -417,25 +343,11 @@ export class DragDrop {
         return dropIndex;
     }
 
-    /**
-     * Create placeholder element for showing drop position
-     */
     createPlaceholder() {
         this.placeholder = document.createElement('div');
         this.placeholder.className = 'drop-placeholder';
-        this.placeholder.style.cssText = `
-            width: 8px;
-            height: 50px;
-            background: var(--color-success);
-            border-radius: 4px;
-            transition: transform 0.15s ease;
-        `;
     }
 
-    /**
-     * Update placeholder position during drag
-     * @param {Touch|object} touch - Touch or coordinate object
-     */
     updatePlaceholderPosition(touch) {
         if (!this.placeholder) {
             this.createPlaceholder();

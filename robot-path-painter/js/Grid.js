@@ -1,6 +1,5 @@
 /**
- * Grid class - Manages grid state and rendering
- * Single responsibility: Handle grid cells, painting, obstacles, and target tracking
+ * Grid - Handles grid state, rendering, and cell operations
  */
 export class Grid {
     constructor(size, targetCells = [], obstacles = []) {
@@ -10,54 +9,30 @@ export class Grid {
         this.obstacles = new Set(obstacles);
     }
 
-    /**
-     * Paint a cell at the given coordinates
-     * @param {string} positionKey - Cell position as "x,y"
-     */
     paintCell(positionKey) {
         this.paintedCells.add(positionKey);
     }
 
-    /**
-     * Check if a cell is painted
-     * @param {string} positionKey - Cell position as "x,y"
-     * @returns {boolean}
-     */
     isPainted(positionKey) {
         return this.paintedCells.has(positionKey);
     }
 
-    /**
-     * Check if a cell is a target
-     * @param {string} positionKey - Cell position as "x,y"
-     * @returns {boolean}
-     */
     isTarget(positionKey) {
         return this.targetCells.has(positionKey);
     }
 
-    /**
-     * Check if a cell has an obstacle
-     * @param {string} positionKey - Cell position as "x,y"
-     * @returns {boolean}
-     */
     hasObstacle(positionKey) {
         return this.obstacles.has(positionKey);
     }
 
-    /**
-     * Remove an obstacle from the grid
-     * @param {string} positionKey - Cell position as "x,y"
-     * @returns {boolean} True if obstacle was removed
-     */
     removeObstacle(positionKey) {
         return this.obstacles.delete(positionKey);
     }
 
-    /**
-     * Check if all target cells are painted
-     * @returns {boolean}
-     */
+    resetObstacles(obstacles = []) {
+        this.obstacles = new Set(obstacles);
+    }
+
     allTargetsPainted() {
         for (const target of this.targetCells) {
             if (!this.paintedCells.has(target)) {
@@ -67,36 +42,10 @@ export class Grid {
         return true;
     }
 
-    /**
-     * Get count of painted targets
-     * @returns {object} { painted, total }
-     */
-    getProgress() {
-        let painted = 0;
-        for (const target of this.targetCells) {
-            if (this.paintedCells.has(target)) {
-                painted++;
-            }
-        }
-        return {
-            painted,
-            total: this.targetCells.size
-        };
-    }
-
-    /**
-     * Clear all painted cells
-     */
     clearPaint() {
         this.paintedCells.clear();
     }
 
-    /**
-     * Update grid configuration
-     * @param {number} size - New grid size
-     * @param {string[]} targets - New target cells
-     * @param {string[]} obstacles - Obstacle cell positions
-     */
     configure(size, targets, obstacles = []) {
         this.size = size;
         this.targetCells = new Set(targets);
@@ -104,20 +53,6 @@ export class Grid {
         this.obstacles = new Set(obstacles);
     }
 
-    /**
-     * Reset obstacles to initial state
-     * @param {string[]} obstacles - Initial obstacle positions
-     */
-    resetObstacles(obstacles = []) {
-        this.obstacles = new Set(obstacles);
-    }
-
-    /**
-     * Render grid to a container element
-     * @param {HTMLElement} container - DOM container for grid
-     * @param {object} robotPosition - Current robot position {x, y}
-     * @returns {void}
-     */
     render(container, robotPosition) {
         container.innerHTML = '';
         container.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
@@ -134,11 +69,9 @@ export class Grid {
                 if (this.isTarget(key)) {
                     cell.classList.add('target');
                 }
-
                 if (this.isPainted(key)) {
                     cell.classList.add('painted');
                 }
-
                 if (this.hasObstacle(key)) {
                     cell.classList.add('obstacle');
                     const obstacle = document.createElement('span');
@@ -147,16 +80,24 @@ export class Grid {
                     cell.appendChild(obstacle);
                 }
 
-                if (x === robotPosition.x && y === robotPosition.y) {
-                    cell.classList.add('robot');
-                    const robot = document.createElement('span');
-                    robot.className = 'robot-emoji';
-                    robot.textContent = '🤖';
-                    cell.appendChild(robot);
-                }
-
                 container.appendChild(cell);
             }
         }
+    }
+
+    /**
+     * Get cell position for smooth animations
+     */
+    getCellPosition(container, x, y) {
+        const cell = container.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+        if (!cell) return null;
+        const containerRect = container.getBoundingClientRect();
+        const cellRect = cell.getBoundingClientRect();
+        return {
+            left: cellRect.left - containerRect.left + cellRect.width / 2,
+            top: cellRect.top - containerRect.top + cellRect.height / 2,
+            width: cellRect.width,
+            height: cellRect.height
+        };
     }
 }
