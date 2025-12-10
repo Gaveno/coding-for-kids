@@ -205,9 +205,9 @@ body {
 /* Smooth-moving robot overlay */
 .robot-overlay {
     position: absolute;
-    font-size: 2rem;
+    /* font-size set dynamically by JS based on cell size */
     z-index: 20;
-    transition: left 0.25s ease-out, top 0.25s ease-out;
+    transition: left 0.25s ease-out, top 0.25s ease-out, font-size 0.25s ease-out;
     pointer-events: none;
     display: flex;
     justify-content: center;
@@ -251,7 +251,7 @@ body {
 /* ===== Projectiles ===== */
 .projectile {
     position: absolute;
-    font-size: 1.5rem;
+    /* font-size set dynamically by JS based on cell size */
     z-index: 25;
     pointer-events: none;
     display: flex;

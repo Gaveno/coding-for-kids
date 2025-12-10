@@ -68,7 +68,12 @@ export class Game {
         this.sequence.clear();
         this.elements.levelNum.textContent = levelNum;
         this.render();
-        this.updateRobotOverlay(false);
+        // Wait for layout to complete before positioning robot
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this.updateRobotOverlay(false);
+            });
+        });
     }
 
     render() {
@@ -88,30 +93,30 @@ export class Game {
             this.elements.gridContainer.appendChild(robotOverlay);
         }
 
-        requestAnimationFrame(() => {
-            const pos = this.grid.getCellPosition(
-                this.elements.gridContainer,
-                this.robot.position.x,
-                this.robot.position.y
-            );
-            
-            if (pos) {
-                if (!animate) {
-                    robotOverlay.style.transition = 'none';
-                }
-                robotOverlay.style.left = `${pos.left}px`;
-                robotOverlay.style.top = `${pos.top}px`;
-                robotOverlay.style.width = `${pos.width}px`;
-                robotOverlay.style.height = `${pos.height}px`;
-                robotOverlay.style.marginLeft = `-${pos.width / 2}px`;
-                robotOverlay.style.marginTop = `-${pos.height / 2}px`;
-                
-                if (!animate) {
-                    robotOverlay.offsetHeight;
-                    robotOverlay.style.transition = '';
-                }
+        const pos = this.grid.getCellPosition(
+            this.elements.gridContainer,
+            this.robot.position.x,
+            this.robot.position.y
+        );
+        
+        if (pos) {
+            if (!animate) {
+                robotOverlay.style.transition = 'none';
             }
-        });
+            robotOverlay.style.left = `${pos.left}px`;
+            robotOverlay.style.top = `${pos.top}px`;
+            robotOverlay.style.width = `${pos.width}px`;
+            robotOverlay.style.height = `${pos.height}px`;
+            robotOverlay.style.marginLeft = `-${pos.width / 2}px`;
+            robotOverlay.style.marginTop = `-${pos.height / 2}px`;
+            // Scale font size to 70% of cell size for proper fit
+            robotOverlay.style.fontSize = `${pos.width * 0.7}px`;
+            
+            if (!animate) {
+                robotOverlay.offsetHeight;
+                robotOverlay.style.transition = '';
+            }
+        }
     }
 
     renderSequence() {
@@ -527,6 +532,8 @@ export class Game {
             projectile.style.height = `${pos.height}px`;
             projectile.style.marginLeft = `-${pos.width / 2}px`;
             projectile.style.marginTop = `-${pos.height / 2}px`;
+            // Scale font size to 50% of cell size
+            projectile.style.fontSize = `${pos.width * 0.5}px`;
             projectile.offsetHeight;
             projectile.style.transition = '';
         }
@@ -715,5 +722,29 @@ export class Game {
                 case 'Escape': this.resetLevel(); break;
             }
         });
+
+        // Handle window resize and orientation change
+        const handleResize = () => {
+            if (!this.isPlaying) {
+                requestAnimationFrame(() => {
+                    this.updateRobotOverlay(false);
+                });
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            // Delay to allow layout to settle after orientation change
+            setTimeout(handleResize, 100);
+        });
+
+        // Use ResizeObserver for grid container size changes
+        if (typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(() => {
+                if (!this.isPlaying) {
+                    this.updateRobotOverlay(false);
+                }
+            });
+            resizeObserver.observe(this.elements.gridContainer);
+        }
     }
 }
