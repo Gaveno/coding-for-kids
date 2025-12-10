@@ -39,11 +39,13 @@ No build step required. Games are static HTML/CSS/JS.
 
 **To test locally:**
 ```bash
-# Start any local server from repo root
+# Start server from repo root (IMPORTANT: always serve from root, not sub-folders)
 npx serve .
 # Or
 python -m http.server 8000
 ```
+
+**IMPORTANT:** Always launch from the root URL (http://localhost:3000/) and navigate to games via the home page. Do NOT navigate directly to game URLs like `/robot-path-painter` - the `serve.json` config ensures proper trailing slash handling for relative paths.
 
 **To run tests:**
 Open `game-name/tests/index.html` in a browser.
