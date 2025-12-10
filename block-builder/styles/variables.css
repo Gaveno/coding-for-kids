@@ -44,4 +44,9 @@
     --hook-size: 24px;
     --string-width: 3px;
     --total-columns: 7; /* 3 supply + 4 build */
+    
+    /* Fixed design dimensions for uniform scaling */
+    --workspace-width: 380px;
+    --workspace-height: 280px;
+    --workspace-scale: 1;
 }

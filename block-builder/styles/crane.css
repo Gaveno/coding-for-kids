@@ -1,13 +1,26 @@
-/* ===== Crane Workspace ===== */
-.crane-workspace {
+/* ===== Crane Workspace Container ===== */
+.crane-workspace-container {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ===== Crane Workspace (scales uniformly) ===== */
+.crane-workspace {
+    width: var(--workspace-width);
+    height: var(--workspace-height);
     display: flex;
     flex-direction: column;
     background: var(--color-surface);
     border-radius: var(--radius-md);
     padding: var(--spacing-sm);
-    overflow: hidden;
-    min-height: 0;
+    overflow: visible;
+    transform: scale(var(--workspace-scale));
+    transform-origin: center center;
+    transition: transform 0.2s ease;
 }
 
 /* ===== Crane Rail ===== */

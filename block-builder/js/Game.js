@@ -52,6 +52,7 @@ export class Game {
         this.audio.init();
         this.setupDragDrop();
         this.setupEventListeners();
+        this.setupResizeHandler();
         this.loadLevel(this.currentLevel);
     }
 
@@ -60,6 +61,7 @@ export class Game {
      */
     cacheElements() {
         this.elements = {
+            workspaceContainer: document.getElementById('craneWorkspaceContainer'),
             workspace: document.getElementById('craneWorkspace'),
             craneRail: document.getElementById('craneRail'),
             railMarkers: document.getElementById('railMarkers'),
@@ -131,6 +133,41 @@ export class Game {
     }
 
     /**
+     * Set up resize handler for uniform workspace scaling
+     */
+    setupResizeHandler() {
+        const updateScale = () => {
+            const container = this.elements.workspaceContainer;
+            if (!container) return;
+            
+            const containerRect = container.getBoundingClientRect();
+            const workspaceWidth = 380; // Fixed design width
+            const workspaceHeight = 280; // Fixed design height
+            
+            // Calculate scale to fit container while maintaining aspect ratio
+            const scaleX = containerRect.width / workspaceWidth;
+            const scaleY = containerRect.height / workspaceHeight;
+            const scale = Math.min(scaleX, scaleY, 1.5); // Cap at 1.5x
+            
+            this.elements.workspace.style.setProperty('--workspace-scale', scale);
+            
+            // Recalculate crane positions after scale change (only if game is loaded)
+            if (this.crane) {
+                requestAnimationFrame(() => {
+                    this.columnPositions = this.calculateColumnPositions();
+                    this.renderCrane();
+                });
+            }
+        };
+        
+        // Store reference so we can call it later
+        this.updateWorkspaceScale = updateScale;
+        
+        // Update on resize
+        window.addEventListener('resize', updateScale);
+    }
+
+    /**
      * Load a level
      * @param {number} levelNum - Level number (1-indexed)
      */
@@ -157,6 +194,11 @@ export class Game {
         this.sequence.clear();
         this.render();
         this.updateLevelDisplay();
+        
+        // Update workspace scale after render
+        if (this.updateWorkspaceScale) {
+            this.updateWorkspaceScale();
+        }
     }
 
     /**
@@ -177,7 +219,7 @@ export class Game {
         const container = this.elements.railMarkers;
         container.innerHTML = '';
         
-        const columnWidth = this.cellSize + 6; // cell + gap
+        const scale = this.getWorkspaceScale();
         
         // Get actual positions of supply columns and build cells
         const supplyColumns = this.elements.supplyStacks?.querySelectorAll('.supply-column');
@@ -188,7 +230,8 @@ export class Game {
         if (supplyColumns) {
             supplyColumns.forEach((col, index) => {
                 const colRect = col.getBoundingClientRect();
-                const centerX = colRect.left + colRect.width / 2 - railRect.left;
+                // Divide by scale to get unscaled coordinates
+                const centerX = (colRect.left + colRect.width / 2 - railRect.left) / scale;
                 
                 const marker = document.createElement('div');
                 marker.className = 'rail-marker supply';
@@ -211,7 +254,8 @@ export class Game {
             const buildColumns = Array.from(buildCells).filter(cell => cell.dataset.y === '0');
             buildColumns.forEach((cell, index) => {
                 const cellRect = cell.getBoundingClientRect();
-                const centerX = cellRect.left + cellRect.width / 2 - railRect.left;
+                // Divide by scale to get unscaled coordinates
+                const centerX = (cellRect.left + cellRect.width / 2 - railRect.left) / scale;
                 
                 const marker = document.createElement('div');
                 marker.className = 'rail-marker build';
@@ -233,10 +277,21 @@ export class Game {
     }
 
     /**
-     * Calculate actual X positions for each column
+     * Get the current scale factor applied to the workspace
+     * @returns {number} The current scale factor
+     */
+    getWorkspaceScale() {
+        const scaleStr = getComputedStyle(this.elements.workspace)
+            .getPropertyValue('--workspace-scale');
+        return parseFloat(scaleStr) || 1;
+    }
+
+    /**
+     * Calculate actual X positions for each column (in unscaled coordinates)
      */
     calculateColumnPositions() {
         const positions = [];
+        const scale = this.getWorkspaceScale();
         const railRect = this.elements.craneRail.getBoundingClientRect();
         
         // Supply column positions
@@ -244,7 +299,9 @@ export class Game {
         if (supplyColumns) {
             supplyColumns.forEach(col => {
                 const colRect = col.getBoundingClientRect();
-                positions.push(colRect.left + colRect.width / 2 - railRect.left);
+                // Divide by scale to get unscaled coordinates
+                const centerX = (colRect.left + colRect.width / 2 - railRect.left) / scale;
+                positions.push(centerX);
             });
         }
         
@@ -253,7 +310,9 @@ export class Game {
         if (buildCells) {
             buildCells.forEach(cell => {
                 const cellRect = cell.getBoundingClientRect();
-                positions.push(cellRect.left + cellRect.width / 2 - railRect.left);
+                // Divide by scale to get unscaled coordinates
+                const centerX = (cellRect.left + cellRect.width / 2 - railRect.left) / scale;
+                positions.push(centerX);
             });
         }
         
