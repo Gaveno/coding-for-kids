@@ -129,6 +129,139 @@ export function runSequenceTests() {
         assertEqual(count, 2);
     }));
 
+    // ===== Loop Tests =====
+    
+    // Test: Add loop command
+    results.push(test('Add loop to sequence', () => {
+        const seq = new Sequence();
+        seq.addLoop(3);
+        assertEqual(seq.length, 1);
+        assertEqual(seq.getCommand(0).type, 'loop');
+        assertEqual(seq.getCommand(0).iterations, 3);
+        assertTrue(Array.isArray(seq.getCommand(0).commands));
+    }));
+
+    // Test: Add commands to active loop
+    results.push(test('Add commands to active loop', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        seq.addCommand('left');
+        seq.addCommand('right');
+        
+        assertEqual(seq.length, 1); // Only loop in main sequence
+        assertEqual(seq.getCommand(0).commands.length, 2);
+        assertEqual(seq.getCommand(0).commands[0].type, 'left');
+        assertEqual(seq.getCommand(0).commands[1].type, 'right');
+    }));
+
+    // Test: Deactivate loop
+    results.push(test('Deactivate loop adds commands to main sequence', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        seq.addCommand('left');
+        seq.setActiveLoop(null); // Deactivate
+        seq.addCommand('right');
+        
+        assertEqual(seq.length, 2); // Loop + right command
+        assertEqual(seq.getCommand(0).commands.length, 1);
+        assertEqual(seq.getCommand(1).type, 'right');
+    }));
+
+    // Test: Flatten simple loop
+    results.push(test('Flatten expands loop commands', () => {
+        const seq = new Sequence();
+        seq.addLoop(3);
+        seq.setActiveLoop(0);
+        seq.addCommand('left');
+        seq.addCommand('right');
+        
+        const flat = seq.flatten();
+        assertEqual(flat.length, 6); // (left + right) * 3
+        assertEqual(flat[0].type, 'left');
+        assertEqual(flat[1].type, 'right');
+        assertEqual(flat[2].type, 'left');
+        assertEqual(flat[3].type, 'right');
+        assertEqual(flat[4].type, 'left');
+        assertEqual(flat[5].type, 'right');
+    }));
+
+    // Test: Update loop iterations
+    results.push(test('Update loop iterations', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.updateLoopIterations(0, 5);
+        assertEqual(seq.getCommand(0).iterations, 5);
+        
+        // Clamp to min 1
+        seq.updateLoopIterations(0, 0);
+        assertEqual(seq.getCommand(0).iterations, 1);
+        
+        // Clamp to max 9
+        seq.updateLoopIterations(0, 15);
+        assertEqual(seq.getCommand(0).iterations, 9);
+    }));
+
+    // Test: Remove command from loop
+    results.push(test('Remove command from loop', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        seq.addCommand('left');
+        seq.addCommand('right');
+        seq.addCommand('lower');
+        
+        seq.removeFromLoop(0, 1); // Remove 'right'
+        
+        assertEqual(seq.getCommand(0).commands.length, 2);
+        assertEqual(seq.getCommand(0).commands[0].type, 'left');
+        assertEqual(seq.getCommand(0).commands[1].type, 'lower');
+    }));
+
+    // Test: Remove loop clears activeLoopIndex
+    results.push(test('Removing active loop clears activeLoopIndex', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        assertEqual(seq.activeLoopIndex, 0);
+        
+        seq.removeAt(0);
+        assertEqual(seq.activeLoopIndex, null);
+    }));
+
+    // Test: Clear resets activeLoopIndex
+    results.push(test('Clear resets activeLoopIndex', () => {
+        const seq = new Sequence();
+        seq.addLoop(2);
+        seq.setActiveLoop(0);
+        seq.clear();
+        
+        assertEqual(seq.length, 0);
+        assertEqual(seq.activeLoopIndex, null);
+    }));
+
+    // Test: Flatten mixed sequence
+    results.push(test('Flatten mixed sequence with loops and commands', () => {
+        const seq = new Sequence();
+        seq.addCommand('lower'); // 0: lower
+        seq.addLoop(2);          // 1: loop
+        seq.setActiveLoop(1);
+        seq.addCommand('left');  // Inside loop
+        seq.addCommand('right'); // Inside loop
+        seq.setActiveLoop(null);
+        seq.addCommand('raise'); // 2: raise
+        
+        const flat = seq.flatten();
+        assertEqual(flat.length, 6); // lower + (left + right) * 2 + raise
+        assertEqual(flat[0].type, 'lower');
+        assertEqual(flat[1].type, 'left');
+        assertEqual(flat[2].type, 'right');
+        assertEqual(flat[3].type, 'left');
+        assertEqual(flat[4].type, 'right');
+        assertEqual(flat[5].type, 'raise');
+    }));
+
     return results;
 }
 

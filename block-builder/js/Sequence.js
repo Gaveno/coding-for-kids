@@ -6,6 +6,7 @@
  * - right: Move crane right  
  * - lower: Lower the hook
  * - raise: Raise the hook
+ * - loop: Repeat contained commands N times
  */
 
 const VALID_COMMANDS = ['left', 'right', 'lower', 'raise'];
@@ -20,6 +21,7 @@ const COMMAND_ICONS = {
 export class Sequence {
     constructor() {
         this.commands = [];
+        this.activeLoopIndex = null;
     }
 
     get length() {
@@ -60,8 +62,60 @@ export class Sequence {
         if (!VALID_COMMANDS.includes(type)) {
             return false;
         }
-        this.commands.push({ type, id: Date.now() + Math.random() });
+        const cmd = { type, id: Date.now() + Math.random() };
+        if (this.activeLoopIndex !== null) {
+            this.commands[this.activeLoopIndex].commands.push(cmd);
+        } else {
+            this.commands.push(cmd);
+        }
         return true;
+    }
+
+    /**
+     * Add a loop command
+     * @param {number} iterations - Number of times to repeat (default 2)
+     */
+    addLoop(iterations = 2) {
+        this.commands.push({
+            type: 'loop',
+            iterations,
+            commands: [],
+            id: Date.now() + Math.random()
+        });
+    }
+
+    /**
+     * Set the active loop for adding commands into
+     * @param {number|null} index - Loop index or null to deactivate
+     */
+    setActiveLoop(index) {
+        if (index !== null && this.commands[index]?.type === 'loop') {
+            this.activeLoopIndex = index;
+        } else {
+            this.activeLoopIndex = null;
+        }
+    }
+
+    /**
+     * Update iterations for a loop
+     * @param {number} loopIndex - Index of the loop
+     * @param {number} iterations - New iteration count
+     */
+    updateLoopIterations(loopIndex, iterations) {
+        if (this.commands[loopIndex]?.type === 'loop') {
+            this.commands[loopIndex].iterations = Math.max(1, Math.min(9, iterations));
+        }
+    }
+
+    /**
+     * Remove a command from inside a loop
+     * @param {number} loopIndex - Index of the loop
+     * @param {number} cmdIndex - Index of command within the loop
+     */
+    removeFromLoop(loopIndex, cmdIndex) {
+        if (this.commands[loopIndex]?.type === 'loop') {
+            this.commands[loopIndex].commands.splice(cmdIndex, 1);
+        }
     }
 
     getCommand(index) {
@@ -76,6 +130,12 @@ export class Sequence {
         if (index < 0 || index >= this.commands.length) {
             return false;
         }
+        // Clear active loop if removing it
+        if (this.activeLoopIndex === index) {
+            this.activeLoopIndex = null;
+        } else if (this.activeLoopIndex !== null && index < this.activeLoopIndex) {
+            this.activeLoopIndex--;
+        }
         this.commands.splice(index, 1);
         return true;
     }
@@ -87,6 +147,11 @@ export class Sequence {
         if (index < 0) index = 0;
         if (index > this.commands.length) index = this.commands.length;
         
+        // Update activeLoopIndex if inserting before it
+        if (this.activeLoopIndex !== null && index <= this.activeLoopIndex) {
+            this.activeLoopIndex++;
+        }
+        
         this.commands.splice(index, 0, { type, id: Date.now() + Math.random() });
         return true;
     }
@@ -95,6 +160,21 @@ export class Sequence {
         if (fromIndex < 0 || fromIndex >= this.commands.length) return false;
         if (toIndex < 0 || toIndex > this.commands.length) return false;
         
+        // Update activeLoopIndex if needed
+        if (this.activeLoopIndex !== null) {
+            if (this.activeLoopIndex === fromIndex) {
+                if (toIndex > fromIndex) {
+                    this.activeLoopIndex = toIndex - 1;
+                } else {
+                    this.activeLoopIndex = toIndex;
+                }
+            } else if (fromIndex < this.activeLoopIndex && toIndex > this.activeLoopIndex) {
+                this.activeLoopIndex--;
+            } else if (fromIndex > this.activeLoopIndex && toIndex <= this.activeLoopIndex) {
+                this.activeLoopIndex++;
+            }
+        }
+        
         const [command] = this.commands.splice(fromIndex, 1);
         this.commands.splice(toIndex, 0, command);
         return true;
@@ -102,6 +182,28 @@ export class Sequence {
 
     clear() {
         this.commands = [];
+        this.activeLoopIndex = null;
+    }
+
+    /**
+     * Flatten the command sequence, expanding loops
+     * @returns {Array} Flat array of executable commands
+     */
+    flatten() {
+        const flat = [];
+        const expandCommands = (cmds) => {
+            for (const cmd of cmds) {
+                if (cmd.type === 'loop') {
+                    for (let i = 0; i < cmd.iterations; i++) {
+                        expandCommands(cmd.commands);
+                    }
+                } else {
+                    flat.push(cmd);
+                }
+            }
+        };
+        expandCommands(this.commands);
+        return flat;
     }
 
     // Make iterable

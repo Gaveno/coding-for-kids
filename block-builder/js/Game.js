@@ -77,6 +77,7 @@ export class Game {
             sequencePlaceholder: document.getElementById('sequencePlaceholder'),
             trashZone: document.getElementById('trashZone'),
             clearBtn: document.getElementById('clearBtn'),
+            loopBtn: document.getElementById('loopBtn'),
             playBtn: document.getElementById('playBtn'),
             resetBtn: document.getElementById('resetBtn'),
             levelNum: document.getElementById('levelNum'),
@@ -113,6 +114,9 @@ export class Game {
                 }
             });
         });
+
+        // Loop button
+        this.elements.loopBtn.addEventListener('click', () => this.addLoop());
 
         // Control buttons
         this.elements.playBtn.addEventListener('click', () => this.run());
@@ -446,40 +450,201 @@ export class Game {
         this.elements.sequencePlaceholder.style.display = 
             commands.length === 0 ? 'flex' : 'none';
         
-        // Clear existing items
-        this.elements.sequenceArea.querySelectorAll('.sequence-item').forEach(el => el.remove());
+        // Clear existing items (sequence items and loop blocks)
+        this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block').forEach(el => el.remove());
         
         commands.forEach((cmd, index) => {
-            const item = document.createElement('div');
-            item.className = 'sequence-item';
-            item.dataset.index = index;
-            
-            // Add click to remove functionality
-            item.addEventListener('click', () => {
-                if (!this.isRunning) {
-                    this.removeCommandAt(index);
-                }
-            });
-            
-            // Create icon based on command type
-            if (cmd.type === 'lower' || cmd.type === 'raise') {
-                // Hook commands have stacked icons
-                const hookIcon = document.createElement('span');
-                hookIcon.className = 'seq-hook-icon';
-                hookIcon.textContent = '🪝';
-                
-                const arrowIcon = document.createElement('span');
-                arrowIcon.className = 'seq-arrow-icon';
-                arrowIcon.textContent = cmd.type === 'lower' ? '⬇️' : '⬆️';
-                
-                item.appendChild(hookIcon);
-                item.appendChild(arrowIcon);
+            if (cmd.type === 'loop') {
+                const loopBlock = this.createLoopBlock(cmd, index, this.sequence.activeLoopIndex === index);
+                this.elements.sequenceArea.appendChild(loopBlock);
             } else {
-                item.textContent = Sequence.getIcon(cmd.type);
+                const item = this.createSequenceItem(cmd, index);
+                this.elements.sequenceArea.appendChild(item);
             }
-            
-            this.elements.sequenceArea.appendChild(item);
         });
+    }
+
+    /**
+     * Create a sequence item element
+     * @param {Object} cmd - Command object
+     * @param {number} index - Command index
+     * @returns {HTMLElement} Sequence item element
+     */
+    createSequenceItem(cmd, index) {
+        const item = document.createElement('div');
+        item.className = 'sequence-item';
+        item.dataset.index = index;
+        
+        // Add click to remove functionality
+        item.addEventListener('click', () => {
+            if (!this.isRunning) {
+                this.removeCommandAt(index);
+            }
+        });
+        
+        // Create icon based on command type
+        if (cmd.type === 'lower' || cmd.type === 'raise') {
+            // Hook commands have stacked icons
+            const hookIcon = document.createElement('span');
+            hookIcon.className = 'seq-hook-icon';
+            hookIcon.textContent = '🪝';
+            
+            const arrowIcon = document.createElement('span');
+            arrowIcon.className = 'seq-arrow-icon';
+            arrowIcon.textContent = cmd.type === 'lower' ? '⬇️' : '⬆️';
+            
+            item.appendChild(hookIcon);
+            item.appendChild(arrowIcon);
+        } else {
+            item.textContent = Sequence.getIcon(cmd.type);
+        }
+        
+        return item;
+    }
+
+    /**
+     * Create a loop block element
+     * @param {Object} cmd - Loop command object
+     * @param {number} index - Command index
+     * @param {boolean} isActive - Whether this loop is active for adding commands
+     * @returns {HTMLElement} Loop block element
+     */
+    createLoopBlock(cmd, index, isActive) {
+        const loopBlock = document.createElement('div');
+        loopBlock.className = 'loop-block' + (isActive ? ' active' : '');
+        loopBlock.dataset.index = index;
+
+        // Header with loop icon and iteration controls
+        const header = document.createElement('div');
+        header.className = 'loop-header';
+        
+        const loopIcon = document.createElement('span');
+        loopIcon.className = 'loop-icon';
+        loopIcon.textContent = '🔄';
+        header.appendChild(loopIcon);
+
+        const iterControls = document.createElement('div');
+        iterControls.className = 'loop-iteration-controls';
+
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'iter-btn minus-btn';
+        minusBtn.textContent = '➖';
+        minusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.updateLoopIterations(index, cmd.iterations - 1);
+        });
+
+        const iterCount = document.createElement('span');
+        iterCount.className = 'iter-count';
+        iterCount.textContent = cmd.iterations;
+
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'iter-btn plus-btn';
+        plusBtn.textContent = '➕';
+        plusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.updateLoopIterations(index, cmd.iterations + 1);
+        });
+
+        iterControls.appendChild(minusBtn);
+        iterControls.appendChild(iterCount);
+        iterControls.appendChild(plusBtn);
+        header.appendChild(iterControls);
+
+        loopBlock.appendChild(header);
+
+        // Body with loop commands
+        const body = document.createElement('div');
+        body.className = 'loop-body';
+
+        if (cmd.commands.length === 0) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'loop-placeholder';
+            placeholder.textContent = '👆';
+            body.appendChild(placeholder);
+        } else {
+            cmd.commands.forEach((innerCmd, cmdIndex) => {
+                const item = document.createElement('div');
+                item.className = 'sequence-item loop-item';
+                
+                if (innerCmd.type === 'lower' || innerCmd.type === 'raise') {
+                    const hookIcon = document.createElement('span');
+                    hookIcon.className = 'seq-hook-icon';
+                    hookIcon.textContent = '🪝';
+                    const arrowIcon = document.createElement('span');
+                    arrowIcon.className = 'seq-arrow-icon';
+                    arrowIcon.textContent = innerCmd.type === 'lower' ? '⬇️' : '⬆️';
+                    item.appendChild(hookIcon);
+                    item.appendChild(arrowIcon);
+                } else {
+                    item.textContent = Sequence.getIcon(innerCmd.type);
+                }
+                
+                item.dataset.loopIndex = index;
+                item.dataset.cmdIndex = cmdIndex;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.removeFromLoop(index, cmdIndex);
+                });
+                body.appendChild(item);
+            });
+        }
+
+        loopBlock.appendChild(body);
+
+        // Click to select/deselect loop
+        loopBlock.addEventListener('click', (e) => {
+            if (e.target === loopBlock || e.target === header || e.target === body || 
+                e.target === loopIcon || e.target.classList.contains('loop-placeholder')) {
+                this.selectLoop(isActive ? null : index);
+            }
+        });
+
+        return loopBlock;
+    }
+
+    /**
+     * Add a loop to the sequence
+     */
+    addLoop() {
+        if (this.isRunning) return;
+        this.sequence.addLoop(2);
+        this.sequence.setActiveLoop(this.sequence.commands.length - 1);
+        this.renderSequence();
+        this.audio.playTone(440, 0.05);
+    }
+
+    /**
+     * Select or deselect a loop for adding commands
+     * @param {number|null} index - Loop index or null to deselect
+     */
+    selectLoop(index) {
+        if (this.isRunning) return;
+        this.sequence.setActiveLoop(index);
+        this.renderSequence();
+    }
+
+    /**
+     * Update loop iterations
+     * @param {number} index - Loop index
+     * @param {number} iterations - New iteration count
+     */
+    updateLoopIterations(index, iterations) {
+        if (this.isRunning) return;
+        this.sequence.updateLoopIterations(index, iterations);
+        this.renderSequence();
+    }
+
+    /**
+     * Remove a command from inside a loop
+     * @param {number} loopIndex - Loop index
+     * @param {number} cmdIndex - Command index within loop
+     */
+    removeFromLoop(loopIndex, cmdIndex) {
+        if (this.isRunning) return;
+        this.sequence.removeFromLoop(loopIndex, cmdIndex);
+        this.renderSequence();
+        this.audio.playTone(330, 0.05);
     }
 
     /**
@@ -551,11 +716,11 @@ export class Game {
         
         await this.delay(TIMING.COMMAND_DELAY);
 
-        // Execute each command
-        const commands = this.sequence.getCommands();
-        for (let i = 0; i < commands.length; i++) {
-            this.highlightCommand(i);
-            await this.executeCommand(commands[i]);
+        // Execute flattened commands (loops expanded)
+        const flatCommands = this.sequence.flatten();
+        for (let i = 0; i < flatCommands.length; i++) {
+            this.highlightFlatCommand(flatCommands, i);
+            await this.executeCommand(flatCommands[i]);
             await this.delay(TIMING.COMMAND_DELAY);
         }
         
@@ -784,21 +949,55 @@ export class Game {
     }
 
     /**
-     * Highlight currently executing command
-     * @param {number} index - Command index
+     * Highlight currently executing command (for flat commands)
+     * This tracks which command in the flattened sequence is executing
+     * @param {Array} flatCommands - Flattened command array
+     * @param {number} flatIndex - Current index in flattened array
      */
-    highlightCommand(index) {
-        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item');
-        items.forEach((item, i) => {
-            item.classList.toggle('executing', i === index);
-        });
+    highlightFlatCommand(flatCommands, flatIndex) {
+        // Clear all highlights
+        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
+        items.forEach(item => item.classList.remove('executing'));
+        
+        // Find which original command this maps to
+        let count = 0;
+        const commands = this.sequence.getCommands();
+        
+        for (let i = 0; i < commands.length; i++) {
+            const cmd = commands[i];
+            if (cmd.type === 'loop') {
+                const loopSize = cmd.commands.length * cmd.iterations;
+                if (flatIndex < count + loopSize) {
+                    // Highlight the loop block
+                    const loopBlock = this.elements.sequenceArea.querySelector(`.loop-block[data-index="${i}"]`);
+                    if (loopBlock) {
+                        loopBlock.classList.add('executing');
+                        // Also highlight the specific command inside the loop
+                        const innerIndex = (flatIndex - count) % cmd.commands.length;
+                        const loopItems = loopBlock.querySelectorAll('.loop-item');
+                        if (loopItems[innerIndex]) {
+                            loopItems[innerIndex].classList.add('executing');
+                        }
+                    }
+                    return;
+                }
+                count += loopSize;
+            } else {
+                if (flatIndex === count) {
+                    const item = this.elements.sequenceArea.querySelector(`.sequence-item[data-index="${i}"]`);
+                    if (item) item.classList.add('executing');
+                    return;
+                }
+                count++;
+            }
+        }
     }
 
     /**
      * Clear command highlight
      */
     clearHighlight() {
-        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item');
+        const items = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
         items.forEach(item => item.classList.remove('executing'));
     }
 
