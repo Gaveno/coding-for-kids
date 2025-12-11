@@ -34,6 +34,42 @@ Educational game suite teaching programming concepts to **pre-literate children*
 
 ---
 
+## Command Queue Standards
+
+Games with command/sequence queues (robot-path-painter, block-builder, etc.) must implement these features:
+
+### 1. Fixed Height with Scroll
+- **Container height** - Use fixed height (e.g., 60px) with `overflow-y: auto`
+- **Auto-scroll** - Scroll to show newest command when added
+- **Smooth scroll** - Use `scrollIntoView({ behavior: 'smooth' })`
+
+### 2. Drag-to-Reorder
+- **Touch-friendly** - Use pointer events, not just mouse events
+- **Drag threshold** - Require 15px movement before starting drag (prevents accidental drags)
+- **Visual feedback** - Show drop placeholder where item will land
+- **Reorder callback** - Implement `reorderCommand(fromIndex, toIndex)` in Game class
+
+### 3. Zoom Prevention
+- **HTML element** - Apply `touch-action: manipulation` to allow scroll but prevent zoom
+- **Body element** - Apply `touch-action: none` to prevent all gestures on game area
+- **Interactive elements** - Ensure buttons and controls remain responsive
+
+### 4. Trash Zone
+- **Always visible** - Show delete zone during drag operations
+- **Visual states** - `.drag-active` (dragging started), `.drag-over` (item over trash)
+- **Feedback** - Scale up and change color when item is over trash
+
+### 5. Required CSS Classes
+```css
+.sequence-item.dragging { opacity: 0.3; }
+.sequence-area.drag-active { border: 2px dashed; }
+.drop-placeholder { width: 8px; background: success-color; }
+.trash-zone.drag-active { opacity: 0.8; border: dashed; }
+.trash-zone.drag-over { background: danger-color; transform: scale(1.1); }
+```
+
+---
+
 ## Key Constraints
 
 | Constraint | Rule |

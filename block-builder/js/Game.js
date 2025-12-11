@@ -94,11 +94,12 @@ export class Game {
      */
     setupDragDrop() {
         this.dragDrop = new DragDrop({
-            onDragStart: (el) => this.handleDragStart(el),
-            onDrop: (el, zone) => this.handleDrop(el, zone),
-            onDragEnd: () => this.handleDragEnd()
+            sequenceArea: this.elements.sequenceArea,
+            trashZone: this.elements.trashZone,
+            onAddCommand: (command, index) => this.addCommandAt(command, index),
+            onReorder: (from, to) => this.reorderCommand(from, to),
+            onRemove: (index) => this.removeCommandAt(index)
         });
-        this.dragDrop.init('.command-btn, .sequence-item', '.sequence-area, .trash-zone');
     }
 
     /**
@@ -462,6 +463,13 @@ export class Game {
                 this.elements.sequenceArea.appendChild(item);
             }
         });
+        
+        // Make items draggable for reordering
+        const sequenceItems = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
+        this.dragDrop.makeItemsDraggable(sequenceItems);
+        
+        // Scroll to bottom to show newest commands
+        this.elements.sequenceArea.scrollTop = this.elements.sequenceArea.scrollHeight;
     }
 
     /**
@@ -659,13 +667,46 @@ export class Game {
     }
 
     /**
+     * Add a command at a specific index (for drag-drop insertion)
+     * @param {string} type - Command type
+     * @param {number} index - Index to insert at
+     */
+    addCommandAt(type, index) {
+        if (this.isRunning) return;
+        
+        if (this.sequence.activeLoopIndex !== null) {
+            // Add to active loop instead
+            this.sequence.addCommand(type);
+        } else if (index !== undefined && index < this.sequence.commands.length) {
+            this.sequence.insertAt(index, type);
+        } else {
+            this.sequence.addCommand(type);
+        }
+        this.renderSequence();
+        this.audio.playTone(440, 0.05);
+    }
+
+    /**
+     * Reorder a command in the sequence
+     * @param {number} fromIndex - Source index
+     * @param {number} toIndex - Destination index
+     */
+    reorderCommand(fromIndex, toIndex) {
+        if (this.isRunning) return;
+        this.sequence.moveCommand(fromIndex, toIndex);
+        this.renderSequence();
+        this.audio.playTone(440, 0.05);
+    }
+
+    /**
      * Remove a command at index
      * @param {number} index - Command index to remove
      */
     removeCommandAt(index) {
+        if (this.isRunning) return;
         this.sequence.removeAt(index);
         this.renderSequence();
-        this.audio.playTone(330, 0.05); // Lower tone for removal
+        this.audio.playTone(330, 0.05);
     }
 
     /**
@@ -674,29 +715,6 @@ export class Game {
     clearSequence() {
         this.sequence.clear();
         this.renderSequence();
-    }
-
-    handleDragStart(element) {
-        // Visual feedback handled by CSS
-    }
-
-    handleDrop(element, dropZone) {
-        if (dropZone.classList.contains('trash-zone')) {
-            const index = parseInt(element.dataset.index, 10);
-            if (!isNaN(index)) {
-                this.sequence.removeAt(index);
-                this.renderSequence();
-            }
-        } else if (dropZone.classList.contains('sequence-area')) {
-            const command = element.dataset.command;
-            if (command) {
-                this.addCommand(command);
-            }
-        }
-    }
-
-    handleDragEnd() {
-        // Cleanup handled by DragDrop class
     }
 
     /**

@@ -5,6 +5,10 @@
     box-sizing: border-box;
 }
 
+html {
+    touch-action: manipulation;
+}
+
 body {
     font-family: 'Segoe UI', system-ui, sans-serif;
     background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%);
@@ -15,6 +19,7 @@ body {
     padding: 10px;
     overflow: hidden;
     overscroll-behavior: none;
+    touch-action: none;
 }
 
 /* ===== Game Container ===== */
