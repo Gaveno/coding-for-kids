@@ -118,6 +118,19 @@
 
 .loop-icon {
     font-size: 1.2rem;
+    cursor: grab;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.loop-icon:hover {
+    background: rgba(78, 205, 196, 0.3);
+    transform: scale(1.1);
+}
+
+.loop-icon:active {
+    cursor: grabbing;
 }
 
 .loop-iteration-controls {

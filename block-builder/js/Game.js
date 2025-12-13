@@ -464,8 +464,8 @@ export class Game {
             }
         });
         
-        // Make items draggable for reordering
-        const sequenceItems = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
+        // Make items draggable for reordering (only direct children, not items inside loops)
+        const sequenceItems = this.elements.sequenceArea.querySelectorAll(':scope > .sequence-item, :scope > .loop-block');
         this.dragDrop.makeItemsDraggable(sequenceItems);
         
         // Scroll to bottom to show newest commands
@@ -674,10 +674,9 @@ export class Game {
     addCommandAt(type, index) {
         if (this.isRunning) return;
         
-        if (this.sequence.activeLoopIndex !== null) {
-            // Add to active loop instead
-            this.sequence.addCommand(type);
-        } else if (index !== undefined && index < this.sequence.commands.length) {
+        // When drag-dropping to a specific position, always insert at that position
+        // (ignore active loop - user is explicitly choosing where to drop)
+        if (index !== undefined && index <= this.sequence.commands.length) {
             this.sequence.insertAt(index, type);
         } else {
             this.sequence.addCommand(type);

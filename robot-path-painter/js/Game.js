@@ -145,7 +145,8 @@ export class Game {
             }
         });
         
-        const sequenceItems = this.elements.sequenceArea.querySelectorAll('.sequence-item, .loop-block');
+        // Make items draggable for reordering (only direct children, not items inside loops)
+        const sequenceItems = this.elements.sequenceArea.querySelectorAll(':scope > .sequence-item, :scope > .loop-block');
         this.dragDrop.makeItemsDraggable(sequenceItems);
     }
 
@@ -272,10 +273,10 @@ export class Game {
     addCommandAt(direction, index) {
         if (this.isPlaying) return;
         
+        // When drag-dropping to a specific position, always insert at that position
+        // (ignore active loop - user is explicitly choosing where to drop)
         const cmd = { type: 'move', direction };
-        if (this.sequence.activeLoopIndex !== null) {
-            this.sequence.addCommand(direction);
-        } else if (index !== undefined && index < this.sequence.commands.length) {
+        if (index !== undefined && index <= this.sequence.commands.length) {
             this.sequence.insertAt(cmd, index);
         } else {
             this.sequence.addCommand(direction);
@@ -294,10 +295,10 @@ export class Game {
     addFireCommandAt(direction, index) {
         if (this.isPlaying) return;
         
+        // When drag-dropping to a specific position, always insert at that position
+        // (ignore active loop - user is explicitly choosing where to drop)
         const cmd = { type: 'fire', direction };
-        if (this.sequence.activeLoopIndex !== null) {
-            this.sequence.addFireCommand(direction);
-        } else if (index !== undefined && index < this.sequence.commands.length) {
+        if (index !== undefined && index <= this.sequence.commands.length) {
             this.sequence.insertAt(cmd, index);
         } else {
             this.sequence.addFireCommand(direction);

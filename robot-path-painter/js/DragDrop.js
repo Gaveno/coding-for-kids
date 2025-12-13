@@ -17,6 +17,9 @@ export class DragDrop {
         this.placeholder = null;
         this.dragThreshold = 15;
         
+        // Mouse drag tracking for sequence items
+        this.mouseDragPending = null;
+        
         this.setupPaletteButtons();
         this.setupSequenceArea();
         this.setupTrashZone();
@@ -43,6 +46,7 @@ export class DragDrop {
      * Setup the sequence area for receiving drops and reordering
      */
     setupSequenceArea() {
+        // Touch events
         document.addEventListener('touchmove', (e) => {
             if (!this.dragState) return;
             e.preventDefault();
@@ -56,6 +60,37 @@ export class DragDrop {
 
         document.addEventListener('touchcancel', () => {
             this.cancelDrag();
+        });
+
+        // Mouse events for desktop support
+        document.addEventListener('mousemove', (e) => {
+            // Check if we need to initiate a pending drag
+            if (this.mouseDragPending) {
+                const dx = Math.abs(e.clientX - this.mouseDragPending.startX);
+                const dy = Math.abs(e.clientY - this.mouseDragPending.startY);
+                
+                if (dx > this.dragThreshold || dy > this.dragThreshold) {
+                    const { item, index, isLoop } = this.mouseDragPending;
+                    this.startDrag(e, item, {
+                        type: 'reorder',
+                        index: index,
+                        element: item,
+                        isLoop: isLoop
+                    });
+                    item.classList.add('dragging');
+                    this.mouseDragPending = null;
+                }
+            }
+            
+            if (!this.dragState) return;
+            e.preventDefault();
+            this.handleDragMove(e);
+        });
+
+        document.addEventListener('mouseup', () => {
+            this.mouseDragPending = null;
+            if (!this.dragState) return;
+            this.handleDrop();
         });
     }
 
@@ -130,29 +165,38 @@ export class DragDrop {
             const index = parseInt(item.dataset.index);
             if (isNaN(index)) return;
             
-            let touchStartPos = null;
+            // For loop blocks, attach drag handlers to the loop icon in the header
+            const isLoopBlock = item.classList.contains('loop-block');
+            const dragTarget = isLoopBlock ? item.querySelector('.loop-icon') : item;
+            
+            if (!dragTarget) return;
+            
+            let startPos = null;
             let isDragging = false;
 
-            item.addEventListener('touchstart', (e) => {
+            // Touch events
+            dragTarget.addEventListener('touchstart', (e) => {
                 const touch = e.touches[0];
-                touchStartPos = { x: touch.clientX, y: touch.clientY };
+                startPos = { x: touch.clientX, y: touch.clientY };
                 isDragging = false;
             }, { passive: true });
 
-            item.addEventListener('touchmove', (e) => {
-                if (!touchStartPos) return;
+            dragTarget.addEventListener('touchmove', (e) => {
+                if (!startPos) return;
                 
                 const touch = e.touches[0];
-                const dx = Math.abs(touch.clientX - touchStartPos.x);
-                const dy = Math.abs(touch.clientY - touchStartPos.y);
+                const dx = Math.abs(touch.clientX - startPos.x);
+                const dy = Math.abs(touch.clientY - startPos.y);
                 
                 if (!isDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
                     isDragging = true;
                     e.preventDefault();
+                    e.stopPropagation();
                     this.startDrag(touch, item, {
                         type: 'reorder',
                         index: index,
-                        element: item
+                        element: item,
+                        isLoop: isLoopBlock
                     });
                     item.classList.add('dragging');
                 }
@@ -163,18 +207,32 @@ export class DragDrop {
                 }
             }, { passive: false });
 
-            item.addEventListener('touchend', () => {
+            dragTarget.addEventListener('touchend', (e) => {
                 if (isDragging && this.dragState) {
+                    e.stopPropagation();
                     this.handleDrop();
                 }
-                touchStartPos = null;
+                startPos = null;
                 isDragging = false;
             });
 
-            item.addEventListener('touchcancel', () => {
-                touchStartPos = null;
+            dragTarget.addEventListener('touchcancel', () => {
+                startPos = null;
                 isDragging = false;
                 this.cancelDrag();
+            });
+
+            // Mouse events - just record start, document handles the rest
+            dragTarget.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.mouseDragPending = {
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    item: item,
+                    index: index,
+                    isLoop: isLoopBlock
+                };
             });
         });
     }
@@ -190,7 +248,14 @@ export class DragDrop {
 
         this.dragElement = document.createElement('div');
         this.dragElement.className = 'drag-ghost';
-        this.dragElement.innerHTML = sourceElement.innerHTML;
+        
+        // For loop blocks, show simplified loop icon
+        if (data.isLoop) {
+            this.dragElement.innerHTML = '🔄';
+        } else {
+            this.dragElement.innerHTML = sourceElement.innerHTML;
+        }
+        
         this.dragElement.style.cssText = `
             position: fixed;
             left: ${touch.clientX - 30}px;
@@ -323,7 +388,7 @@ export class DragDrop {
     }
 
     getDropIndex(touch) {
-        const items = this.sequenceArea.querySelectorAll('.sequence-item:not(.drag-ghost), .loop-block');
+        const items = this.sequenceArea.querySelectorAll(':scope > .sequence-item:not(.drag-ghost), :scope > .loop-block');
         let dropIndex = 0;
 
         for (let i = 0; i < items.length; i++) {
@@ -353,7 +418,7 @@ export class DragDrop {
             this.createPlaceholder();
         }
 
-        const items = this.sequenceArea.querySelectorAll('.sequence-item:not(.dragging), .loop-block:not(.dragging)');
+        const items = this.sequenceArea.querySelectorAll(':scope > .sequence-item:not(.dragging), :scope > .loop-block:not(.dragging)');
         let insertBefore = null;
 
         for (const item of items) {

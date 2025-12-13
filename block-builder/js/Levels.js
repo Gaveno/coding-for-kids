@@ -22,16 +22,16 @@ export const LEVELS = [
         id: 1,
         supply: {
             columns: [
-                ['🧱', '🧱'],  // Column 0
-                [],            // Column 1
-                []             // Column 2
+                [],             // Column 0
+                [],             // Column 1
+                ['🧱', '🧱']   // Column 2
             ]
         },
         buildArea: { width: 4, height: 4 },
         target: [
             [0, 3, '🧱']  // One brick at bottom-left of build area
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 2: Stack of 2 - teaches repetition
@@ -39,9 +39,9 @@ export const LEVELS = [
         id: 2,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱'],
                 [],
-                []
+                [],
+                ['🧱', '🧱', '🧱']
             ]
         },
         buildArea: { width: 4, height: 4 },
@@ -49,7 +49,7 @@ export const LEVELS = [
             [0, 3, '🧱'],
             [0, 2, '🧱']
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 3: Row of 3 - horizontal placement
@@ -57,9 +57,9 @@ export const LEVELS = [
         id: 3,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱', '🧱'],
-                [],
-                []
+                ['🧱', '🧱'],
+                ['🧱', '🧱'],
+                ['🧱', '🧱']
             ]
         },
         buildArea: { width: 4, height: 4 },
@@ -68,7 +68,7 @@ export const LEVELS = [
             [1, 3, '🧱'],
             [2, 3, '🧱']
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 4: 2x2 square - grid thinking
@@ -76,9 +76,9 @@ export const LEVELS = [
         id: 4,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱', '🧱', '🧱'],
-                [],
-                []
+                ['🧱', '🧱'],
+                ['🧱', '🧱'],
+                ['🧱', '🧱']
             ]
         },
         buildArea: { width: 4, height: 4 },
@@ -86,7 +86,7 @@ export const LEVELS = [
             [0, 3, '🧱'], [1, 3, '🧱'],
             [0, 2, '🧱'], [1, 2, '🧱']
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 5: Wall with window - introduces windows
@@ -94,9 +94,9 @@ export const LEVELS = [
         id: 5,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱', '🧱', '🧱'],
+                ['🧱', '🧱', '🧱'],
                 ['🪟'],
-                []
+                ['🧱', '🧱', '🧱']
             ]
         },
         buildArea: { width: 4, height: 4 },
@@ -104,7 +104,7 @@ export const LEVELS = [
             [0, 3, '🧱'], [1, 3, '🧱'], [2, 3, '🧱'],
             [0, 2, '🧱'], [1, 2, '🪟'], [2, 2, '🧱']
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 6: Wall with door - introduces doors
@@ -112,9 +112,9 @@ export const LEVELS = [
         id: 6,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+                ['🧱', '🧱', '🧱', '🧱'],
                 ['🚪'],
-                []
+                ['🧱', '🧱', '🧱', '🧱']
             ]
         },
         buildArea: { width: 4, height: 4 },
@@ -123,7 +123,7 @@ export const LEVELS = [
             [0, 2, '🧱'], [1, 2, '🧱'], [2, 2, '🧱'],
             [0, 1, '🧱'], [1, 1, '🧱'], [2, 1, '🧱']
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 7: Simple house outline
@@ -131,9 +131,9 @@ export const LEVELS = [
         id: 7,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-                ['🪟', '🚪'],
-                []
+                ['🧱', '🧱', '🧱', '🧱', '🧱'],
+                ['🪟', '🚪', '🪟'],
+                ['🧱', '🧱', '🧱', '🧱', '🧱']
             ]
         },
         buildArea: { width: 4, height: 4 },
@@ -142,7 +142,7 @@ export const LEVELS = [
             [0, 2, '🪟'], [2, 2, '🪟'],
             [0, 1, '🧱'], [1, 1, '🧱'], [2, 1, '🧱']
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 8: House with roof - introduces roof pieces
@@ -150,8 +150,8 @@ export const LEVELS = [
         id: 8,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-                ['🪟', '🚪'],
+                ['🧱', '🧱', '🧱', '🧱', '🧱'],
+                ['🪟', '🪟', '🚪', '🧱'],
                 ['🔺', '🔺', '🔺']
             ]
         },
@@ -162,7 +162,7 @@ export const LEVELS = [
             [0, 2, '🧱'], [1, 2, '🧱'], [2, 2, '🧱'],
             [0, 1, '🔺'], [1, 1, '🔺'], [2, 1, '🔺']
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 9: Tall tower
@@ -170,9 +170,9 @@ export const LEVELS = [
         id: 9,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+                ['🧱', '🧱', '🧱', '🧱'],
                 ['🪟', '🪟'],
-                ['🔺']
+                ['🔺', '🧱', '🧱']
             ]
         },
         buildArea: { width: 4, height: 5 },
@@ -183,7 +183,7 @@ export const LEVELS = [
             [1, 1, '🪟'],
             [1, 0, '🔺']
         ],
-        craneStart: 0
+        craneStart: 2
     },
 
     // Level 10: Complete house - final challenge
@@ -191,9 +191,9 @@ export const LEVELS = [
         id: 10,
         supply: {
             columns: [
-                ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-                ['🪟', '🪟', '🚪'],
-                ['🔺', '🔺', '🔺', '🔺']
+                ['🧱', '🧱', '🧱', '🧱', '🧱'],
+                ['🪟', '🪟', '🚪', '🧱', '🧱'],
+                ['🔺', '🔺', '🔺', '🔺', '🧱', '🧱']
             ]
         },
         buildArea: { width: 4, height: 5 },
@@ -203,7 +203,7 @@ export const LEVELS = [
             [0, 2, '🧱'], [1, 2, '🧱'], [2, 2, '🧱'], [3, 2, '🧱'],
             [0, 1, '🔺'], [1, 1, '🔺'], [2, 1, '🔺'], [3, 1, '🔺']
         ],
-        craneStart: 0
+        craneStart: 2
     }
 ];
 
