@@ -1,0 +1,228 @@
+/* ===== Timeline Container ===== */
+.timeline-container {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-sm);
+    box-shadow: var(--shadow);
+}
+
+/* ===== Timeline Header ===== */
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.timeline-controls-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.length-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-light);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.length-btn:hover {
+    transform: scale(1.1);
+    background: var(--color-primary);
+}
+
+.length-btn:active {
+    transform: scale(0.95);
+}
+
+.beat-count {
+    font-size: 1.2rem;
+    color: var(--color-text);
+    min-width: 32px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.clear-btn {
+    font-size: 1.4rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.clear-btn:hover {
+    transform: scale(1.1);
+    background: rgba(255, 107, 107, 0.2);
+}
+
+/* ===== Timeline Scroll ===== */
+.timeline-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-light);
+}
+
+/* ===== Timeline ===== */
+.timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: fit-content;
+    padding-left: var(--track-label-width);
+}
+
+/* ===== Playhead ===== */
+.playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-warning);
+    border-radius: 2px;
+    z-index: 10;
+    opacity: 0;
+    left: var(--track-label-width);
+    box-shadow: 0 0 8px var(--color-warning);
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+}
+
+.playhead.active {
+    opacity: 1;
+}
+
+/* ===== Beat Markers ===== */
+.beat-markers {
+    display: flex;
+    height: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.beat-marker {
+    width: var(--cell-size);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.beat-marker.downbeat {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: bold;
+    border-right-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== Track ===== */
+.track {
+    display: flex;
+    align-items: stretch;
+    min-height: var(--cell-size);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.track:last-child {
+    border-bottom: none;
+}
+
+.track-label {
+    position: absolute;
+    left: 0;
+    width: var(--track-label-width);
+    height: var(--cell-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: var(--color-surface);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.track-cells {
+    display: flex;
+    flex: 1;
+}
+
+/* Track backgrounds */
+.track[data-track="melody"] {
+    background: var(--track-melody);
+}
+
+.track[data-track="bass"] {
+    background: var(--track-bass);
+}
+
+.track[data-track="percussion"] {
+    background: var(--track-percussion);
+}
+
+/* ===== Track Cell ===== */
+.track-cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    position: relative;
+}
+
+.track-cell:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.track-cell.downbeat {
+    border-right-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Cell with note */
+.track-cell.has-note {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.track-cell .cell-note {
+    font-size: 1.3rem;
+    pointer-events: none;
+    animation: notePopIn 0.2s ease-out;
+}
+
+/* Drop target state */
+.track-cell.drop-target {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 0 0 2px var(--color-success);
+}
+
+/* Playing state */
+.track-cell.playing {
+    background: rgba(255, 230, 109, 0.4);
+    box-shadow: inset 0 0 10px var(--color-warning);
+}
+
+@keyframes notePopIn {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+}

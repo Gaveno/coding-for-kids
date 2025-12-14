@@ -1,51 +1,48 @@
 /**
- * Character.js - Manages the dancing character
+ * Character.js - Manages multiple dancing characters
  */
 class Character {
-    constructor(element) {
-        this.element = element;
-        this.dances = ['jump', 'spin', 'wiggle', 'bounce', 'sway', 'wave'];
-        this.colorToDance = {
-            'red': 'jump',
-            'orange': 'spin',
-            'yellow': 'wiggle',
-            'green': 'bounce',
-            'blue': 'sway',
-            'purple': 'wave'
-        };
-        this.isAnimating = false;
+    constructor(mainEl, leftEl, rightEl) {
+        this.main = mainEl;
+        this.left = leftEl;
+        this.right = rightEl;
         
-        // Start with idle animation
         this.setIdle(true);
     }
 
     /**
-     * Perform a dance move based on color
-     * @param {string} color - Color of the note
-     * @returns {Promise} - Resolves when animation completes
+     * Make characters dance based on which tracks are playing
+     * @param {Object} playing - { melody: bool, bass: bool, percussion: bool }
      */
-    dance(color) {
-        return new Promise((resolve) => {
-            if (this.isAnimating) {
-                resolve();
-                return;
-            }
+    dance(playing) {
+        // Main character dances on bass
+        if (playing.bass) {
+            this.triggerDance(this.main);
+        }
+        
+        // Left character dances on melody
+        if (playing.melody) {
+            this.triggerDance(this.left);
+        }
+        
+        // Right character dances on percussion
+        if (playing.percussion) {
+            this.triggerDance(this.right);
+        }
+    }
 
-            this.isAnimating = true;
-            this.setIdle(false);
-
-            const danceMove = this.colorToDance[color] || 'jump';
-            const className = `dance-${danceMove}`;
-
-            this.element.classList.add(className);
-
-            // Remove class after animation completes
-            setTimeout(() => {
-                this.element.classList.remove(className);
-                this.isAnimating = false;
-                resolve();
-            }, 400);
-        });
+    /**
+     * Trigger dance animation on a character
+     * @param {HTMLElement} element - Character element
+     */
+    triggerDance(element) {
+        element.classList.remove('idle');
+        element.classList.remove('dancing');
+        
+        // Force reflow to restart animation
+        void element.offsetWidth;
+        
+        element.classList.add('dancing');
     }
 
     /**
@@ -53,10 +50,15 @@ class Character {
      */
     celebrate() {
         this.setIdle(false);
-        this.element.classList.add('celebrate');
+        
+        [this.main, this.left, this.right].forEach(el => {
+            el.classList.add('celebrate');
+        });
         
         setTimeout(() => {
-            this.element.classList.remove('celebrate');
+            [this.main, this.left, this.right].forEach(el => {
+                el.classList.remove('celebrate');
+            });
             this.setIdle(true);
         }, 800);
     }
@@ -66,22 +68,25 @@ class Character {
      * @param {boolean} idle - Whether to show idle animation
      */
     setIdle(idle) {
-        if (idle) {
-            this.element.classList.add('idle');
-        } else {
-            this.element.classList.remove('idle');
-        }
+        [this.main, this.left, this.right].forEach(el => {
+            if (idle) {
+                el.classList.add('idle');
+                el.classList.remove('dancing');
+            } else {
+                el.classList.remove('idle');
+            }
+        });
     }
 
     /**
-     * Reset character to initial state
+     * Reset characters to initial state
      */
     reset() {
-        this.isAnimating = false;
-        this.element.className = 'character';
+        [this.main, this.left, this.right].forEach(el => {
+            el.className = el.className.replace(/\s*(dancing|celebrate)\s*/g, ' ');
+        });
         this.setIdle(true);
     }
 }
 
-// Export for use in other modules
 window.Character = Character;

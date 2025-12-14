@@ -4,17 +4,30 @@
 class Game {
     constructor() {
         this.audio = new Audio();
-        this.sequencer = new Sequencer();
+        this.timeline = null;
         this.character = null;
-        this.isPlaying = false;
-        this.currentNoteIndex = -1;
+        this.dragDrop = null;
         
-        // DOM Elements
-        this.sequencerTrack = null;
-        this.playBtn = null;
-        this.stopBtn = null;
-        this.clearBtn = null;
-        this.soundBlocks = null;
+        this.isPlaying = false;
+        this.isLooping = false;
+        this.currentBeat = 0;
+        this.playbackInterval = null;
+        this.animationFrame = null;
+        
+        // Speed settings (ms per beat)
+        this.speeds = [
+            { ms: 200, icon: '🐢' },
+            { ms: 120, icon: '🚶' },
+            { ms: 80, icon: '🏃' },
+            { ms: 50, icon: '⚡' }
+        ];
+        this.currentSpeedIndex = 1; // Default: medium
+        
+        // Beat lengths
+        this.beatLengths = [8, 16, 24, 32];
+        
+        // DOM elements
+        this.elements = {};
     }
 
     /**
@@ -22,7 +35,7 @@ class Game {
      */
     init() {
         this.cacheElements();
-        this.character = new Character(document.getElementById('character'));
+        this.initComponents();
         this.bindEvents();
     }
 
@@ -30,187 +43,300 @@ class Game {
      * Cache DOM elements
      */
     cacheElements() {
-        this.sequencerTrack = document.getElementById('sequencerTrack');
-        this.playBtn = document.getElementById('playBtn');
-        this.stopBtn = document.getElementById('stopBtn');
-        this.clearBtn = document.getElementById('clearBtn');
-        this.soundBlocks = document.querySelectorAll('.sound-block');
+        this.elements = {
+            playBtn: document.getElementById('playBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            speedBtn: document.getElementById('speedBtn'),
+            loopBtn: document.getElementById('loopBtn'),
+            clearBtn: document.getElementById('clearBtn'),
+            lengthUpBtn: document.getElementById('lengthUpBtn'),
+            lengthDownBtn: document.getElementById('lengthDownBtn'),
+            beatCount: document.getElementById('beatCount'),
+            timeline: document.getElementById('timeline'),
+            timelineScroll: document.getElementById('timelineScroll'),
+            beatMarkers: document.getElementById('beatMarkers'),
+            playhead: document.getElementById('playhead'),
+            cellsMelody: document.getElementById('cellsMelody'),
+            cellsBass: document.getElementById('cellsBass'),
+            cellsPercussion: document.getElementById('cellsPercussion'),
+            palette: document.querySelector('.palette'),
+            characterMain: document.getElementById('characterMain'),
+            characterLeft: document.getElementById('characterLeft'),
+            characterRight: document.getElementById('characterRight')
+        };
+    }
+
+    /**
+     * Initialize sub-components
+     */
+    initComponents() {
+        // Character manager
+        this.character = new Character(
+            this.elements.characterMain,
+            this.elements.characterLeft,
+            this.elements.characterRight
+        );
+        
+        // Timeline
+        this.timeline = new Timeline({
+            container: this.elements.timeline,
+            scrollContainer: this.elements.timelineScroll,
+            beatMarkers: this.elements.beatMarkers,
+            playhead: this.elements.playhead,
+            cellsMelody: this.elements.cellsMelody,
+            cellsBass: this.elements.cellsBass,
+            cellsPercussion: this.elements.cellsPercussion,
+            onCellClick: (track, beat, note) => this.handleCellClick(track, beat)
+        });
+        
+        // Drag and drop
+        this.dragDrop = new DragDrop({
+            palette: this.elements.palette,
+            timeline: this.timeline,
+            onPreview: (note, type) => this.previewNote(note, type),
+            onDrop: (track, beat, note, icon) => this.handleNoteDrop(track, beat, note, icon)
+        });
     }
 
     /**
      * Bind event listeners
      */
     bindEvents() {
-        // Sound block clicks
-        this.soundBlocks.forEach(block => {
-            block.addEventListener('click', () => this.handleBlockClick(block));
-            block.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.handleBlockClick(block);
-            });
-        });
-
-        // Control buttons
-        this.playBtn.addEventListener('click', () => this.play());
-        this.stopBtn.addEventListener('click', () => this.stop());
-        this.clearBtn.addEventListener('click', () => this.clear());
-
+        this.elements.playBtn.addEventListener('click', () => this.togglePlay());
+        this.elements.stopBtn.addEventListener('click', () => this.stop());
+        this.elements.speedBtn.addEventListener('click', () => this.cycleSpeed());
+        this.elements.loopBtn.addEventListener('click', () => this.toggleLoop());
+        this.elements.clearBtn.addEventListener('click', () => this.clear());
+        this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
+        this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
+        
         // Initialize audio on first interaction
-        document.addEventListener('click', () => this.audio.init(), { once: true });
-        document.addEventListener('touchstart', () => this.audio.init(), { once: true });
-    }
-
-    /**
-     * Handle sound block click
-     * @param {HTMLElement} block - The clicked block element
-     */
-    handleBlockClick(block) {
-        const note = block.dataset.note;
-        const color = block.dataset.color;
-
-        // Play the note immediately
-        this.audio.playNote(note);
-        
-        // Visual feedback on block
-        block.classList.add('playing');
-        setTimeout(() => block.classList.remove('playing'), 300);
-
-        // Add to sequence
-        if (this.sequencer.addNote(note, color)) {
-            this.renderSequence();
-        }
-    }
-
-    /**
-     * Render the sequence track
-     */
-    renderSequence() {
-        this.sequencerTrack.innerHTML = '';
-        
-        const notes = this.sequencer.getNotes();
-        notes.forEach((noteObj, index) => {
-            const noteEl = document.createElement('div');
-            noteEl.className = 'seq-note';
-            noteEl.dataset.color = noteObj.color;
-            noteEl.dataset.index = index;
-            noteEl.textContent = this.getEmojiForColor(noteObj.color);
-            
-            // Click to remove
-            noteEl.addEventListener('click', () => this.removeNote(index));
-            
-            this.sequencerTrack.appendChild(noteEl);
-        });
-    }
-
-    /**
-     * Get emoji for a color
-     * @param {string} color - Color name
-     * @returns {string} - Emoji
-     */
-    getEmojiForColor(color) {
-        const emojis = {
-            'red': '🔴',
-            'orange': '🟠',
-            'yellow': '🟡',
-            'green': '🟢',
-            'blue': '🔵',
-            'purple': '🟣'
+        const initAudio = () => {
+            this.audio.init();
+            document.removeEventListener('click', initAudio);
+            document.removeEventListener('touchstart', initAudio);
         };
-        return emojis[color] || '⚪';
+        document.addEventListener('click', initAudio, { once: true });
+        document.addEventListener('touchstart', initAudio, { once: true });
     }
 
     /**
-     * Remove a note from the sequence
-     * @param {number} index - Index to remove
+     * Preview a note (tap on palette)
      */
-    removeNote(index) {
+    previewNote(note, type) {
+        this.audio.playNote(note, type);
+    }
+
+    /**
+     * Handle cell click (remove note)
+     */
+    handleCellClick(track, beat) {
         if (this.isPlaying) return;
-        
-        this.sequencer.removeNote(index);
-        this.renderSequence();
+        this.timeline.clearNote(track, beat);
     }
 
     /**
-     * Play the sequence
+     * Handle note drop from palette
      */
-    async play() {
-        if (this.isPlaying || this.sequencer.isEmpty()) return;
+    handleNoteDrop(track, beat, note, icon) {
+        this.timeline.setNote(track, beat, note, icon);
+        this.audio.playNote(note, track);
+    }
 
+    /**
+     * Toggle play/pause
+     */
+    togglePlay() {
+        if (this.isPlaying) {
+            this.pause();
+        } else {
+            this.play();
+        }
+    }
+
+    /**
+     * Start playback
+     */
+    play() {
+        if (this.timeline.isEmpty()) return;
+        
         this.isPlaying = true;
-        this.playBtn.classList.add('playing');
+        this.elements.playBtn.classList.add('playing');
+        this.elements.playBtn.textContent = '⏸️';
         this.character.setIdle(false);
+        
+        this.timeline.setPlayheadVisible(true);
+        this.startPlayback();
+    }
 
-        const notes = this.sequencer.getNotes();
-        const noteElements = this.sequencerTrack.querySelectorAll('.seq-note');
-
-        for (let i = 0; i < notes.length; i++) {
-            if (!this.isPlaying) break;
-
-            this.currentNoteIndex = i;
-            const noteObj = notes[i];
-            const noteEl = noteElements[i];
-
-            // Highlight current note
-            noteEl.classList.add('active');
-
-            // Play sound and animate character
-            this.audio.playNote(noteObj.note, 0.4);
-            await this.character.dance(noteObj.color);
-
-            // Remove highlight
-            noteEl.classList.remove('active');
-
-            // Wait before next note
-            if (i < notes.length - 1) {
-                await this.delay(100);
-            }
-        }
-
-        // Celebrate at the end
-        if (this.isPlaying && notes.length > 0) {
-            this.character.celebrate();
-            this.audio.playSuccess();
-        }
-
+    /**
+     * Pause playback
+     */
+    pause() {
         this.isPlaying = false;
-        this.currentNoteIndex = -1;
-        this.playBtn.classList.remove('playing');
-        this.character.setIdle(true);
+        this.elements.playBtn.classList.remove('playing');
+        this.elements.playBtn.textContent = '▶️';
+        
+        if (this.playbackInterval) {
+            clearInterval(this.playbackInterval);
+            this.playbackInterval = null;
+        }
+        
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
     }
 
     /**
      * Stop playback
      */
     stop() {
-        this.isPlaying = false;
-        this.currentNoteIndex = -1;
-        this.playBtn.classList.remove('playing');
+        this.pause();
+        this.currentBeat = 0;
+        this.timeline.highlightBeat(-1);
+        this.timeline.setPlayheadVisible(false);
+        this.timeline.updatePlayheadPosition(0);
         this.character.reset();
-
-        // Remove all active states
-        const noteElements = this.sequencerTrack.querySelectorAll('.seq-note');
-        noteElements.forEach(el => el.classList.remove('active'));
     }
 
     /**
-     * Clear the sequence
+     * Start the playback loop
      */
-    clear() {
+    startPlayback() {
+        const beatDuration = this.speeds[this.currentSpeedIndex].ms;
+        let lastBeatTime = performance.now();
+        let beatProgress = 0;
+        
+        const tick = (now) => {
+            if (!this.isPlaying) return;
+            
+            const elapsed = now - lastBeatTime;
+            beatProgress = elapsed / beatDuration;
+            
+            // Update playhead position smoothly
+            const smoothBeat = this.currentBeat + Math.min(beatProgress, 1);
+            this.timeline.updatePlayheadPosition(smoothBeat);
+            
+            // Check if we've completed a beat
+            if (elapsed >= beatDuration) {
+                lastBeatTime = now;
+                beatProgress = 0;
+                
+                this.playBeat(this.currentBeat);
+                this.timeline.highlightBeat(this.currentBeat);
+                this.timeline.scrollToBeat(this.currentBeat);
+                
+                this.currentBeat++;
+                
+                // Check if we've reached the end
+                if (this.currentBeat >= this.timeline.getBeatCount()) {
+                    if (this.isLooping) {
+                        this.currentBeat = 0;
+                    } else {
+                        this.onPlaybackComplete();
+                        return;
+                    }
+                }
+            }
+            
+            this.animationFrame = requestAnimationFrame(tick);
+        };
+        
+        // Play first beat immediately
+        this.playBeat(this.currentBeat);
+        this.timeline.highlightBeat(this.currentBeat);
+        
+        this.animationFrame = requestAnimationFrame(tick);
+    }
+
+    /**
+     * Play sounds for a beat
+     */
+    playBeat(beat) {
+        const notes = this.timeline.getNotesAtBeat(beat);
+        const playing = {
+            melody: false,
+            bass: false,
+            percussion: false
+        };
+        
+        if (notes.melody) {
+            this.audio.playNote(notes.melody.note, 'melody');
+            playing.melody = true;
+        }
+        
+        if (notes.bass) {
+            this.audio.playNote(notes.bass.note, 'bass');
+            playing.bass = true;
+        }
+        
+        if (notes.percussion) {
+            this.audio.playNote(notes.percussion.note, 'percussion');
+            playing.percussion = true;
+        }
+        
+        // Animate characters if any notes played
+        if (playing.melody || playing.bass || playing.percussion) {
+            this.character.dance(playing);
+        }
+    }
+
+    /**
+     * Handle playback completion
+     */
+    onPlaybackComplete() {
+        this.stop();
+        this.character.celebrate();
+        this.audio.playSuccess();
+    }
+
+    /**
+     * Cycle through speed options
+     */
+    cycleSpeed() {
+        this.currentSpeedIndex = (this.currentSpeedIndex + 1) % this.speeds.length;
+        this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
+    }
+
+    /**
+     * Toggle loop mode
+     */
+    toggleLoop() {
+        this.isLooping = !this.isLooping;
+        this.elements.loopBtn.classList.toggle('active', this.isLooping);
+    }
+
+    /**
+     * Change beat length
+     * @param {number} direction - 1 for longer, -1 for shorter
+     */
+    changeLength(direction) {
         if (this.isPlaying) return;
         
-        this.sequencer.clear();
-        this.renderSequence();
+        const currentLength = this.timeline.getBeatCount();
+        const currentIndex = this.beatLengths.indexOf(currentLength);
+        let newIndex = currentIndex + direction;
+        
+        // Clamp to valid range
+        newIndex = Math.max(0, Math.min(this.beatLengths.length - 1, newIndex));
+        
+        if (newIndex !== currentIndex) {
+            const newLength = this.beatLengths[newIndex];
+            this.timeline.setBeatCount(newLength);
+            this.elements.beatCount.textContent = newLength;
+        }
     }
 
     /**
-     * Delay helper
-     * @param {number} ms - Milliseconds to wait
-     * @returns {Promise}
+     * Clear all tracks
      */
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    clear() {
+        if (this.isPlaying) {
+            this.stop();
+        }
+        this.timeline.clearAll();
     }
 }
 
-// Export for use in other modules
 window.Game = Game;

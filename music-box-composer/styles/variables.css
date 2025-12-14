@@ -5,18 +5,28 @@
     --color-secondary: #FF6B6B;
     --color-success: #4ECDC4;
     --color-warning: #FFE66D;
+    --color-danger: #FF6B6B;
     --color-bg: #1a1a2e;
     --color-surface: #16213e;
     --color-surface-light: #0f3460;
     --color-text: #ffffff;
 
-    /* Note Colors */
+    /* Note Colors - Melody */
     --note-red: #FF6B6B;
     --note-orange: #FF9F43;
     --note-yellow: #FFE66D;
     --note-green: #4ECDC4;
+    
+    /* Note Colors - Bass */
     --note-blue: #6C63FF;
     --note-purple: #A55EEA;
+    --note-brown: #8B5A2B;
+    --note-black: #2C3E50;
+    
+    /* Track Colors */
+    --track-melody: rgba(255, 107, 107, 0.3);
+    --track-bass: rgba(108, 99, 255, 0.3);
+    --track-percussion: rgba(78, 205, 196, 0.3);
 
     /* Spacing */
     --spacing-xs: 4px;
@@ -25,10 +35,14 @@
     --spacing-lg: 16px;
     --spacing-xl: 24px;
 
+    /* Sizes */
+    --cell-size: 44px;
+    --track-label-width: 36px;
+
     /* Border Radius */
     --radius-sm: 8px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
     --radius-full: 50%;
 
     /* Shadows */
@@ -36,6 +50,12 @@
     --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
 
     /* Transitions */
-    --transition-fast: 0.2s ease;
+    --transition-fast: 0.15s ease;
     --transition-normal: 0.3s ease;
+    
+    /* Speed settings (ms per beat) */
+    --speed-slow: 200ms;
+    --speed-medium: 120ms;
+    --speed-fast: 80ms;
+    --speed-veryfast: 50ms;
 }

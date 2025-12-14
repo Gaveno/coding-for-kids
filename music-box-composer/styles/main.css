@@ -5,25 +5,34 @@
     box-sizing: border-box;
 }
 
+html {
+    touch-action: manipulation;
+}
+
 body {
     font-family: 'Segoe UI', system-ui, sans-serif;
     background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%);
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     padding: var(--spacing-sm);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* ===== Game Container ===== */
 .game-container {
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
+    padding-bottom: var(--spacing-xl);
 }
 
 /* ===== Header ===== */
@@ -32,15 +41,20 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: var(--spacing-sm);
+    padding: var(--spacing-xs);
 }
 
 .home-btn {
     position: absolute;
     left: 0;
-    font-size: 2rem;
+    font-size: 1.8rem;
     text-decoration: none;
     transition: transform var(--transition-fast);
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .home-btn:hover {
@@ -48,5 +62,21 @@ body {
 }
 
 .game-title {
-    font-size: 3rem;
+    font-size: 2.5rem;
+}
+
+/* ===== Utility Classes ===== */
+.hidden {
+    display: none !important;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
 }

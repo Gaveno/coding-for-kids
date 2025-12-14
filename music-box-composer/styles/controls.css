@@ -2,16 +2,16 @@
 .controls {
     display: flex;
     justify-content: center;
-    gap: var(--spacing-lg);
-    padding: var(--spacing-md);
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
 }
 
 .control-btn {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     border: none;
     border-radius: var(--radius-full);
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -28,16 +28,36 @@
     transform: scale(0.95);
 }
 
+/* Play Button */
 .play-btn {
     background: linear-gradient(135deg, var(--color-success) 0%, #3eb5aa 100%);
+    width: 70px;
+    height: 70px;
+    font-size: 2rem;
 }
 
 .play-btn.playing {
     background: linear-gradient(135deg, var(--color-warning) 0%, #e5cc55 100%);
 }
 
+/* Stop Button */
 .stop-btn {
     background: linear-gradient(135deg, var(--color-secondary) 0%, #e55555 100%);
+}
+
+/* Speed Button */
+.speed-btn {
+    background: linear-gradient(135deg, var(--color-primary) 0%, #5550e5 100%);
+}
+
+/* Loop Button */
+.loop-btn {
+    background: linear-gradient(135deg, #888 0%, #666 100%);
+}
+
+.loop-btn.active {
+    background: linear-gradient(135deg, var(--color-success) 0%, #3eb5aa 100%);
+    box-shadow: 0 0 15px var(--color-success);
 }
 
 .control-btn:disabled {

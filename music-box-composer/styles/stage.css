@@ -1,0 +1,112 @@
+/* ===== Stage ===== */
+.stage {
+    background: linear-gradient(180deg, #2d1b4e 0%, #1a1a2e 100%);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Stage Floor */
+.stage-floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(180deg, #3d2b5e 0%, #2d1b4e 100%);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ===== Characters Container ===== */
+.characters {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    z-index: 1;
+    padding-bottom: var(--spacing-sm);
+}
+
+/* ===== Character Base ===== */
+.character {
+    line-height: 1;
+    transition: transform var(--transition-fast);
+    will-change: transform;
+}
+
+/* Main Character - Center, larger */
+.character.main {
+    font-size: 4rem;
+}
+
+/* Backup Characters - Smaller, raised */
+.character.backup {
+    font-size: 2.5rem;
+    transform: translateY(-10px);
+}
+
+.character.backup.left {
+    order: -1;
+}
+
+.character.backup.right {
+    order: 1;
+}
+
+/* ===== Dance Animations ===== */
+.character.dancing {
+    animation: characterBounce 0.3s ease-out;
+}
+
+.character.main.dancing {
+    animation: characterBounceBig 0.3s ease-out;
+}
+
+/* Idle animation */
+.character.idle {
+    animation: idle 2s ease-in-out infinite;
+}
+
+.character.backup.idle {
+    animation: idleSmall 2s ease-in-out infinite;
+}
+
+/* Celebration */
+.character.celebrate {
+    animation: celebrate 0.8s ease-out;
+}
+
+@keyframes characterBounce {
+    0%, 100% { transform: translateY(-10px); }
+    50% { transform: translateY(-25px); }
+}
+
+@keyframes characterBounceBig {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes idle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes idleSmall {
+    0%, 100% { transform: translateY(-10px); }
+    50% { transform: translateY(-15px); }
+}
+
+@keyframes celebrate {
+    0% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.2) rotate(-10deg); }
+    50% { transform: scale(1.3) rotate(10deg); }
+    75% { transform: scale(1.2) rotate(-5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
