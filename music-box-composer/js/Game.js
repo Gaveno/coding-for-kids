@@ -346,28 +346,119 @@ class Game {
         this.updateURL();
     }
 
+    // Note mappings for compact encoding (index 0 = empty)
+    static MELODY_NOTES = ['', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
+    static BASS_NOTES = ['', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3'];
+    static PERC_NOTES = ['', 'kick', 'snare', 'hihat', 'clap'];
+    static MELODY_ICONS = ['', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚪', '❤️'];
+    static BASS_ICONS = ['', '🟦', '🟪', '🟫', '⬛', '💙', '💜'];
+    static PERC_ICONS = ['', '🥁', '🪘', '🔔', '👏'];
+
     /**
-     * Serialize current state to a compact URL-safe string
-     * Format: speed(1)|loop(1)|length(2)|melody|bass|percussion
-     * Each track: beat:noteIndex pairs separated by commas
+     * Serialize current state to a compact binary URL-safe string
+     * Header: 5 bits (speed:2, loop:1, lengthIndex:2)
+     * Per beat: 10 bits (melody:4, bass:3, percussion:3)
      * @returns {string}
      */
     serializeState() {
-        const state = {
-            s: this.currentSpeedIndex,
-            l: this.isLooping ? 1 : 0,
-            b: this.timeline.getBeatCount(),
-            t: this.timeline.serializeTracks()
-        };
+        const beatCount = this.timeline.getBeatCount();
+        const lengthIndex = this.beatLengths.indexOf(beatCount);
         
-        const json = JSON.stringify(state);
-        // Use encodeURIComponent to handle Unicode (emojis), then base64 encode
-        const encoded = btoa(encodeURIComponent(json));
-        return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        // Build bit array
+        const bits = [];
+        
+        // Header: speed (2 bits), loop (1 bit), length index (2 bits)
+        this.pushBits(bits, this.currentSpeedIndex, 2);
+        this.pushBits(bits, this.isLooping ? 1 : 0, 1);
+        this.pushBits(bits, lengthIndex, 2);
+        
+        // Track data for each beat
+        const tracks = this.timeline.serializeTracks();
+        for (let i = 0; i < beatCount; i++) {
+            const melodyNote = this.findNoteAtBeat(tracks.melody, i);
+            const bassNote = this.findNoteAtBeat(tracks.bass, i);
+            const percNote = this.findNoteAtBeat(tracks.percussion, i);
+            
+            const melodyIdx = Game.MELODY_NOTES.indexOf(melodyNote);
+            const bassIdx = Game.BASS_NOTES.indexOf(bassNote);
+            const percIdx = Game.PERC_NOTES.indexOf(percNote);
+            
+            this.pushBits(bits, Math.max(0, melodyIdx), 4);
+            this.pushBits(bits, Math.max(0, bassIdx), 3);
+            this.pushBits(bits, Math.max(0, percIdx), 3);
+        }
+        
+        // Convert bits to bytes
+        const bytes = this.bitsToBytes(bits);
+        
+        // Convert to URL-safe base64
+        let base64 = '';
+        for (let i = 0; i < bytes.length; i++) {
+            base64 += String.fromCharCode(bytes[i]);
+        }
+        return btoa(base64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
     /**
-     * Deserialize state from URL string
+     * Find note value at a specific beat from serialized track data
+     */
+    findNoteAtBeat(trackData, beat) {
+        for (const [b, note] of trackData) {
+            if (b === beat) return note;
+        }
+        return '';
+    }
+
+    /**
+     * Push bits to bit array (MSB first)
+     */
+    pushBits(bits, value, count) {
+        for (let i = count - 1; i >= 0; i--) {
+            bits.push((value >> i) & 1);
+        }
+    }
+
+    /**
+     * Read bits from bit array
+     */
+    readBits(bits, offset, count) {
+        let value = 0;
+        for (let i = 0; i < count; i++) {
+            value = (value << 1) | (bits[offset + i] || 0);
+        }
+        return value;
+    }
+
+    /**
+     * Convert bit array to byte array
+     */
+    bitsToBytes(bits) {
+        const bytes = [];
+        for (let i = 0; i < bits.length; i += 8) {
+            let byte = 0;
+            for (let j = 0; j < 8; j++) {
+                byte = (byte << 1) | (bits[i + j] || 0);
+            }
+            bytes.push(byte);
+        }
+        return bytes;
+    }
+
+    /**
+     * Convert byte array to bit array
+     */
+    bytesToBits(bytes) {
+        const bits = [];
+        for (const byte of bytes) {
+            for (let i = 7; i >= 0; i--) {
+                bits.push((byte >> i) & 1);
+            }
+        }
+        return bits;
+    }
+
+    /**
+     * Deserialize state from compact binary URL string
      * @param {string} encoded - Encoded state string
      * @returns {Object|null}
      */
@@ -377,9 +468,51 @@ class Game {
             let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
             while (base64.length % 4) base64 += '=';
             
-            // Decode base64, then decodeURIComponent to restore Unicode
-            const json = decodeURIComponent(atob(base64));
-            return JSON.parse(json);
+            // Decode base64 to bytes
+            const decoded = atob(base64);
+            const bytes = [];
+            for (let i = 0; i < decoded.length; i++) {
+                bytes.push(decoded.charCodeAt(i));
+            }
+            
+            // Convert to bits
+            const bits = this.bytesToBits(bytes);
+            let offset = 0;
+            
+            // Read header
+            const speedIndex = this.readBits(bits, offset, 2); offset += 2;
+            const loop = this.readBits(bits, offset, 1); offset += 1;
+            const lengthIndex = this.readBits(bits, offset, 2); offset += 2;
+            
+            const beatCount = this.beatLengths[lengthIndex] || 16;
+            
+            // Read track data
+            const melody = [];
+            const bass = [];
+            const percussion = [];
+            
+            for (let i = 0; i < beatCount; i++) {
+                const melodyIdx = this.readBits(bits, offset, 4); offset += 4;
+                const bassIdx = this.readBits(bits, offset, 3); offset += 3;
+                const percIdx = this.readBits(bits, offset, 3); offset += 3;
+                
+                if (melodyIdx > 0 && melodyIdx < Game.MELODY_NOTES.length) {
+                    melody.push([i, Game.MELODY_NOTES[melodyIdx], Game.MELODY_ICONS[melodyIdx]]);
+                }
+                if (bassIdx > 0 && bassIdx < Game.BASS_NOTES.length) {
+                    bass.push([i, Game.BASS_NOTES[bassIdx], Game.BASS_ICONS[bassIdx]]);
+                }
+                if (percIdx > 0 && percIdx < Game.PERC_NOTES.length) {
+                    percussion.push([i, Game.PERC_NOTES[percIdx], Game.PERC_ICONS[percIdx]]);
+                }
+            }
+            
+            return {
+                s: speedIndex,
+                l: loop,
+                b: beatCount,
+                t: { melody, bass, percussion }
+            };
         } catch (e) {
             console.warn('Failed to decode state from URL:', e);
             return null;
