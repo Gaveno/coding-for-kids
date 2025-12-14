@@ -97,3 +97,41 @@ element.addEventListener('mousedown', handleClick); // Misses touch!
 
 - No npm packages, CDN imports, or frameworks
 - Vanilla JavaScript only
+
+## Shared Modules (Use Before Creating Game-Specific)
+
+For visual programming "language" elements, **always extend shared base classes**:
+
+```javascript
+// ✅ DO: Extend shared base class
+import { BaseDragDrop } from '../../shared/js/BaseDragDrop.js';
+
+export class DragDrop extends BaseDragDrop {
+    setupPaletteButtons() {
+        // Game-specific command buttons
+    }
+    
+    handleDrop(index, dropTarget) {
+        // Game-specific drop behavior
+    }
+}
+```
+
+### Shared JavaScript Modules
+| Module | Contains |
+|--------|----------|
+| `shared/js/BaseDragDrop.js` | Drag-drop infrastructure, trash zones, placeholders, reordering |
+| `shared/js/BaseSequence.js` | Command sequences, loop management, insertion/removal |
+
+### Abstract Methods to Implement
+When extending shared classes, implement these game-specific methods:
+
+**BaseDragDrop:**
+- `setupPaletteButtons()` - Wire up command palette buttons
+- `startDrag(item, e)` - Initialize drag for game-specific item types
+- `handleDrop(index, dropTarget)` - Handle drops with game-specific logic
+- `getDragGhostContent(item)` - Return content for drag ghost element
+
+**BaseSequence:**
+- `addCommand(type)` - Add game-specific command type
+- `flatten()` - Convert sequence to executable array

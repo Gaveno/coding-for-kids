@@ -32,6 +32,35 @@ Educational game suite teaching programming concepts to **pre-literate children*
 - **Standard duration** - Use 300ms (0.3s) for movement animations
 - **Easing functions** - Use `ease-out` for natural deceleration
 
+### 5. Visual Programming Language Consistency (Critical)
+The "programming language" elements must be **uniform across all games**. This includes:
+
+#### Shared UI Elements (use `shared/` modules)
+- **Command sequences** - Drag-drop behavior, reordering, deletion
+- **Loop blocks** - Appearance, iteration controls, nesting behavior
+- **Trash zones** - Visual states, drop behavior
+- **Control buttons** - Play, reset, icons and styling
+
+#### Standard Icons (never deviate without strong justification)
+| Element | Icon | Notes |
+|---------|------|-------|
+| Loop/Repeat | 🔄 | Use for both loop button and loop block header |
+| Play/Run | ▶️ | Execute the command sequence |
+| Reset/Restart | 🔄 | Reset level to initial state |
+| Delete/Trash | 🗑️ | Trash zone for removing commands |
+| Save/Function | 💾 | Save sequence as reusable function |
+
+#### Why Consistency Matters
+- **Transferable learning** - Skills learned in one game apply to all games
+- **Reduced confusion** - Same icon = same concept everywhere
+- **Unified experience** - Games feel like parts of one coherent suite
+
+#### When to Deviate
+Only deviate from shared styling/behavior when:
+1. The game mechanic fundamentally requires different interaction
+2. The deviation is documented with clear justification
+3. Core concepts (loops, sequences, drag-drop) still feel familiar
+
 ---
 
 ## Command Queue Standards

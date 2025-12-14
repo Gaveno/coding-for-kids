@@ -130,3 +130,33 @@ button, .interactive {
 
 - **Maximum 300 lines** per CSS file
 - Split by component: `variables.css`, `grid.css`, `controls.css`, `animations.css`
+
+## Shared Styles (Use Before Creating Game-Specific)
+
+For visual programming "language" elements, **always use shared styles first**:
+
+```css
+/* ✅ DO: Import shared sequence styles */
+@import '../../shared/styles/sequence.css';
+
+/* Then add game-specific overrides only if needed */
+.sequence-item {
+    /* Game-specific sizing adjustment */
+}
+```
+
+### Shared Style Modules
+| Module | Contains |
+|--------|----------|
+| `shared/styles/sequence.css` | Command sequences, loop blocks, drag states, placeholders, trash zones |
+
+### When to Add Game-Specific Overrides
+Only override shared styles when:
+1. The game requires different sizing (e.g., larger icons for crane commands)
+2. Game-specific command types need unique styling
+3. Layout constraints require adjustments
+
+**Never override** to change:
+- Core interaction patterns (drag states, placeholders)
+- Standard icons or their meanings
+- Animation timings for common operations
