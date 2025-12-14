@@ -85,45 +85,37 @@ class DragDrop {
                 e.preventDefault();
                 mouseStartPos = { x: e.clientX, y: e.clientY };
                 isMouseDragging = false;
-            });
-            
-            btn.addEventListener('click', (e) => {
-                // Only preview if we didn't drag
-                if (!isMouseDragging && mouseStartPos) {
-                    this.previewNote(btn);
-                }
-                mouseStartPos = null;
-                isMouseDragging = false;
-            });
-            
-            // Global mouse move/up for this button
-            const handleMouseMove = (e) => {
-                if (!mouseStartPos) return;
                 
-                const dx = Math.abs(e.clientX - mouseStartPos.x);
-                const dy = Math.abs(e.clientY - mouseStartPos.y);
+                // Add document-level listeners for this drag
+                const handleMouseMove = (moveE) => {
+                    if (!mouseStartPos) return;
+                    
+                    const dx = Math.abs(moveE.clientX - mouseStartPos.x);
+                    const dy = Math.abs(moveE.clientY - mouseStartPos.y);
+                    
+                    if (!isMouseDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
+                        isMouseDragging = true;
+                        this.startDrag(moveE, btn);
+                    }
+                    
+                    if (isMouseDragging && this.dragState) {
+                        this.handleDragMove(moveE);
+                    }
+                };
                 
-                if (!isMouseDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
-                    isMouseDragging = true;
-                    this.startDrag(e, btn);
-                }
+                const handleMouseUp = () => {
+                    if (isMouseDragging && this.dragState) {
+                        this.handleDrop();
+                    } else if (!isMouseDragging && mouseStartPos) {
+                        // It was a click - preview the sound
+                        this.previewNote(btn);
+                    }
+                    mouseStartPos = null;
+                    isMouseDragging = false;
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
                 
-                if (isMouseDragging && this.dragState) {
-                    this.handleDragMove(e);
-                }
-            };
-            
-            const handleMouseUp = () => {
-                if (isMouseDragging && this.dragState) {
-                    this.handleDrop();
-                }
-                mouseStartPos = null;
-                isMouseDragging = false;
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-            };
-            
-            btn.addEventListener('mousedown', () => {
                 document.addEventListener('mousemove', handleMouseMove);
                 document.addEventListener('mouseup', handleMouseUp);
             });
