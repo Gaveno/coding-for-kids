@@ -98,7 +98,12 @@ export class Game {
             trashZone: this.elements.trashZone,
             onAddCommand: (command, index) => this.addCommandAt(command, index),
             onReorder: (from, to) => this.reorderCommand(from, to),
-            onRemove: (index) => this.removeCommandAt(index)
+            onRemove: (index) => this.removeCommandAt(index),
+            onReorderInLoop: (loopIndex, from, to) => this.reorderInLoop(loopIndex, from, to),
+            onMoveFromLoop: (loopIndex, cmdIndex, targetIndex) => this.moveFromLoopToMain(loopIndex, cmdIndex, targetIndex),
+            onMoveToLoop: (fromIndex, loopIndex, targetCmdIndex) => this.moveFromMainToLoop(fromIndex, loopIndex, targetCmdIndex),
+            onRemoveFromLoop: (loopIndex, cmdIndex) => this.removeFromLoop(loopIndex, cmdIndex),
+            onAddToLoop: (command, loopIndex, cmdIndex) => this.addToLoop(command, loopIndex, cmdIndex)
         });
     }
 
@@ -600,6 +605,9 @@ export class Game {
 
         loopBlock.appendChild(body);
 
+        // Make loop items draggable
+        this.dragDrop.makeLoopItemsDraggable(body, index);
+
         // Click to select/deselect loop
         loopBlock.addEventListener('click', (e) => {
             if (e.target === loopBlock || e.target === header || e.target === body || 
@@ -653,6 +661,58 @@ export class Game {
         this.sequence.removeFromLoop(loopIndex, cmdIndex);
         this.renderSequence();
         this.audio.playTone(330, 0.05);
+    }
+
+    /**
+     * Reorder commands within a loop
+     * @param {number} loopIndex - Loop index
+     * @param {number} fromIndex - Source command index within loop
+     * @param {number} toIndex - Destination command index within loop
+     */
+    reorderInLoop(loopIndex, fromIndex, toIndex) {
+        if (this.isRunning) return;
+        this.sequence.moveWithinLoop(loopIndex, fromIndex, toIndex);
+        this.renderSequence();
+        this.audio.playTone(440, 0.05);
+    }
+
+    /**
+     * Move a command from inside a loop to the main sequence
+     * @param {number} loopIndex - Loop index
+     * @param {number} cmdIndex - Command index within loop
+     * @param {number} targetIndex - Target index in main sequence
+     */
+    moveFromLoopToMain(loopIndex, cmdIndex, targetIndex) {
+        if (this.isRunning) return;
+        this.sequence.moveFromLoopToMain(loopIndex, cmdIndex, targetIndex);
+        this.renderSequence();
+        this.audio.playTone(440, 0.05);
+    }
+
+    /**
+     * Move a command from main sequence into a loop
+     * @param {number} fromIndex - Source index in main sequence
+     * @param {number} loopIndex - Target loop index
+     * @param {number} cmdIndex - Target command index within loop
+     */
+    moveFromMainToLoop(fromIndex, loopIndex, cmdIndex) {
+        if (this.isRunning) return;
+        this.sequence.moveFromMainToLoop(fromIndex, loopIndex, cmdIndex);
+        this.renderSequence();
+        this.audio.playTone(440, 0.05);
+    }
+
+    /**
+     * Add a new command directly to a loop (from palette)
+     * @param {string} command - Command type
+     * @param {number} loopIndex - Target loop index
+     * @param {number} cmdIndex - Target command index within loop
+     */
+    addToLoop(command, loopIndex, cmdIndex) {
+        if (this.isRunning) return;
+        this.sequence.insertIntoLoop(loopIndex, cmdIndex, command);
+        this.renderSequence();
+        this.audio.playTone(440, 0.05);
     }
 
     /**

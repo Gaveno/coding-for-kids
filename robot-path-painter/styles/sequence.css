@@ -180,6 +180,21 @@
     justify-content: flex-start;
 }
 
+.loop-body.drag-over {
+    background: rgba(78, 205, 196, 0.3);
+    border: 2px dashed var(--color-success);
+    border-radius: var(--radius-sm);
+}
+
+.loop-placeholder-indicator {
+    width: 4px;
+    height: 32px;
+    background: var(--color-success);
+    border-radius: 2px;
+    animation: pulse 0.8s ease infinite;
+    flex-shrink: 0;
+}
+
 .loop-placeholder {
     color: rgba(255, 255, 255, 0.3);
     font-size: 1.2rem;
@@ -190,6 +205,10 @@
 .loop-item {
     font-size: 1.4rem !important;
     padding: var(--spacing-xs) var(--spacing-sm) !important;
+}
+
+.loop-item.dragging {
+    opacity: 0.3;
 }
 
 .loop-block.executing {

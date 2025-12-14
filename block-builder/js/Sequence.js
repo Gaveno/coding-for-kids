@@ -118,6 +118,98 @@ export class Sequence {
         }
     }
 
+    /**
+     * Move a command within a loop
+     * @param {number} loopIndex - Index of the loop
+     * @param {number} fromIndex - Source index within loop
+     * @param {number} toIndex - Destination index within loop
+     */
+    moveWithinLoop(loopIndex, fromIndex, toIndex) {
+        const loop = this.commands[loopIndex];
+        if (!loop || loop.type !== 'loop') return false;
+        if (fromIndex < 0 || fromIndex >= loop.commands.length) return false;
+        if (toIndex < 0 || toIndex > loop.commands.length) return false;
+        
+        const [command] = loop.commands.splice(fromIndex, 1);
+        const adjustedTo = toIndex > fromIndex ? toIndex - 1 : toIndex;
+        loop.commands.splice(adjustedTo, 0, command);
+        return true;
+    }
+
+    /**
+     * Move a command from a loop to the main sequence
+     * @param {number} loopIndex - Index of the loop
+     * @param {number} cmdIndex - Index of command within loop
+     * @param {number} targetIndex - Target index in main sequence
+     */
+    moveFromLoopToMain(loopIndex, cmdIndex, targetIndex) {
+        const loop = this.commands[loopIndex];
+        if (!loop || loop.type !== 'loop') return false;
+        if (cmdIndex < 0 || cmdIndex >= loop.commands.length) return false;
+        
+        const [command] = loop.commands.splice(cmdIndex, 1);
+        
+        // Adjust target index if inserting after the loop
+        let adjustedTarget = targetIndex;
+        if (targetIndex > loopIndex) {
+            // No adjustment needed
+        }
+        
+        // Update activeLoopIndex if needed
+        if (this.activeLoopIndex !== null && adjustedTarget <= this.activeLoopIndex) {
+            this.activeLoopIndex++;
+        }
+        
+        this.commands.splice(adjustedTarget, 0, command);
+        return true;
+    }
+
+    /**
+     * Move a command from the main sequence into a loop
+     * @param {number} cmdIndex - Index in main sequence
+     * @param {number} loopIndex - Target loop index
+     * @param {number} targetIndex - Target index within loop
+     */
+    moveFromMainToLoop(cmdIndex, loopIndex, targetIndex) {
+        // Can't move a loop into itself or another loop
+        if (this.commands[cmdIndex]?.type === 'loop') return false;
+        
+        const loop = this.commands[loopIndex];
+        if (!loop || loop.type !== 'loop') return false;
+        
+        const [command] = this.commands.splice(cmdIndex, 1);
+        
+        // Adjust loopIndex if the removed command was before the loop
+        const adjustedLoopIndex = cmdIndex < loopIndex ? loopIndex - 1 : loopIndex;
+        
+        // Update activeLoopIndex
+        if (this.activeLoopIndex !== null) {
+            if (cmdIndex < this.activeLoopIndex) {
+                this.activeLoopIndex--;
+            } else if (cmdIndex === this.activeLoopIndex) {
+                this.activeLoopIndex = null;
+            }
+        }
+        
+        this.commands[adjustedLoopIndex].commands.splice(targetIndex, 0, command);
+        return true;
+    }
+
+    /**
+     * Insert a command into a loop at a specific position
+     * @param {number} loopIndex - Index of the loop
+     * @param {number} targetIndex - Target index within loop
+     * @param {string} type - Command type
+     */
+    insertIntoLoop(loopIndex, targetIndex, type) {
+        if (!VALID_COMMANDS.includes(type)) return false;
+        const loop = this.commands[loopIndex];
+        if (!loop || loop.type !== 'loop') return false;
+        
+        loop.commands.splice(targetIndex, 0, { type, id: Date.now() + Math.random() });
+        return true;
+    }
+
     getCommand(index) {
         return this.commands[index];
     }
