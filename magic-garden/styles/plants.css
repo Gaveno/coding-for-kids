@@ -1,0 +1,54 @@
+/* ===== Plant Animation Styles ===== */
+
+@keyframes bloom {
+    0% {
+        transform: translateX(-50%) scale(0.9);
+        filter: brightness(0.8);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.3);
+        filter: brightness(1.2);
+    }
+    100% {
+        transform: translateX(-50%) scale(1.2);
+        filter: brightness(1);
+    }
+}
+
+@keyframes wilt {
+    0% {
+        transform: translateX(-50%) scale(1) rotate(0deg);
+    }
+    100% {
+        transform: translateX(-50%) scale(1) rotate(-15deg);
+    }
+}
+
+/* Growth stages visual effects */
+.plant.seeded::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 5px;
+    background: #5D4E37;
+    border-radius: 50%;
+}
+
+.plant.sprouting {
+    filter: brightness(0.9);
+}
+
+.plant.growing {
+    filter: brightness(1);
+}
+
+.plant.blooming {
+    filter: drop-shadow(0 0 10px rgba(255, 105, 180, 0.5));
+}
+
+.plant.wilted {
+    filter: grayscale(0.5) brightness(0.7);
+}

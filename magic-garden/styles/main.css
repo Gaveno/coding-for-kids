@@ -1,0 +1,104 @@
+/* ===== Main Styles for Magic Garden ===== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    touch-action: manipulation;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--color-bg) 0%, #0D1F0D 100%);
+    color: var(--color-text);
+    min-height: 100dvh;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+}
+
+/* ===== Header ===== */
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+}
+
+.home-btn {
+    font-size: 1.5rem;
+    text-decoration: none;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    transition: transform var(--transition-fast);
+}
+
+.home-btn:hover {
+    transform: scale(1.1);
+}
+
+.logo {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.level-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: var(--color-surface-light);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+}
+
+.star {
+    font-size: 1.2rem;
+}
+
+.level-num {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.help-btn {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: transform var(--transition-fast);
+}
+
+.help-btn:hover {
+    transform: scale(1.1);
+}
+
+/* ===== Main Game Area ===== */
+.game-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    overflow: hidden;
+}

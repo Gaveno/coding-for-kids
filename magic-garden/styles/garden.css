@@ -1,0 +1,160 @@
+/* ===== Garden Area Styles ===== */
+
+.garden-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: var(--spacing-md);
+    background: linear-gradient(180deg, 
+        rgba(135, 206, 235, 0.2) 0%, 
+        rgba(45, 90, 39, 0.3) 50%, 
+        rgba(139, 69, 19, 0.3) 100%
+    );
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    position: relative;
+    min-height: 200px;
+}
+
+/* Wizard */
+.wizard-container {
+    position: absolute;
+    left: var(--spacing-lg);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.wizard {
+    font-size: 4rem;
+    transition: transform var(--transition-normal);
+}
+
+.wizard.casting {
+    animation: wizardCast 0.3s ease;
+}
+
+.wizard.celebrating {
+    animation: wizardCelebrate 1s ease;
+}
+
+.wizard.puzzled {
+    animation: wizardPuzzled 0.8s ease;
+}
+
+/* Pot and Plant */
+.pot-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.pot {
+    /* Terracotta pot shape using CSS */
+    width: 80px;
+    height: 60px;
+    background: linear-gradient(180deg, #C65D35 0%, #A0522D 40%, #8B4513 100%);
+    border-radius: 0 0 35% 35%;
+    position: relative;
+    box-shadow: 
+        inset -8px 0 12px rgba(0, 0, 0, 0.2),
+        inset 8px 0 12px rgba(255, 255, 255, 0.1),
+        0 4px 8px rgba(0, 0, 0, 0.3);
+    margin-top: 12px; /* Space for rim */
+}
+
+/* Pot rim - oval lip around top */
+.pot::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 20px;
+    background: linear-gradient(180deg, #D2691E 0%, #B8602A 50%, #A0522D 100%);
+    border-radius: 50%;
+    box-shadow: 
+        inset 0 3px 6px rgba(255, 255, 255, 0.2),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Soil/dirt inside pot - smaller oval inside the rim */
+.pot::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70px;
+    height: 14px;
+    background: linear-gradient(180deg, #4A3520 0%, #3D2914 50%, #2D1F0D 100%);
+    border-radius: 50%;
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+.plant {
+    font-size: 3rem;
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    transform-origin: bottom center;
+    transition: transform var(--transition-normal);
+}
+
+.plant.seeded {
+    transform: translateX(-50%) scale(0.5);
+}
+
+.plant.sprouting {
+    transform: translateX(-50%) scale(0.7);
+}
+
+.plant.growing {
+    transform: translateX(-50%) scale(0.9);
+}
+
+.plant.blooming {
+    transform: translateX(-50%) scale(1.2);
+    animation: bloom 0.5s ease-out;
+}
+
+.plant.wilted {
+    transform: translateX(-50%) scale(1) rotate(-15deg);
+    animation: wilt 0.5s ease-out;
+}
+
+/* Target Display */
+.target-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    background: var(--color-surface);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-top: var(--spacing-md);
+}
+
+.target-label {
+    font-size: 1.5rem;
+}
+
+.target-flower {
+    font-size: 2.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Action Effect */
+.action-effect {
+    position: absolute;
+    font-size: 2rem;
+    pointer-events: none;
+    animation: actionFloat 0.6s ease-out forwards;
+    opacity: 0;
+}

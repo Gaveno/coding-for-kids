@@ -38,13 +38,13 @@ A collection of visual, no-reading-required browser games to teach programming f
 **Concept:** Help a wizard grow a garden by creating "spell recipes" (sequences of actions).
 
 **How it works:**
-- Drag icons: 💧 (water), ☀️ (sun), 🌱 (seed)
+- Drag icons: 🌱 (seed), 💧 (water), ☀️ (sun), 🎵 (music), ✨ (magic)
 - Different combinations grow different plants
 - **Reusable code:** Save successful recipes as "spell books" to plant the same flower again
 
-**Skills taught:** Cause & effect, sequencing, functions
+**Skills taught:** Cause & effect, sequencing, functions, discovery
 
-**Status:** 📋 Planned
+**Status:** ✅ Playable POC
 
 ---
 

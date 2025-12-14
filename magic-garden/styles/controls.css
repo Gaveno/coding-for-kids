@@ -1,0 +1,150 @@
+/* ===== Control Button Styles ===== */
+
+/* Command Palette */
+.command-palette {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+}
+
+.command-btn {
+    min-width: var(--cell-size);
+    min-height: var(--cell-size);
+    font-size: 1.8rem;
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+}
+
+.command-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+    background: var(--color-primary-light);
+}
+
+.command-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.command-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.command-btn.empty {
+    opacity: 0.3;
+    filter: grayscale(0.5);
+}
+
+/* Supply badge showing remaining count */
+.supply-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    background: var(--color-warning);
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Specific action colors */
+.command-btn[data-command="🌱"] {
+    background: linear-gradient(135deg, #228B22, #32CD32);
+}
+
+.command-btn[data-command="💧"] {
+    background: linear-gradient(135deg, #4169E1, #87CEEB);
+}
+
+.command-btn[data-command="☀️"] {
+    background: linear-gradient(135deg, #FFA500, #FFD700);
+}
+
+.command-btn[data-command="🎵"] {
+    background: linear-gradient(135deg, #9932CC, #DDA0DD);
+}
+
+.command-btn[data-command="✨"] {
+    background: linear-gradient(135deg, #9B59B6, #E6E6FA);
+}
+
+/* Loop Button */
+.loop-btn {
+    min-width: var(--cell-size);
+    min-height: var(--cell-size);
+    font-size: 1.5rem;
+    background: var(--color-success);
+    border: 2px dashed rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loop-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+/* Control Buttons */
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+}
+
+.control-btn {
+    min-width: 60px;
+    min-height: 48px;
+    font-size: 1.8rem;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.control-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.control-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.play-btn {
+    background: linear-gradient(135deg, #4ECDC4, #2ECC71);
+    padding: 0 var(--spacing-lg);
+}
+
+.reset-btn {
+    background: linear-gradient(135deg, #E74C3C, #C0392B);
+}

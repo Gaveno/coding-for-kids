@@ -1,0 +1,52 @@
+/* ===== CSS Variables for Magic Garden ===== */
+:root {
+    /* Colors - Garden/Nature Theme */
+    --color-primary: #2D5A27;
+    --color-primary-light: #4A8B3F;
+    --color-secondary: #8B4513;
+    --color-secondary-light: #A0522D;
+    --color-accent: #9B59B6;
+    --color-success: #FF69B4;
+    --color-warning: #FFD700;
+    --color-danger: #DC143C;
+    
+    /* Backgrounds */
+    --color-bg: #1A3A1A;
+    --color-surface: #2D4A2D;
+    --color-surface-light: #3D5A3D;
+    --color-text: #FFFFFF;
+    
+    /* Special colors */
+    --color-magic: #E6E6FA;
+    --color-water: #87CEEB;
+    --color-sun: #FFD700;
+    --color-music: #DDA0DD;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-full: 50%;
+
+    /* Shadows */
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
+    /* Dimensions */
+    --cell-size: 48px;
+    --pot-size: 120px;
+    --wizard-size: 80px;
+}

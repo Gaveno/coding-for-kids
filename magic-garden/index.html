@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🌻 Magic Garden</title>
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/garden.css">
+    <link rel="stylesheet" href="styles/wizard.css">
+    <link rel="stylesheet" href="styles/plants.css">
+    <link rel="stylesheet" href="styles/sequence.css">
+    <link rel="stylesheet" href="styles/controls.css">
+    <link rel="stylesheet" href="styles/overlays.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header with level indicator -->
+        <header class="game-header">
+            <a href="../index.html" class="home-btn" aria-label="Back to Home">🏠</a>
+            <div class="logo" aria-label="Magic Garden game">🌻</div>
+            <div class="level-indicator">
+                <span class="star" aria-hidden="true">⭐</span>
+                <span class="level-num" id="levelNum" aria-label="Current level">1</span>
+            </div>
+            <button class="help-btn" id="helpBtn" aria-label="Help">❓</button>
+        </header>
+
+        <!-- Main game area -->
+        <main class="game-main">
+            <!-- Garden area with wizard and pot -->
+            <section class="garden-area" aria-label="Garden">
+                <div class="wizard-container">
+                    <div class="wizard" id="wizard" aria-label="Wizard">🧙</div>
+                </div>
+                
+                <div class="pot-container">
+                    <div class="pot" id="pot" aria-label="Flower pot"></div>
+                    <div class="plant" id="plant" aria-label="Growing plant"></div>
+                </div>
+                
+                <div class="target-display" id="targetDisplay">
+                    <span class="target-label" aria-hidden="true">🎯</span>
+                    <span class="target-flower" id="targetFlower" aria-label="Target flower">🌷</span>
+                </div>
+            </section>
+
+            <!-- Command sequence area -->
+            <section class="sequence-section" aria-label="Spell Sequence">
+                <div class="sequence-header">
+                    <div class="sequence-label" aria-hidden="true">📝</div>
+                    <div class="trash-zone" id="trashZone" aria-label="Drag here to delete">🗑️</div>
+                    <button class="clear-btn" id="clearBtn" aria-label="Clear sequence">🧹</button>
+                </div>
+                <div class="sequence-area" id="sequenceArea" role="list">
+                    <div class="sequence-placeholder" id="sequencePlaceholder" aria-hidden="true">
+                        👆 ⬇️
+                    </div>
+                </div>
+            </section>
+
+            <!-- Command palette -->
+            <section class="command-palette" id="commandPalette" aria-label="Spell Actions">
+                <button class="command-btn" data-command="🌱" aria-label="Plant seed">
+                    <span aria-hidden="true">🌱</span>
+                </button>
+                <button class="command-btn" data-command="💧" aria-label="Water">
+                    <span aria-hidden="true">💧</span>
+                </button>
+                <button class="command-btn" data-command="☀️" aria-label="Sunshine">
+                    <span aria-hidden="true">☀️</span>
+                </button>
+                <button class="command-btn" data-command="🎵" aria-label="Music">
+                    <span aria-hidden="true">🎵</span>
+                </button>
+                <button class="command-btn" data-command="✨" aria-label="Magic">
+                    <span aria-hidden="true">✨</span>
+                </button>
+                <button class="loop-btn" id="loopBtn" aria-label="Add loop" style="display: none;">
+                    <span aria-hidden="true">🔄</span>
+                </button>
+            </section>
+
+            <!-- Control buttons -->
+            <section class="controls" aria-label="Game Controls">
+                <button class="control-btn play-btn" id="playBtn" aria-label="Cast spell">
+                    <span aria-hidden="true">▶️</span>
+                </button>
+                <button class="control-btn reset-btn" id="resetBtn" aria-label="Reset">
+                    <span aria-hidden="true">🔄</span>
+                </button>
+            </section>
+        </main>
+
+        <!-- Success overlay -->
+        <div class="overlay success-overlay" id="successOverlay">
+            <div class="overlay-content">
+                <div class="success-icon">🎉</div>
+                <div class="success-message">🌸✨🌺</div>
+                <button class="next-btn" id="nextBtn" aria-label="Next level">
+                    ➡️
+                </button>
+            </div>
+        </div>
+
+        <!-- Help overlay -->
+        <div class="overlay" id="helpOverlay">
+            <div class="overlay-content help-content">
+                <h2 class="help-title">🌻 Magic Garden 🧙</h2>
+                
+                <div class="help-section">
+                    <h3>🎯 Goal</h3>
+                    <p>Grow the target flower!</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>✨ Spell Actions</h3>
+                    <div class="help-icons">
+                        <div class="help-icon">
+                            <span>🌱</span>
+                            <span>Seed</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>💧</span>
+                            <span>Water</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>☀️</span>
+                            <span>Sun</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>🎵</span>
+                            <span>Music</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>✨</span>
+                            <span>Magic</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="help-section">
+                    <h3>🎮 How to Play</h3>
+                    <div class="help-icons">
+                        <div class="help-icon">
+                            <span>👆</span>
+                            <span>Tap to add</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>✋</span>
+                            <span>Drag to move</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>🗑️</span>
+                            <span>Drag to delete</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>▶️</span>
+                            <span>Cast spell!</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="close-help-btn" id="closeHelpBtn" aria-label="Close help">
+                    👍
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

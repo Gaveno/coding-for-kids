@@ -1,0 +1,153 @@
+/* ===== Responsive Styles ===== */
+
+/* Small phones */
+@media (max-width: 360px) {
+    :root {
+        --cell-size: 40px;
+        --pot-size: 100px;
+        --wizard-size: 60px;
+    }
+    
+    .wizard {
+        font-size: 3rem;
+    }
+    
+    .pot {
+        width: 60px;
+        height: 45px;
+        margin-top: 10px;
+    }
+    
+    .pot::before {
+        top: -8px;
+        width: 76px;
+        height: 16px;
+    }
+    
+    .pot::after {
+        top: -3px;
+        width: 52px;
+        height: 10px;
+    }
+    
+    .plant {
+        font-size: 2.5rem;
+        bottom: 42px;
+    }
+    
+    .command-btn {
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 1.5rem;
+    }
+}
+
+/* Tablets and larger phones */
+@media (min-width: 768px) {
+    :root {
+        --cell-size: 56px;
+        --pot-size: 150px;
+        --wizard-size: 100px;
+    }
+    
+    .game-container {
+        max-width: 700px;
+        padding: var(--spacing-lg);
+        gap: var(--spacing-lg);
+    }
+    
+    .wizard {
+        font-size: 5rem;
+    }
+    
+    .pot {
+        width: 100px;
+        height: 75px;
+        margin-top: 14px;
+    }
+    
+    .pot::before {
+        top: -12px;
+        width: 124px;
+        height: 24px;
+    }
+    
+    .pot::after {
+        top: -5px;
+        width: 86px;
+        height: 16px;
+    }
+    
+    .plant {
+        font-size: 4rem;
+        bottom: 70px;
+    }
+    
+    .command-btn {
+        min-width: 56px;
+        min-height: 56px;
+        font-size: 2rem;
+    }
+    
+    .sequence-item {
+        min-width: 52px;
+        min-height: 52px;
+        font-size: 1.8rem;
+    }
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) and (max-height: 500px) {
+    .game-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .game-header {
+        width: 100%;
+        flex-shrink: 0;
+    }
+    
+    .game-main {
+        flex: 1;
+        flex-direction: row;
+    }
+    
+    .garden-area {
+        flex: 1;
+        min-height: unset;
+    }
+    
+    .wizard {
+        font-size: 2.5rem;
+    }
+    
+    .pot {
+        width: 50px;
+        height: 38px;
+        margin-top: 8px;
+    }
+    
+    .pot::before {
+        top: -7px;
+        width: 64px;
+        height: 14px;
+    }
+    
+    .pot::after {
+        top: -2px;
+        width: 44px;
+        height: 9px;
+    }
+    
+    .plant {
+        font-size: 2rem;
+        bottom: 35px;
+    }
+    
+    .sequence-section,
+    .command-palette,
+    .controls {
+        flex-shrink: 0;
+    }
+}
