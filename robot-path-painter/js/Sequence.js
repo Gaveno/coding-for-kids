@@ -1,13 +1,34 @@
 /**
- * Sequence - Command sequence management
+ * Sequence - Robot Path Painter command sequence management
+ * Extends BaseSequence with robot-specific commands and functions
  */
-export class Sequence {
+import { BaseSequence } from '../../shared/js/BaseSequence.js';
+
+// Direction emojis
+const DIRECTION_EMOJIS = {
+    up: '⬆️',
+    down: '⬇️',
+    left: '⬅️',
+    right: '➡️'
+};
+
+const FIRE_EMOJIS = {
+    up: '🚀⬆️',
+    down: '🚀⬇️',
+    left: '🚀⬅️',
+    right: '🚀➡️'
+};
+
+export class Sequence extends BaseSequence {
     constructor() {
-        this.commands = [];
+        super();
         this.savedFunctions = [];
-        this.activeLoopIndex = null;
     }
 
+    /**
+     * Add a move command
+     * @param {string} direction - up, down, left, right
+     */
     addCommand(direction) {
         const cmd = { type: 'move', direction };
         if (this.activeLoopIndex !== null) {
@@ -17,6 +38,10 @@ export class Sequence {
         }
     }
 
+    /**
+     * Add a fire command
+     * @param {string} direction - up, down, left, right
+     */
     addFireCommand(direction) {
         const cmd = { type: 'fire', direction };
         if (this.activeLoopIndex !== null) {
@@ -26,113 +51,22 @@ export class Sequence {
         }
     }
 
-    addLoop(iterations = 2) {
-        this.commands.push({
-            type: 'loop',
-            iterations: iterations,
-            commands: []
-        });
-    }
-
-    setActiveLoop(index) {
-        if (index !== null && this.commands[index]?.type === 'loop') {
-            this.activeLoopIndex = index;
-        } else {
-            this.activeLoopIndex = null;
-        }
-    }
-
-    updateLoopIterations(loopIndex, iterations) {
-        if (this.commands[loopIndex]?.type === 'loop') {
-            this.commands[loopIndex].iterations = Math.max(1, Math.min(9, iterations));
-        }
-    }
-
-    removeFromLoop(loopIndex, cmdIndex) {
-        if (this.commands[loopIndex]?.type === 'loop') {
-            this.commands[loopIndex].commands.splice(cmdIndex, 1);
-        }
-    }
-
     /**
-     * Move command within a loop
-     * @param {number} loopIndex - Index of the loop in main sequence
-     * @param {number} fromIndex - Source index within loop
-     * @param {number} toIndex - Target index within loop
+     * Insert command at specific index in main sequence
+     * @param {Object} cmd - Command object
+     * @param {number} index - Insert position
      */
-    moveWithinLoop(loopIndex, fromIndex, toIndex) {
-        const loop = this.commands[loopIndex];
-        if (!loop || loop.type !== 'loop') return;
-        
-        const cmds = loop.commands;
-        if (fromIndex < 0 || fromIndex >= cmds.length) return;
-        if (toIndex < 0 || toIndex > cmds.length) return;
-        
-        const [cmd] = cmds.splice(fromIndex, 1);
-        const adjustedTo = toIndex > fromIndex ? toIndex - 1 : toIndex;
-        cmds.splice(adjustedTo, 0, cmd);
-    }
-
-    /**
-     * Move command from loop to main sequence
-     * @param {number} loopIndex - Index of the loop
-     * @param {number} cmdIndex - Index within the loop
-     * @param {number} targetIndex - Target index in main sequence
-     */
-    moveFromLoopToMain(loopIndex, cmdIndex, targetIndex) {
-        const loop = this.commands[loopIndex];
-        if (!loop || loop.type !== 'loop') return;
-        if (cmdIndex < 0 || cmdIndex >= loop.commands.length) return;
-        
-        const [cmd] = loop.commands.splice(cmdIndex, 1);
-        
-        // Adjust target if needed (account for loop position)
-        let adjustedTarget = targetIndex;
-        if (targetIndex > loopIndex) {
-            // Inserting after the loop, no adjustment needed
-        }
-        
-        // Update active loop index if needed
-        if (this.activeLoopIndex !== null && adjustedTarget <= this.activeLoopIndex) {
+    insertAt(cmd, index) {
+        if (this.activeLoopIndex !== null && index <= this.activeLoopIndex) {
             this.activeLoopIndex++;
         }
-        
-        this.commands.splice(adjustedTarget, 0, cmd);
+        this.commands.splice(index, 0, cmd);
     }
 
     /**
-     * Move command from main sequence into a loop
-     * @param {number} cmdIndex - Index in main sequence
-     * @param {number} loopIndex - Target loop index
-     * @param {number} targetIndex - Target index within loop
-     */
-    moveFromMainToLoop(cmdIndex, loopIndex, targetIndex) {
-        // Can't move a loop into another loop
-        if (this.commands[cmdIndex]?.type === 'loop') return;
-        
-        const loop = this.commands[loopIndex];
-        if (!loop || loop.type !== 'loop') return;
-        
-        // Adjust loop index if we're removing from before it
-        const adjustedLoopIndex = cmdIndex < loopIndex ? loopIndex - 1 : loopIndex;
-        
-        // Update active loop index
-        if (this.activeLoopIndex !== null) {
-            if (cmdIndex < this.activeLoopIndex) {
-                this.activeLoopIndex--;
-            } else if (cmdIndex === this.activeLoopIndex) {
-                this.activeLoopIndex = null;
-            }
-        }
-        
-        const [cmd] = this.commands.splice(cmdIndex, 1);
-        this.commands[adjustedLoopIndex].commands.splice(targetIndex, 0, cmd);
-    }
-
-    /**
-     * Insert a new command into a loop
-     * @param {number} loopIndex - Target loop index
-     * @param {number} targetIndex - Target index within loop
+     * Insert command into a loop at specific index
+     * @param {number} loopIndex - Loop index in main sequence
+     * @param {number} targetIndex - Insert position within loop
      * @param {string} type - Command type ('move' or 'fire')
      * @param {string} direction - Direction
      */
@@ -144,6 +78,10 @@ export class Sequence {
         loop.commands.splice(targetIndex, 0, cmd);
     }
 
+    /**
+     * Add a function call to the sequence
+     * @param {number} functionIndex - Index of saved function
+     */
     addFunctionCall(functionIndex) {
         const func = this.savedFunctions[functionIndex];
         if (func) {
@@ -160,50 +98,10 @@ export class Sequence {
         }
     }
 
-    removeAt(index) {
-        if (this.activeLoopIndex === index) {
-            this.activeLoopIndex = null;
-        } else if (this.activeLoopIndex !== null && index < this.activeLoopIndex) {
-            this.activeLoopIndex--;
-        }
-        this.commands.splice(index, 1);
-    }
-
-    moveCommand(fromIndex, toIndex) {
-        if (fromIndex < 0 || fromIndex >= this.commands.length) return;
-        if (toIndex < 0 || toIndex > this.commands.length) return;
-        
-        if (this.activeLoopIndex !== null) {
-            if (this.activeLoopIndex === fromIndex) {
-                if (toIndex > fromIndex) {
-                    this.activeLoopIndex = toIndex - 1;
-                } else {
-                    this.activeLoopIndex = toIndex;
-                }
-            } else if (fromIndex < this.activeLoopIndex && toIndex > this.activeLoopIndex) {
-                this.activeLoopIndex--;
-            } else if (fromIndex > this.activeLoopIndex && toIndex <= this.activeLoopIndex) {
-                this.activeLoopIndex++;
-            }
-        }
-        
-        const [command] = this.commands.splice(fromIndex, 1);
-        const adjustedTo = toIndex > fromIndex ? toIndex - 1 : toIndex;
-        this.commands.splice(adjustedTo, 0, command);
-    }
-
-    insertAt(cmd, index) {
-        if (this.activeLoopIndex !== null && index <= this.activeLoopIndex) {
-            this.activeLoopIndex++;
-        }
-        this.commands.splice(index, 0, cmd);
-    }
-
-    clear() {
-        this.commands = [];
-        this.activeLoopIndex = null;
-    }
-
+    /**
+     * Save current sequence as a function
+     * @returns {boolean} Whether save was successful
+     */
     saveAsFunction() {
         const moveCommands = this.commands.filter(cmd => cmd.type === 'move');
         if (moveCommands.length === 0) return false;
@@ -211,10 +109,18 @@ export class Sequence {
         return true;
     }
 
+    /**
+     * Delete a saved function
+     * @param {number} index - Function index
+     */
     deleteFunction(index) {
         this.savedFunctions.splice(index, 1);
     }
 
+    /**
+     * Flatten sequence by expanding loops and functions
+     * @returns {Array} Flat array of commands
+     */
     flatten() {
         const flat = [];
         const expandCommands = (cmds) => {
@@ -234,17 +140,21 @@ export class Sequence {
         return flat;
     }
 
-    isEmpty() {
-        return this.commands.length === 0;
-    }
-
+    /**
+     * Get direction emoji
+     * @param {string} direction - Direction
+     * @returns {string} Emoji
+     */
     static getDirectionEmoji(direction) {
-        const emojis = { 'up': '⬆️', 'down': '⬇️', 'left': '⬅️', 'right': '➡️' };
-        return emojis[direction] || '❓';
+        return DIRECTION_EMOJIS[direction] || '❓';
     }
 
+    /**
+     * Get fire emoji
+     * @param {string} direction - Direction
+     * @returns {string} Emoji
+     */
     static getFireEmoji(direction) {
-        const emojis = { 'up': '🚀⬆️', 'down': '🚀⬇️', 'left': '🚀⬅️', 'right': '🚀➡️' };
-        return emojis[direction] || '🚀';
+        return FIRE_EMOJIS[direction] || '🚀';
     }
 }

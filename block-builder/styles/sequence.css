@@ -1,289 +1,39 @@
-/* ===== Sequence Section ===== */
-.sequence-section {
-    background: var(--color-surface);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    flex-shrink: 0;
-}
+/**
+ * Block Builder Sequence Styles
+ * Imports shared styles and adds game-specific overrides
+ */
 
-.sequence-header {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-xs);
-}
+@import '../../shared/styles/sequence.css';
 
-.sequence-label {
-    font-size: 1.2rem;
-}
+/* ===== Block Builder Specific Overrides ===== */
 
-.trash-zone {
-    font-size: 1.2rem;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-light);
-    opacity: 0.5;
-    transition: all var(--transition-fast);
-}
-
-.trash-zone.drag-over {
-    opacity: 1;
-    background: var(--color-danger);
-    transform: scale(1.1);
-}
-
-.trash-zone.drag-active {
-    opacity: 0.8;
-    border: 2px dashed var(--color-danger);
-}
-
-.clear-btn {
-    margin-left: auto;
-    font-size: 1.2rem;
-    background: var(--color-surface-light);
-    border: none;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    min-width: 44px;
-    min-height: 44px;
-}
-
-.clear-btn:hover {
-    background: var(--color-danger);
-}
-
+/* Taller sequence area to fit loop blocks */
 .sequence-area {
-    display: flex;
-    gap: var(--spacing-xs);
-    flex-wrap: wrap;
     min-height: 110px;
-    max-height: 110px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: var(--spacing-sm);
-    background: var(--color-surface-light);
-    border-radius: var(--radius-sm);
-    align-items: flex-start;
-    align-content: flex-start;
 }
 
-.sequence-placeholder {
-    color: var(--color-text);
-    opacity: 0.5;
-    font-size: 1.2rem;
-    width: 100%;
-    text-align: center;
-}
-
+/* Hook command stacking */
 .sequence-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    background: var(--color-primary);
-    border-radius: var(--radius-sm);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all var(--transition-fast);
     position: relative;
 }
 
-.sequence-item:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 2px var(--color-danger);
-}
-
-.sequence-item:active {
-    transform: scale(0.95);
-}
-
-.sequence-item.dragging {
-    opacity: 0.3;
-    transform: scale(0.95);
-}
-
-.sequence-item.executing {
-    animation: pulse 0.5s ease infinite;
-    box-shadow: 0 0 10px var(--color-warning);
-}
-
-/* Drag & Drop Styles */
-.sequence-area.drag-active {
-    border: 2px dashed var(--color-primary);
-}
-
-.sequence-area.drag-over {
-    background: rgba(255, 159, 28, 0.2);
-}
-
-.drop-placeholder {
-    width: 8px;
-    height: 44px;
-    background: var(--color-success);
-    border-radius: 4px;
-    animation: pulse 0.8s ease infinite;
-    flex-shrink: 0;
-}
-
-/* Drop indicator */
-.sequence-area .drop-indicator {
-    width: 4px;
-    height: 44px;
-    background: var(--color-success);
-    border-radius: 2px;
-    animation: pulse 0.5s ease infinite;
-}
-
-/* ===== Loop Block Styles ===== */
-.loop-block {
-    display: flex;
-    flex-direction: column;
-    background: rgba(78, 205, 196, 0.15);
-    border: 3px dashed var(--color-success);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-sm);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    animation: popIn 0.2s ease;
-    min-width: 80px;
-}
-
-.loop-block.active {
-    border-style: solid;
-    background: rgba(78, 205, 196, 0.3);
-    box-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
-}
-
-.loop-block:hover {
-    background: rgba(78, 205, 196, 0.25);
-}
-
-.loop-block.executing {
-    animation: pulse 0.5s ease;
-    background: rgba(78, 205, 196, 0.5);
-    border-style: solid;
-}
-
-.loop-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-sm);
-    padding-bottom: var(--spacing-xs);
-    border-bottom: 2px solid rgba(78, 205, 196, 0.3);
-    margin-bottom: var(--spacing-xs);
-}
-
-.loop-icon {
+.seq-hook-icon {
+    position: absolute;
     font-size: 1.2rem;
-    cursor: grab;
-    padding: 4px;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
-.loop-icon:hover {
-    background: rgba(78, 205, 196, 0.3);
-    transform: scale(1.1);
+.seq-arrow-icon {
+    position: absolute;
+    font-size: 0.9rem;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
-.loop-icon:active {
-    cursor: grabbing;
-}
-
-.loop-block.dragging {
-    opacity: 0.3;
-    transform: scale(0.95);
-}
-
-.loop-iteration-controls {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.iter-btn {
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-light);
-    cursor: pointer;
-    font-size: 0.8rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all var(--transition-fast);
-}
-
-.iter-btn:hover {
-    background: var(--color-primary);
-    transform: scale(1.1);
-}
-
-.iter-btn:active {
-    transform: scale(0.9);
-}
-
-.iter-count {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--color-success);
-    min-width: 24px;
-    text-align: center;
-}
-
-.loop-body {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    min-height: 36px;
-    padding: var(--spacing-xs);
-    align-items: center;
-    justify-content: flex-start;
-}
-
-.loop-body.drag-over {
-    background: rgba(78, 205, 196, 0.3);
-    border: 2px dashed var(--color-success);
-    border-radius: var(--radius-sm);
-}
-
-.loop-placeholder-indicator {
-    width: 4px;
-    height: 32px;
-    background: var(--color-success);
-    border-radius: 2px;
-    animation: pulse 0.8s ease infinite;
-    flex-shrink: 0;
-}
-
-.loop-placeholder {
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 1rem;
-    width: 100%;
-    text-align: center;
-}
-
-.loop-item {
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 1rem !important;
-}
-
-.loop-item.dragging {
-    opacity: 0.3;
-}
-
-.loop-item.executing {
-    animation: pulse 0.5s ease infinite;
-    box-shadow: 0 0 10px var(--color-warning);
-}
-
-/* ===== Loop Button Styles ===== */
+/* Loop button in controls */
 .loop-blocks {
     display: flex;
     gap: var(--spacing-sm);
@@ -298,31 +48,16 @@
     background: var(--color-success);
     border: 3px dashed rgba(255, 255, 255, 0.3);
     border-radius: var(--radius-md);
+    font-size: 1.5rem;
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
 .loop-btn:hover {
     transform: scale(1.05);
-    background: #3dd9cc;
     border-style: solid;
 }
 
 .loop-btn:active {
     transform: scale(0.95);
-}
-
-.loop-btn-icon {
-    font-size: 1.5rem;
-}
-
-@keyframes popIn {
-    0% {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
 }

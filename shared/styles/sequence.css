@@ -1,0 +1,287 @@
+/**
+ * Shared Sequence Styles
+ * 
+ * Common styles for command sequences with loop support.
+ * Games should @import this file and add game-specific overrides.
+ * 
+ * Requires CSS variables:
+ * --color-primary, --color-success, --color-warning, --color-danger
+ * --color-surface, --color-surface-light
+ * --spacing-xs, --spacing-sm, --spacing-md
+ * --radius-sm, --radius-md
+ * --transition-fast
+ */
+
+/* ===== Sequence Area ===== */
+.sequence-area {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    min-height: 60px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.sequence-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 1.2rem;
+    user-select: none;
+}
+
+/* ===== Sequence Items ===== */
+.sequence-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    background: var(--color-primary);
+    border-radius: var(--radius-md);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    animation: popIn 0.2s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sequence-item:hover {
+    transform: scale(1.05);
+}
+
+.sequence-item:active {
+    transform: scale(0.95);
+}
+
+.sequence-item.dragging {
+    opacity: 0.3;
+    transform: scale(0.95);
+}
+
+.sequence-item.executing {
+    animation: pulse 0.5s ease infinite;
+    box-shadow: 0 0 10px var(--color-warning);
+}
+
+/* ===== Drag & Drop States ===== */
+.sequence-area.drag-active {
+    border: 2px dashed var(--color-primary);
+}
+
+.sequence-area.drag-over {
+    background: rgba(255, 159, 28, 0.2);
+}
+
+.drop-placeholder {
+    width: 8px;
+    height: 44px;
+    background: var(--color-success);
+    border-radius: 4px;
+    animation: pulse 0.8s ease infinite;
+    flex-shrink: 0;
+}
+
+/* ===== Loop Block Styles ===== */
+.loop-block {
+    display: flex;
+    flex-direction: column;
+    background: rgba(78, 205, 196, 0.15);
+    border: 3px dashed var(--color-success);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    animation: popIn 0.2s ease;
+    min-width: 80px;
+}
+
+.loop-block.active {
+    border-style: solid;
+    background: rgba(78, 205, 196, 0.3);
+    box-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
+}
+
+.loop-block:hover {
+    background: rgba(78, 205, 196, 0.25);
+}
+
+.loop-block.dragging {
+    opacity: 0.3;
+    transform: scale(0.95);
+}
+
+.loop-block.executing {
+    animation: pulse 0.5s ease;
+    background: rgba(78, 205, 196, 0.5);
+    border-style: solid;
+}
+
+/* ===== Loop Header ===== */
+.loop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid rgba(78, 205, 196, 0.3);
+    margin-bottom: var(--spacing-xs);
+}
+
+.loop-icon {
+    font-size: 1.2rem;
+    cursor: grab;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.loop-icon:hover {
+    background: rgba(78, 205, 196, 0.3);
+    transform: scale(1.1);
+}
+
+.loop-icon:active {
+    cursor: grabbing;
+}
+
+/* ===== Loop Iteration Controls ===== */
+.loop-iteration-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.iter-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-light);
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all var(--transition-fast);
+}
+
+.iter-btn:hover {
+    background: var(--color-primary);
+    transform: scale(1.1);
+}
+
+.iter-btn:active {
+    transform: scale(0.9);
+}
+
+.iter-count {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--color-success);
+    min-width: 24px;
+    text-align: center;
+}
+
+/* ===== Loop Body ===== */
+.loop-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    min-height: 36px;
+    padding: var(--spacing-xs);
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.loop-body.drag-over {
+    background: rgba(78, 205, 196, 0.3);
+    border: 2px dashed var(--color-success);
+    border-radius: var(--radius-sm);
+}
+
+.loop-placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 1rem;
+    width: 100%;
+    text-align: center;
+}
+
+.loop-placeholder-indicator {
+    width: 4px;
+    height: 32px;
+    background: var(--color-success);
+    border-radius: 2px;
+    animation: pulse 0.8s ease infinite;
+    flex-shrink: 0;
+}
+
+.loop-item {
+    font-size: 1rem !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+}
+
+.loop-item.dragging {
+    opacity: 0.3;
+}
+
+.loop-item.executing {
+    animation: pulse 0.5s ease infinite;
+    box-shadow: 0 0 10px var(--color-warning);
+}
+
+/* ===== Trash Zone ===== */
+.trash-zone {
+    font-size: 1.5rem;
+    background: var(--color-surface-light);
+    border: 2px dashed transparent;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: all var(--transition-fast);
+    opacity: 0.6;
+}
+
+.trash-zone.drag-active {
+    opacity: 1;
+    border-color: var(--color-danger);
+}
+
+.trash-zone.drag-over {
+    background: var(--color-danger);
+    transform: scale(1.1);
+    border-style: solid;
+}
+
+/* ===== Animation Keyframes ===== */
+@keyframes popIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
