@@ -25,6 +25,7 @@ class Timeline {
         
         this.onCellClick = options.onCellClick || (() => {});
         this.onCellDrop = options.onCellDrop || (() => {});
+        this.onNoteChange = options.onNoteChange || (() => {});
         
         this.init();
     }
@@ -267,6 +268,29 @@ class Timeline {
                 behavior: 'smooth'
             });
         }
+    }
+
+    /**
+     * Serialize all tracks to a compact object
+     * @returns {Object}
+     */
+    serializeTracks() {
+        return {
+            melody: this.tracks.melody.serialize(),
+            bass: this.tracks.bass.serialize(),
+            percussion: this.tracks.percussion.serialize()
+        };
+    }
+
+    /**
+     * Deserialize tracks from object
+     * @param {Object} data - Serialized track data
+     */
+    deserializeTracks(data) {
+        if (data.melody) this.tracks.melody.deserialize(data.melody);
+        if (data.bass) this.tracks.bass.deserialize(data.bass);
+        if (data.percussion) this.tracks.percussion.deserialize(data.percussion);
+        this.render();
     }
 }
 

@@ -177,6 +177,16 @@
     background: var(--track-percussion);
 }
 
+/* Track drag availability states */
+.track.drop-unavailable {
+    opacity: 0.3;
+    filter: grayscale(0.5);
+}
+
+.track.drop-available {
+    box-shadow: inset 0 0 0 2px var(--color-success);
+}
+
 /* ===== Track Cell ===== */
 .track-cell {
     width: var(--cell-size);

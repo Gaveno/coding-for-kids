@@ -158,8 +158,28 @@ class DragDrop {
         
         btn.classList.add('dragging');
         
+        // Highlight available/unavailable tracks
+        this.updateTrackAvailability(type);
+        
         this.createDragGhost(pointer, icon);
         this.updateDropTargets(pointer);
+    }
+
+    /**
+     * Update track visual states based on note type
+     * @param {string} noteType - The type of note being dragged
+     */
+    updateTrackAvailability(noteType) {
+        document.querySelectorAll('.track').forEach(track => {
+            const trackType = track.dataset.track;
+            if (trackType === noteType) {
+                track.classList.add('drop-available');
+                track.classList.remove('drop-unavailable');
+            } else {
+                track.classList.add('drop-unavailable');
+                track.classList.remove('drop-available');
+            }
+        });
     }
 
     /**
@@ -285,6 +305,11 @@ class DragDrop {
         // Clear drop targets
         document.querySelectorAll('.track-cell.drop-target').forEach(cell => {
             cell.classList.remove('drop-target');
+        });
+        
+        // Clear track availability states
+        document.querySelectorAll('.track').forEach(track => {
+            track.classList.remove('drop-available', 'drop-unavailable');
         });
         
         this.dragState = null;

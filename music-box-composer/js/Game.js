@@ -37,6 +37,7 @@ class Game {
         this.cacheElements();
         this.initComponents();
         this.bindEvents();
+        this.loadFromURL();
     }
 
     /**
@@ -86,7 +87,8 @@ class Game {
             cellsMelody: this.elements.cellsMelody,
             cellsBass: this.elements.cellsBass,
             cellsPercussion: this.elements.cellsPercussion,
-            onCellClick: (track, beat, note) => this.handleCellClick(track, beat)
+            onCellClick: (track, beat, note) => this.handleCellClick(track, beat),
+            onNoteChange: () => this.updateURL()
         });
         
         // Drag and drop
@@ -133,6 +135,7 @@ class Game {
     handleCellClick(track, beat) {
         if (this.isPlaying) return;
         this.timeline.clearNote(track, beat);
+        this.updateURL();
     }
 
     /**
@@ -141,6 +144,7 @@ class Game {
     handleNoteDrop(track, beat, note, icon) {
         this.timeline.setNote(track, beat, note, icon);
         this.audio.playNote(note, track);
+        this.updateURL();
     }
 
     /**
@@ -297,6 +301,7 @@ class Game {
     cycleSpeed() {
         this.currentSpeedIndex = (this.currentSpeedIndex + 1) % this.speeds.length;
         this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
+        this.updateURL();
     }
 
     /**
@@ -305,6 +310,7 @@ class Game {
     toggleLoop() {
         this.isLooping = !this.isLooping;
         this.elements.loopBtn.classList.toggle('active', this.isLooping);
+        this.updateURL();
     }
 
     /**
@@ -325,6 +331,7 @@ class Game {
             const newLength = this.beatLengths[newIndex];
             this.timeline.setBeatCount(newLength);
             this.elements.beatCount.textContent = newLength;
+            this.updateURL();
         }
     }
 
@@ -336,6 +343,92 @@ class Game {
             this.stop();
         }
         this.timeline.clearAll();
+        this.updateURL();
+    }
+
+    /**
+     * Serialize current state to a compact URL-safe string
+     * Format: speed(1)|loop(1)|length(2)|melody|bass|percussion
+     * Each track: beat:noteIndex pairs separated by commas
+     * @returns {string}
+     */
+    serializeState() {
+        const state = {
+            s: this.currentSpeedIndex,
+            l: this.isLooping ? 1 : 0,
+            b: this.timeline.getBeatCount(),
+            t: this.timeline.serializeTracks()
+        };
+        
+        const json = JSON.stringify(state);
+        // Use encodeURIComponent to handle Unicode (emojis), then base64 encode
+        const encoded = btoa(encodeURIComponent(json));
+        return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    /**
+     * Deserialize state from URL string
+     * @param {string} encoded - Encoded state string
+     * @returns {Object|null}
+     */
+    deserializeState(encoded) {
+        try {
+            // Restore base64 padding and characters
+            let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4) base64 += '=';
+            
+            // Decode base64, then decodeURIComponent to restore Unicode
+            const json = decodeURIComponent(atob(base64));
+            return JSON.parse(json);
+        } catch (e) {
+            console.warn('Failed to decode state from URL:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Update URL with current state
+     */
+    updateURL() {
+        const encoded = this.serializeState();
+        const newURL = `${window.location.pathname}?c=${encoded}`;
+        window.history.replaceState(null, '', newURL);
+    }
+
+    /**
+     * Load state from URL if present
+     */
+    loadFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        const encoded = params.get('c');
+        
+        if (!encoded) return;
+        
+        const state = this.deserializeState(encoded);
+        if (!state) return;
+        
+        // Apply speed
+        if (typeof state.s === 'number' && state.s >= 0 && state.s < this.speeds.length) {
+            this.currentSpeedIndex = state.s;
+            this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
+        }
+        
+        // Apply loop
+        if (state.l === 1) {
+            this.isLooping = true;
+            this.elements.loopBtn.classList.add('active');
+        }
+        
+        // Apply beat count
+        if (typeof state.b === 'number' && this.beatLengths.includes(state.b)) {
+            this.timeline.setBeatCount(state.b);
+            this.elements.beatCount.textContent = state.b;
+        }
+        
+        // Apply tracks
+        if (state.t) {
+            this.timeline.deserializeTracks(state.t);
+        }
     }
 }
 

@@ -85,6 +85,39 @@ class Track {
     getNotes() {
         return [...this.notes];
     }
+
+    /**
+     * Serialize track to compact array of [beat, note, icon] tuples
+     * Only includes beats that have notes
+     * @returns {Array}
+     */
+    serialize() {
+        const data = [];
+        this.notes.forEach((note, beat) => {
+            if (note) {
+                data.push([beat, note.note, note.icon]);
+            }
+        });
+        return data;
+    }
+
+    /**
+     * Deserialize track from array of [beat, note, icon] tuples
+     * @param {Array} data - Serialized data
+     */
+    deserialize(data) {
+        this.clear();
+        if (!Array.isArray(data)) return;
+        
+        data.forEach(item => {
+            if (Array.isArray(item) && item.length >= 3) {
+                const [beat, note, icon] = item;
+                if (beat >= 0 && beat < this.length) {
+                    this.notes[beat] = { note, icon };
+                }
+            }
+        });
+    }
 }
 
 window.Track = Track;

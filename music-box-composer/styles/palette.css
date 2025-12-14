@@ -88,14 +88,14 @@
     position: fixed;
     pointer-events: none;
     z-index: 1000;
-    font-size: 2rem;
+    font-size: 3rem;
     opacity: 0.9;
-    transform: translate(-50%, -50%);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    transform: translate(-50%, -80%);
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
     animation: ghostAppear 0.15s ease-out;
 }
 
 @keyframes ghostAppear {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+    0% { transform: translate(-50%, -80%) scale(0.5); opacity: 0; }
+    100% { transform: translate(-50%, -80%) scale(1); opacity: 0.9; }
 }
