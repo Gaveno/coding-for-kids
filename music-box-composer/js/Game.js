@@ -210,22 +210,36 @@ class Game {
     startPlayback() {
         const beatDuration = this.speeds[this.currentSpeedIndex].ms;
         let lastBeatTime = performance.now();
-        let beatProgress = 0;
+        let displayBeat = this.currentBeat;
+        
+        // Play first beat immediately
+        this.playBeat(this.currentBeat);
+        this.timeline.highlightBeat(this.currentBeat);
+        this.currentBeat++;
+        
+        // Check if only one beat
+        if (this.currentBeat >= this.timeline.getBeatCount()) {
+            if (this.isLooping) {
+                this.currentBeat = 0;
+            } else {
+                this.onPlaybackComplete();
+                return;
+            }
+        }
         
         const tick = (now) => {
             if (!this.isPlaying) return;
             
             const elapsed = now - lastBeatTime;
-            beatProgress = elapsed / beatDuration;
+            const beatProgress = Math.min(elapsed / beatDuration, 1);
             
             // Update playhead position smoothly
-            const smoothBeat = this.currentBeat + Math.min(beatProgress, 1);
-            this.timeline.updatePlayheadPosition(smoothBeat);
+            this.timeline.updatePlayheadPosition(displayBeat + beatProgress);
             
             // Check if we've completed a beat
             if (elapsed >= beatDuration) {
                 lastBeatTime = now;
-                beatProgress = 0;
+                displayBeat = this.currentBeat;
                 
                 this.playBeat(this.currentBeat);
                 this.timeline.highlightBeat(this.currentBeat);
@@ -246,10 +260,6 @@ class Game {
             
             this.animationFrame = requestAnimationFrame(tick);
         };
-        
-        // Play first beat immediately
-        this.playBeat(this.currentBeat);
-        this.timeline.highlightBeat(this.currentBeat);
         
         this.animationFrame = requestAnimationFrame(tick);
     }
