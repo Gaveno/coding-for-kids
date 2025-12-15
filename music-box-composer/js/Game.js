@@ -16,10 +16,10 @@ class Game {
         
         // Speed settings (ms per beat)
         this.speeds = [
-            { ms: 200, icon: '🐢' },
-            { ms: 120, icon: '🚶' },
-            { ms: 80, icon: '🏃' },
-            { ms: 50, icon: '⚡' }
+            { ms: 350, icon: '🐢' },
+            { ms: 200, icon: '🚶' },
+            { ms: 130, icon: '🏃' },
+            { ms: 80, icon: '⚡' }
         ];
         this.currentSpeedIndex = 1; // Default: medium
         
