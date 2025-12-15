@@ -267,7 +267,15 @@ class DragDrop {
         const noteType = this.dragState.type;
         
         // Notes can only be dropped on matching track type
-        return trackType === noteType;
+        if (trackType !== noteType) return false;
+        
+        // Don't allow dropping on cells covered by extended notes
+        if (cell.classList.contains('covered-by-note')) return false;
+        
+        // Don't allow dropping on cells that already have notes
+        if (cell.classList.contains('has-note')) return false;
+        
+        return true;
     }
 
     /**

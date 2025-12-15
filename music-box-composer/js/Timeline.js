@@ -105,24 +105,195 @@ class Timeline {
                 cell.classList.add('downbeat');
             }
             
+            // Check if this beat is covered by an extended note
+            const coveringNote = track.getCoveringNote(i);
+            if (coveringNote) {
+                cell.classList.add('covered-by-note');
+            }
+            
             // Add note if present
             const note = track.getNote(i);
             if (note) {
                 cell.classList.add('has-note');
-                const noteEl = document.createElement('span');
+                const duration = note.duration || 1;
+                
+                // Create note element that can span multiple cells
+                const noteEl = document.createElement('div');
                 noteEl.className = 'cell-note';
                 noteEl.textContent = note.icon;
+                noteEl.dataset.duration = duration;
+                
+                // Set width based on duration (always use calc for consistency)
+                if (duration > 1) {
+                    noteEl.classList.add('extended');
+                }
+                noteEl.style.width = `calc(${duration} * var(--cell-size) - 4px)`;
+                
+                // Setup drag-to-resize
+                this.setupNoteDrag(noteEl, trackType, i, note);
+                
                 cell.appendChild(noteEl);
             }
             
-            // Click to remove note
-            cell.addEventListener('click', () => {
+            // Click to remove note (only if not covered)
+            cell.addEventListener('click', (e) => {
+                // Don't remove if clicked on the note element (handled by note drag)
+                if (e.target.classList.contains('cell-note')) return;
+                
                 if (track.hasNote(i)) {
                     this.onCellClick(trackType, i, null);
+                } else if (coveringNote) {
+                    // Clicking on a covered cell clears the parent note
+                    this.onCellClick(trackType, coveringNote.startBeat, null);
                 }
             });
             
             container.appendChild(cell);
+        }
+    }
+
+    /**
+     * Setup drag-to-resize for a note
+     * @param {HTMLElement} noteEl - Note element
+     * @param {string} trackType - Track type
+     * @param {number} beat - Beat index
+     * @param {Object} note - Note data
+     */
+    setupNoteDrag(noteEl, trackType, beat, note) {
+        let startX = null;
+        let startDuration = note.duration || 1;
+        let isDragging = false;
+        const dragThreshold = 10;
+        
+        const handleDragStart = (clientX) => {
+            startX = clientX;
+            startDuration = note.duration || 1;
+            isDragging = false;
+        };
+        
+        const handleDragMove = (clientX) => {
+            if (startX === null) return;
+            
+            const dx = clientX - startX;
+            
+            if (!isDragging && Math.abs(dx) > dragThreshold) {
+                isDragging = true;
+                noteEl.classList.add('resizing');
+            }
+            
+            if (isDragging) {
+                // Calculate new duration based on drag distance
+                const cellsChange = Math.round(dx / this.cellSize);
+                const newDuration = Math.max(1, startDuration + cellsChange);
+                
+                // Preview the new size visually
+                const maxDuration = this.getMaxDuration(trackType, beat, startDuration);
+                const clampedDuration = Math.min(newDuration, maxDuration);
+                noteEl.style.width = `calc(${clampedDuration} * var(--cell-size) - 4px)`;
+                noteEl.dataset.previewDuration = clampedDuration;
+            }
+        };
+        
+        const handleDragEnd = () => {
+            if (isDragging && noteEl.dataset.previewDuration) {
+                const newDuration = parseInt(noteEl.dataset.previewDuration);
+                if (newDuration !== startDuration) {
+                    this.onNoteResize(trackType, beat, newDuration);
+                }
+            }
+            
+            startX = null;
+            isDragging = false;
+            noteEl.classList.remove('resizing');
+            delete noteEl.dataset.previewDuration;
+        };
+        
+        // Touch events
+        noteEl.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            handleDragStart(e.touches[0].clientX);
+        }, { passive: true });
+        
+        noteEl.addEventListener('touchmove', (e) => {
+            if (startX !== null) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDragMove(e.touches[0].clientX);
+            }
+        }, { passive: false });
+        
+        noteEl.addEventListener('touchend', (e) => {
+            e.stopPropagation();
+            handleDragEnd();
+        });
+        
+        noteEl.addEventListener('touchcancel', () => {
+            startX = null;
+            isDragging = false;
+            noteEl.classList.remove('resizing');
+        });
+        
+        // Mouse events
+        noteEl.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            handleDragStart(e.clientX);
+            
+            const onMouseMove = (moveE) => handleDragMove(moveE.clientX);
+            const onMouseUp = () => {
+                handleDragEnd();
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+        
+        // Click to delete (if not dragged)
+        noteEl.addEventListener('click', (e) => {
+            if (!isDragging) {
+                e.stopPropagation();
+                this.onCellClick(trackType, beat, null);
+            }
+        });
+    }
+
+    /**
+     * Get maximum duration a note can extend to
+     * @param {string} trackType - Track type
+     * @param {number} beat - Starting beat
+     * @param {number} currentDuration - Current duration
+     * @returns {number} Maximum duration
+     */
+    getMaxDuration(trackType, beat, currentDuration) {
+        const track = this.tracks[trackType];
+        let maxDuration = this.beatCount - beat;
+        
+        // Check for notes that would block extension
+        for (let i = beat + currentDuration; i < this.beatCount; i++) {
+            if (track.hasNote(i)) {
+                maxDuration = i - beat;
+                break;
+            }
+        }
+        
+        return maxDuration;
+    }
+
+    /**
+     * Handle note resize
+     * @param {string} trackType - Track type
+     * @param {number} beat - Beat index
+     * @param {number} newDuration - New duration
+     */
+    onNoteResize(trackType, beat, newDuration) {
+        const track = this.tracks[trackType];
+        const note = track.getNote(beat);
+        if (note) {
+            note.duration = newDuration;
+            this.renderTrack(trackType);
+            this.onNoteChange();
         }
     }
 
@@ -166,15 +337,31 @@ class Timeline {
 
     /**
      * Get notes at a specific beat across all tracks
+     * Includes extended notes that started earlier but are still playing
      * @param {number} beat - Beat index
      * @returns {Object} - { melody: note|null, bass: note|null, percussion: note|null }
      */
     getNotesAtBeat(beat) {
-        return {
-            melody: this.tracks.melody.getNote(beat),
-            bass: this.tracks.bass.getNote(beat),
-            percussion: this.tracks.percussion.getNote(beat)
-        };
+        const result = {};
+        
+        ['melody', 'bass', 'percussion'].forEach(trackType => {
+            const track = this.tracks[trackType];
+            // First check if there's a note starting at this beat
+            let note = track.getNote(beat);
+            
+            // If no note at this beat, check if an extended note covers this beat
+            if (!note) {
+                const covering = track.getCoveringNote(beat);
+                if (covering) {
+                    // Return the covering note but mark it as sustained (not a new attack)
+                    note = { ...covering.note, sustained: true };
+                }
+            }
+            
+            result[trackType] = note;
+        });
+        
+        return result;
     }
 
     /**

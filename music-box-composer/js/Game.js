@@ -266,6 +266,7 @@ class Game {
 
     /**
      * Play sounds for a beat
+     * Extended notes only trigger on their first beat (not sustained beats)
      */
     playBeat(beat) {
         const notes = this.timeline.getNotesAtBeat(beat);
@@ -274,25 +275,40 @@ class Game {
             bass: false,
             percussion: false
         };
+        const durations = {
+            melody: 1,
+            bass: 1,
+            percussion: 1
+        };
         
-        if (notes.melody) {
-            this.audio.playNote(notes.melody.note, 'melody');
+        // Calculate beat duration in seconds
+        const beatDurationMs = this.speeds[this.currentSpeedIndex].ms;
+        const beatDurationSec = beatDurationMs / 1000;
+        
+        // Only play notes that are starting (not sustained from previous beat)
+        if (notes.melody && !notes.melody.sustained) {
+            const noteDuration = (notes.melody.duration || 1) * beatDurationSec;
+            this.audio.playNote(notes.melody.note, 'melody', noteDuration);
             playing.melody = true;
+            durations.melody = notes.melody.duration || 1;
         }
         
-        if (notes.bass) {
-            this.audio.playNote(notes.bass.note, 'bass');
+        if (notes.bass && !notes.bass.sustained) {
+            const noteDuration = (notes.bass.duration || 1) * beatDurationSec;
+            this.audio.playNote(notes.bass.note, 'bass', noteDuration);
             playing.bass = true;
+            durations.bass = notes.bass.duration || 1;
         }
         
-        if (notes.percussion) {
+        if (notes.percussion && !notes.percussion.sustained) {
+            // Percussion doesn't use duration
             this.audio.playNote(notes.percussion.note, 'percussion');
             playing.percussion = true;
         }
         
         // Animate characters if any notes played
         if (playing.melody || playing.bass || playing.percussion) {
-            this.character.dance(playing);
+            this.character.dance(playing, durations);
         }
     }
 
@@ -363,11 +379,20 @@ class Game {
     static MELODY_ICONS = ['', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚪', '❤️'];
     static BASS_ICONS = ['', '🟦', '🟪', '🟫', '⬛', '💙', '💜'];
     static PERC_ICONS = ['', '🥁', '🪘', '🔔', '👏'];
+    
+    // Encoding version: increment when format changes
+    // v1: 10 bits per beat (no duration)
+    // v2: 16 bits per beat (with duration for melody/bass)
+    static ENCODING_VERSION = 2;
 
     /**
      * Serialize current state to a compact binary URL-safe string
+     * Format: "v{version}_{base64data}"
+     * 
+     * v2 Binary format:
      * Header: 5 bits (speed:2, loop:1, lengthIndex:2)
-     * Per beat: 10 bits (melody:4, bass:3, percussion:3)
+     * Per beat: 16 bits (melody:4, melodyDur:3, bass:3, bassDur:3, percussion:3)
+     * Duration is stored as (duration - 1) to fit 1-8 in 3 bits
      * @returns {string}
      */
     serializeState() {
@@ -385,16 +410,23 @@ class Game {
         // Track data for each beat
         const tracks = this.timeline.serializeTracks();
         for (let i = 0; i < beatCount; i++) {
-            const melodyNote = this.findNoteAtBeat(tracks.melody, i);
-            const bassNote = this.findNoteAtBeat(tracks.bass, i);
-            const percNote = this.findNoteAtBeat(tracks.percussion, i);
+            const melodyData = this.findNoteDataAtBeat(tracks.melody, i);
+            const bassData = this.findNoteDataAtBeat(tracks.bass, i);
+            const percData = this.findNoteDataAtBeat(tracks.percussion, i);
             
-            const melodyIdx = Game.MELODY_NOTES.indexOf(melodyNote);
-            const bassIdx = Game.BASS_NOTES.indexOf(bassNote);
-            const percIdx = Game.PERC_NOTES.indexOf(percNote);
+            const melodyIdx = Game.MELODY_NOTES.indexOf(melodyData.note);
+            const bassIdx = Game.BASS_NOTES.indexOf(bassData.note);
+            const percIdx = Game.PERC_NOTES.indexOf(percData.note);
             
+            // Melody: 4 bits note + 3 bits duration (0-7 = duration 1-8)
             this.pushBits(bits, Math.max(0, melodyIdx), 4);
+            this.pushBits(bits, Math.min(7, Math.max(0, melodyData.duration - 1)), 3);
+            
+            // Bass: 3 bits note + 3 bits duration
             this.pushBits(bits, Math.max(0, bassIdx), 3);
+            this.pushBits(bits, Math.min(7, Math.max(0, bassData.duration - 1)), 3);
+            
+            // Percussion: 3 bits note (no duration needed for percussion)
             this.pushBits(bits, Math.max(0, percIdx), 3);
         }
         
@@ -406,17 +438,23 @@ class Game {
         for (let i = 0; i < bytes.length; i++) {
             base64 += String.fromCharCode(bytes[i]);
         }
-        return btoa(base64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const data = btoa(base64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        
+        // Prefix with version
+        return `v${Game.ENCODING_VERSION}_${data}`;
     }
 
     /**
-     * Find note value at a specific beat from serialized track data
+     * Find note data (note and duration) at a specific beat from serialized track data
+     * @returns {Object} - { note: string, duration: number }
      */
-    findNoteAtBeat(trackData, beat) {
-        for (const [b, note] of trackData) {
-            if (b === beat) return note;
+    findNoteDataAtBeat(trackData, beat) {
+        for (const item of trackData) {
+            if (item[0] === beat) {
+                return { note: item[1], duration: item[3] || 1 };
+            }
         }
-        return '';
+        return { note: '', duration: 1 };
     }
 
     /**
@@ -469,13 +507,24 @@ class Game {
 
     /**
      * Deserialize state from compact binary URL string
+     * Supports both v1 (no duration) and v2 (with duration) formats
      * @param {string} encoded - Encoded state string
      * @returns {Object|null}
      */
     deserializeState(encoded) {
         try {
+            // Check for version prefix
+            let version = 1;
+            let data = encoded;
+            
+            const versionMatch = encoded.match(/^v(\d+)_(.+)$/);
+            if (versionMatch) {
+                version = parseInt(versionMatch[1]);
+                data = versionMatch[2];
+            }
+            
             // Restore base64 padding and characters
-            let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+            let base64 = data.replace(/-/g, '+').replace(/_/g, '/');
             while (base64.length % 4) base64 += '=';
             
             // Decode base64 to bytes
@@ -487,46 +536,113 @@ class Game {
             
             // Convert to bits
             const bits = this.bytesToBits(bytes);
-            let offset = 0;
             
-            // Read header
-            const speedIndex = this.readBits(bits, offset, 2); offset += 2;
-            const loop = this.readBits(bits, offset, 1); offset += 1;
-            const lengthIndex = this.readBits(bits, offset, 2); offset += 2;
-            
-            const beatCount = this.beatLengths[lengthIndex] || 16;
-            
-            // Read track data
-            const melody = [];
-            const bass = [];
-            const percussion = [];
-            
-            for (let i = 0; i < beatCount; i++) {
-                const melodyIdx = this.readBits(bits, offset, 4); offset += 4;
-                const bassIdx = this.readBits(bits, offset, 3); offset += 3;
-                const percIdx = this.readBits(bits, offset, 3); offset += 3;
-                
-                if (melodyIdx > 0 && melodyIdx < Game.MELODY_NOTES.length) {
-                    melody.push([i, Game.MELODY_NOTES[melodyIdx], Game.MELODY_ICONS[melodyIdx]]);
-                }
-                if (bassIdx > 0 && bassIdx < Game.BASS_NOTES.length) {
-                    bass.push([i, Game.BASS_NOTES[bassIdx], Game.BASS_ICONS[bassIdx]]);
-                }
-                if (percIdx > 0 && percIdx < Game.PERC_NOTES.length) {
-                    percussion.push([i, Game.PERC_NOTES[percIdx], Game.PERC_ICONS[percIdx]]);
-                }
+            // Dispatch to version-specific decoder
+            if (version === 1) {
+                return this.deserializeV1(bits);
+            } else if (version === 2) {
+                return this.deserializeV2(bits);
+            } else {
+                console.warn(`Unknown encoding version: ${version}`);
+                return null;
             }
-            
-            return {
-                s: speedIndex,
-                l: loop,
-                b: beatCount,
-                t: { melody, bass, percussion }
-            };
         } catch (e) {
             console.warn('Failed to decode state from URL:', e);
             return null;
         }
+    }
+
+    /**
+     * Deserialize v1 format (no duration support)
+     * Per beat: 10 bits (melody:4, bass:3, percussion:3)
+     */
+    deserializeV1(bits) {
+        let offset = 0;
+        
+        // Read header
+        const speedIndex = this.readBits(bits, offset, 2); offset += 2;
+        const loop = this.readBits(bits, offset, 1); offset += 1;
+        const lengthIndex = this.readBits(bits, offset, 2); offset += 2;
+        
+        const beatCount = this.beatLengths[lengthIndex] || 16;
+        
+        // Read track data (v1: no duration)
+        const melody = [];
+        const bass = [];
+        const percussion = [];
+        
+        for (let i = 0; i < beatCount; i++) {
+            const melodyIdx = this.readBits(bits, offset, 4); offset += 4;
+            const bassIdx = this.readBits(bits, offset, 3); offset += 3;
+            const percIdx = this.readBits(bits, offset, 3); offset += 3;
+            
+            if (melodyIdx > 0 && melodyIdx < Game.MELODY_NOTES.length) {
+                melody.push([i, Game.MELODY_NOTES[melodyIdx], Game.MELODY_ICONS[melodyIdx], 1]);
+            }
+            if (bassIdx > 0 && bassIdx < Game.BASS_NOTES.length) {
+                bass.push([i, Game.BASS_NOTES[bassIdx], Game.BASS_ICONS[bassIdx], 1]);
+            }
+            if (percIdx > 0 && percIdx < Game.PERC_NOTES.length) {
+                percussion.push([i, Game.PERC_NOTES[percIdx], Game.PERC_ICONS[percIdx], 1]);
+            }
+        }
+        
+        return {
+            s: speedIndex,
+            l: loop,
+            b: beatCount,
+            t: { melody, bass, percussion }
+        };
+    }
+
+    /**
+     * Deserialize v2 format (with duration support)
+     * Per beat: 16 bits (melody:4, melodyDur:3, bass:3, bassDur:3, percussion:3)
+     */
+    deserializeV2(bits) {
+        let offset = 0;
+        
+        // Read header
+        const speedIndex = this.readBits(bits, offset, 2); offset += 2;
+        const loop = this.readBits(bits, offset, 1); offset += 1;
+        const lengthIndex = this.readBits(bits, offset, 2); offset += 2;
+        
+        const beatCount = this.beatLengths[lengthIndex] || 16;
+        
+        // Read track data
+        const melody = [];
+        const bass = [];
+        const percussion = [];
+        
+        for (let i = 0; i < beatCount; i++) {
+            // Melody: 4 bits note + 3 bits duration
+            const melodyIdx = this.readBits(bits, offset, 4); offset += 4;
+            const melodyDur = this.readBits(bits, offset, 3) + 1; offset += 3;
+            
+            // Bass: 3 bits note + 3 bits duration
+            const bassIdx = this.readBits(bits, offset, 3); offset += 3;
+            const bassDur = this.readBits(bits, offset, 3) + 1; offset += 3;
+            
+            // Percussion: 3 bits note (no duration)
+            const percIdx = this.readBits(bits, offset, 3); offset += 3;
+            
+            if (melodyIdx > 0 && melodyIdx < Game.MELODY_NOTES.length) {
+                melody.push([i, Game.MELODY_NOTES[melodyIdx], Game.MELODY_ICONS[melodyIdx], melodyDur]);
+            }
+            if (bassIdx > 0 && bassIdx < Game.BASS_NOTES.length) {
+                bass.push([i, Game.BASS_NOTES[bassIdx], Game.BASS_ICONS[bassIdx], bassDur]);
+            }
+            if (percIdx > 0 && percIdx < Game.PERC_NOTES.length) {
+                percussion.push([i, Game.PERC_NOTES[percIdx], Game.PERC_ICONS[percIdx], 1]);
+            }
+        }
+        
+        return {
+            s: speedIndex,
+            l: loop,
+            b: beatCount,
+            t: { melody, bass, percussion }
+        };
     }
 
     /**

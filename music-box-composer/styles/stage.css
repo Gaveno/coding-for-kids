@@ -110,3 +110,24 @@
     75% { transform: scale(1.2) rotate(-5deg); }
     100% { transform: scale(1) rotate(0deg); }
 }
+
+/* Spinning for extended notes */
+.character.spinning {
+    animation: characterSpin 0.6s ease-in-out;
+}
+
+.character.main.spinning {
+    animation: characterSpinBig 0.6s ease-in-out;
+}
+
+@keyframes characterSpin {
+    0% { transform: translateY(-10px) rotate(0deg); }
+    50% { transform: translateY(-30px) rotate(180deg); }
+    100% { transform: translateY(-10px) rotate(360deg); }
+}
+
+@keyframes characterSpinBig {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-25px) rotate(180deg); }
+    100% { transform: translateY(0) rotate(360deg); }
+}

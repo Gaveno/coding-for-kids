@@ -271,14 +271,15 @@ class Audio {
      * Play a note based on type
      * @param {string} note - Note name or percussion type
      * @param {string} type - 'melody', 'bass', or 'percussion'
+     * @param {number} duration - Duration in seconds (optional)
      */
-    playNote(note, type) {
+    playNote(note, type, duration) {
         switch (type) {
             case 'melody':
-                this.playMelody(note);
+                this.playMelody(note, duration);
                 break;
             case 'bass':
-                this.playBass(note);
+                this.playBass(note, duration);
                 break;
             case 'percussion':
                 this.playPercussion(note);

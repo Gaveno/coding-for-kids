@@ -13,36 +13,45 @@ class Character {
     /**
      * Make characters dance based on which tracks are playing
      * @param {Object} playing - { melody: bool, bass: bool, percussion: bool }
+     * @param {Object} durations - { melody: number, bass: number, percussion: number }
      */
-    dance(playing) {
+    dance(playing, durations = {}) {
         // Main character dances on bass
         if (playing.bass) {
-            this.triggerDance(this.main);
+            const isExtended = (durations.bass || 1) > 1;
+            this.triggerDance(this.main, isExtended);
         }
         
         // Left character dances on melody
         if (playing.melody) {
-            this.triggerDance(this.left);
+            const isExtended = (durations.melody || 1) > 1;
+            this.triggerDance(this.left, isExtended);
         }
         
         // Right character dances on percussion
         if (playing.percussion) {
-            this.triggerDance(this.right);
+            this.triggerDance(this.right, false); // Percussion doesn't have duration
         }
     }
 
     /**
      * Trigger dance animation on a character
      * @param {HTMLElement} element - Character element
+     * @param {boolean} spin - Whether to use spinning animation for extended notes
      */
-    triggerDance(element) {
+    triggerDance(element, spin = false) {
         element.classList.remove('idle');
         element.classList.remove('dancing');
+        element.classList.remove('spinning');
         
         // Force reflow to restart animation
         void element.offsetWidth;
         
-        element.classList.add('dancing');
+        if (spin) {
+            element.classList.add('spinning');
+        } else {
+            element.classList.add('dancing');
+        }
     }
 
     /**
@@ -83,7 +92,7 @@ class Character {
      */
     reset() {
         [this.main, this.left, this.right].forEach(el => {
-            el.className = el.className.replace(/\s*(dancing|celebrate)\s*/g, ' ');
+            el.className = el.className.replace(/\s*(dancing|celebrate|spinning)\s*/g, ' ');
         });
         this.setIdle(true);
     }
