@@ -621,9 +621,13 @@ export class Game {
         this.elements.successOverlay.classList.remove('active');
         
         if (this.currentLevel < getTotalLevels()) {
+            // Clear sequence first (before loading new level) to avoid
+            // returning old commands to new level's supply
+            this.sequence.clear();
+            this.renderSequence();
+            
             this.currentLevel++;
             this.loadLevel(this.currentLevel);
-            this.clearSequence();
         }
     }
 

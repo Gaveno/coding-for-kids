@@ -115,9 +115,9 @@ export function runLevelsTests() {
     });
 
     // Progression tests
-    test('Level 1 is tulip', () => {
+    test('Level 1 is clover (easiest - all same action)', () => {
         const level = getLevel(1);
-        assertEqual(level.target, '🌷', 'Level 1 should be tulip');
+        assertEqual(level.target, '🍀', 'Level 1 should be clover');
     });
 
     test('Music action introduced at level 8', () => {
