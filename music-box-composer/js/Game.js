@@ -2,6 +2,29 @@
  * Game.js - Main game controller for Music Box Composer
  */
 class Game {
+    // Key signatures: indices map to PIANO_NOTES array (1-12, 0=empty)
+    static KEY_SIGNATURES = {
+        'C Major':  [1, 3, 5, 6, 8, 10, 12],     // C D E F G A B
+        'G Major':  [1, 3, 5, 7, 8, 10, 12],     // G A B C D E F#
+        'D Major':  [1, 2, 3, 5, 7, 9, 10, 12],  // D E F# G A B C#
+        'A Major':  [1, 2, 4, 6, 7, 9, 11],      // A B C# D E F# G#
+        'E Major':  [1, 2, 4, 6, 8, 9, 11],      // E F# G# A B C# D#
+        'B Major':  [1, 2, 4, 5, 7, 9, 11],      // B C# D# E F# G# A#
+        'F Major':  [1, 3, 5, 6, 8, 10, 11],     // F G A Bb C D E
+        'Bb Major': [1, 3, 4, 6, 8, 10, 11],     // Bb C D Eb F G A
+        'Eb Major': [1, 3, 4, 6, 8, 9, 11],      // Eb F G Ab Bb C D
+        'A Minor':  [1, 3, 4, 6, 8, 9, 11],      // A B C D E F G
+        'E Minor':  [1, 3, 5, 6, 8, 10, 11],     // E F# G A B C D
+        'B Minor':  [1, 2, 4, 6, 7, 9, 11],      // B C# D E F# G A
+        'D Minor':  [1, 3, 4, 6, 8, 9, 10],      // D E F G A Bb C
+        'G Minor':  [1, 3, 4, 5, 7, 9, 10],      // G A Bb C D Eb F
+        'C Minor':  [1, 3, 4, 6, 7, 9, 10],      // C D Eb F G Ab Bb
+        'Freeform': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  // All notes
+    };
+    
+    // Key names for dropdown population
+    static KEY_NAMES = Object.keys(Game.KEY_SIGNATURES);
+    
     constructor() {
         this.audio = new Audio();
         this.timeline = null;
@@ -66,6 +89,7 @@ class Game {
             cells3: document.getElementById('cells3'),
             palette: document.querySelector('.palette'),
             pianoKeyboardContainer: document.getElementById('piano-keyboard-container'),
+            keySelect: document.getElementById('key-select'),
             characterMain: document.getElementById('characterMain'),
             characterLeft: document.getElementById('characterLeft'),
             characterRight: document.getElementById('characterRight')
@@ -89,6 +113,9 @@ class Game {
         
         // Enable all keys initially (C Major = all white keys)
         this.pianoKeyboard.updateDisabledKeys([1, 3, 5, 6, 8, 10, 12]);
+        
+        // Populate key selector dropdown
+        this.populateKeySelector();
         
         // Timeline
         this.timeline = new Timeline({
@@ -114,6 +141,21 @@ class Game {
     }
 
     /**
+     * Populate key selector dropdown with available keys
+     */
+    populateKeySelector() {
+        Game.KEY_NAMES.forEach(keyName => {
+            const option = document.createElement('option');
+            option.value = keyName;
+            option.textContent = keyName;
+            this.elements.keySelect.appendChild(option);
+        });
+        
+        // Set default to C Major
+        this.elements.keySelect.value = this.currentKey;
+    }
+
+    /**
      * Bind event listeners
      */
     bindEvents() {
@@ -124,6 +166,7 @@ class Game {
         this.elements.clearBtn.addEventListener('click', () => this.clear());
         this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
+        this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
         
         // Initialize audio on first interaction
         const initAudio = () => {
@@ -383,6 +426,34 @@ class Game {
         }
         this.timeline.clearAll();
         this.updateURL();
+    }
+
+    /**
+     * Set the musical key and update piano keyboard
+     * @param {string} keyName - The key name (e.g., 'C Major', 'G Minor')
+     */
+    setKey(keyName) {
+        this.currentKey = keyName;
+        const allowedNotes = Game.KEY_SIGNATURES[keyName];
+        this.pianoKeyboard.updateDisabledKeys(allowedNotes);
+        this.updateURL();
+    }
+
+    /**
+     * Get the index of the current key for serialization
+     * @returns {number} - Index in KEY_NAMES array
+     */
+    getKeyIndex() {
+        return Game.KEY_NAMES.indexOf(this.currentKey);
+    }
+
+    /**
+     * Get key name from index for deserialization
+     * @param {number} index - Index in KEY_NAMES array
+     * @returns {string} - Key name
+     */
+    static getKeyNameFromIndex(index) {
+        return Game.KEY_NAMES[index] || 'C Major';
     }
 
     // Note mappings for compact encoding (index 0 = empty)

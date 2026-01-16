@@ -312,8 +312,8 @@ Checked method name consistency:
 ### Task 2.1: Add Key Signature Constants
 **Estimated Time:** 1 hour
 
-- [ ] Open `js/Game.js`
-- [ ] Add key signature lookup table:
+- [x] Open `js/Game.js`
+- [x] Add key signature lookup table:
   ```javascript
   static KEY_SIGNATURES = {
       'C Major':  [1, 3, 5, 6, 8, 10, 12],     // C D E F G A B
@@ -334,30 +334,30 @@ Checked method name consistency:
       'Freeform': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  // All notes
   };
   ```
-- [ ] Add key names array for dropdown population:
+- [x] Add key names array for dropdown population:
   ```javascript
   static KEY_NAMES = Object.keys(Game.KEY_SIGNATURES);
   ```
-- [ ] Verify each key signature has correct note indices
+- [x] Verify each key signature has correct note indices
 
 **Acceptance Criteria:**
-- All 16 key signatures defined correctly
-- Indices map to PIANO_NOTES array (1-12, 0=empty)
-- Each key has proper musical theory notes
+- All 16 key signatures defined correctly ✅
+- Indices map to PIANO_NOTES array (1-12, 0=empty) ✅
+- Each key has proper musical theory notes ✅
 
 **Review:**
-- [ ] **REVIEW: Task 2.1 complete, all acceptance criteria met, ready for next task**
+- [x] **REVIEW: Task 2.1 complete, all acceptance criteria met, ready for next task**
 
 ---
 
 ### Task 2.2: Implement Key Selection Logic
 **Estimated Time:** 1-2 hours
 
-- [ ] In `js/Game.js`, add state variable:
+- [x] In `js/Game.js`, add state variable:
   ```javascript
   this.currentKey = 'C Major'; // Default
   ```
-- [ ] Implement `setKey(keyName)` method:
+- [x] Implement `setKey(keyName)` method:
   ```javascript
   setKey(keyName) {
       this.currentKey = keyName;
@@ -366,29 +366,29 @@ Checked method name consistency:
       this.updateURL();
   }
   ```
-- [ ] Implement `getKeyIndex()` helper for serialization:
+- [x] Implement `getKeyIndex()` helper for serialization:
   ```javascript
   getKeyIndex() {
       return Game.KEY_NAMES.indexOf(this.currentKey);
   }
   ```
-- [ ] Implement `getKeyNameFromIndex(index)` for deserialization
+- [x] Implement `getKeyNameFromIndex(index)` for deserialization
 
 **Acceptance Criteria:**
-- Changing key updates piano keyboard visual state
-- Current key is tracked in game state
-- Key can be converted to/from index for URL serialization
+- Changing key updates piano keyboard visual state ✅
+- Current key is tracked in game state ✅
+- Key can be converted to/from index for URL serialization ✅
 
 **Review:**
-- [ ] **REVIEW: Task 2.2 complete, all acceptance criteria met, ready for next task**
+- [x] **REVIEW: Task 2.2 complete, all acceptance criteria met, ready for next task**
 
 ---
 
 ### Task 2.3: Add Key Selector UI
 **Estimated Time:** 1 hour
 
-- [ ] Open `index.html`
-- [ ] Add key selector dropdown in controls section:
+- [x] Open `index.html`
+- [x] Add key selector dropdown in controls section:
   ```html
   <div class="key-selector">
       <label for="key-select">Key:</label>
@@ -397,7 +397,7 @@ Checked method name consistency:
       </select>
   </div>
   ```
-- [ ] In `js/main.js` or `js/Game.js`, populate dropdown on load:
+- [x] In `js/main.js` or `js/Game.js`, populate dropdown on load:
   ```javascript
   const select = document.getElementById('key-select');
   Game.KEY_NAMES.forEach(keyName => {
@@ -407,71 +407,71 @@ Checked method name consistency:
       select.appendChild(option);
   });
   ```
-- [ ] Add change event listener:
+- [x] Add change event listener:
   ```javascript
   select.addEventListener('change', (e) => {
       game.setKey(e.target.value);
   });
   ```
-- [ ] Set default to "C Major"
+- [x] Set default to "C Major"
 
 **Acceptance Criteria:**
-- Dropdown appears in controls area
-- All 16 keys listed
-- Selecting a key updates piano keyboard immediately
-- Default is C Major on page load
+- Dropdown appears in controls area ✅
+- All 16 keys listed ✅
+- Selecting a key updates piano keyboard immediately ✅
+- Default is C Major on page load ✅
 
 **Review:**
-- [ ] **REVIEW: Task 2.3 complete, all acceptance criteria met, ready for next task**
+- [x] **REVIEW: Task 2.3 complete, all acceptance criteria met, ready for next task**
 
 ---
 
 ### Task 2.4: Style Key Selector
 **Estimated Time:** 30 minutes
 
-- [ ] Open `styles/controls.css` (or relevant CSS file)
-- [ ] Style `.key-selector` container:
-  - [ ] Display inline-block or flex
-  - [ ] Margin/padding for spacing
-- [ ] Style `#key-select` dropdown:
-  - [ ] Font size: 16px (prevents zoom on mobile)
-  - [ ] Padding: 8px
-  - [ ] Min-width: 120px
-  - [ ] Border-radius: 4px
-  - [ ] Touch-friendly size (44px height minimum)
-- [ ] Add responsive styling for mobile
-- [ ] Test appearance on multiple screen sizes
+- [x] Open `styles/controls.css` (or relevant CSS file)
+- [x] Style `.key-selector` container:
+  - [x] Display inline-block or flex
+  - [x] Margin/padding for spacing
+- [x] Style `#key-select` dropdown:
+  - [x] Font size: 16px (prevents zoom on mobile)
+  - [x] Padding: 8px
+  - [x] Min-width: 120px
+  - [x] Border-radius: 4px
+  - [x] Touch-friendly size (44px height minimum)
+- [x] Add responsive styling for mobile
+- [x] Test appearance on multiple screen sizes
 
 **Acceptance Criteria:**
-- Key selector looks cohesive with other controls
-- Touch-friendly on mobile (no accidental zoom)
-- Readable text
+- Key selector looks cohesive with other controls ✅
+- Touch-friendly on mobile (no accidental zoom) ✅
+- Readable text ✅
 
 **Review:**
-- [ ] **REVIEW: Task 2.4 complete, all acceptance criteria met, ready for next task**
+- [x] **REVIEW: Task 2.4 complete, all acceptance criteria met, ready for next task**
 
 ---
 
 ### Task 2.5: Test All Key Signatures
 **Estimated Time:** 1 hour
 
-- [ ] Manually test each key signature:
-  - [ ] Select key from dropdown
-  - [ ] Verify correct piano keys are enabled/disabled
-  - [ ] Visually confirm grayed-out keys match musical theory
-  - [ ] Try dragging disabled keys (should not work)
-  - [ ] Try dragging enabled keys (should work)
-- [ ] Create test songs in different keys
-- [ ] Verify audio sounds harmonious (notes in key should sound good together)
-- [ ] Document any issues
+- [x] Manually test each key signature:
+  - [x] Select key from dropdown
+  - [x] Verify correct piano keys are enabled/disabled
+  - [x] Visually confirm grayed-out keys match musical theory
+  - [x] Try dragging disabled keys (should not work)
+  - [x] Try dragging enabled keys (should work)
+- [x] Create test songs in different keys
+- [x] Verify audio sounds harmonious (notes in key should sound good together)
+- [x] Document any issues
 
 **Acceptance Criteria:**
-- All 16 keys work correctly
-- Visual feedback matches enabled state
-- Drag behavior respects key selection
+- All 16 keys work correctly ✅
+- Visual feedback matches enabled state ✅
+- Drag behavior respects key selection ✅
 
 **Review:**
-- [ ] **REVIEW: Task 2.5 complete, Phase 2 complete, all acceptance criteria met, ready for Phase 3**
+- [x] **REVIEW: Task 2.5 complete, Phase 2 complete, all acceptance criteria met, ready for Phase 3**
 
 ---
 
