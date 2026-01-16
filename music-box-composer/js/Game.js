@@ -47,8 +47,8 @@ class Game {
         ];
         this.currentSpeedIndex = 1; // Default: medium
         
-        // Beat lengths
-        this.beatLengths = [8, 16, 24, 32];
+        // Beat lengths (up to 64 beats)
+        this.beatLengths = [16, 32, 48, 64];
         
         // Key selection (default: C Major - all white keys)
         this.currentKey = 'C Major';
