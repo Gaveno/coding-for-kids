@@ -9,15 +9,15 @@ class Timeline {
         this.playhead = options.playhead;
         
         this.trackElements = {
-            melody: options.cellsMelody,
-            bass: options.cellsBass,
-            percussion: options.cellsPercussion
+            1: options.cells1,
+            2: options.cells2,
+            3: options.cells3
         };
         
         this.tracks = {
-            melody: new Track('melody'),
-            bass: new Track('bass'),
-            percussion: new Track('percussion')
+            1: new Track(1),
+            2: new Track(2),
+            3: new Track(3)
         };
         
         this.beatCount = 16;
@@ -57,9 +57,9 @@ class Timeline {
      */
     render() {
         this.renderBeatMarkers();
-        this.renderTrack('melody');
-        this.renderTrack('bass');
-        this.renderTrack('percussion');
+        this.renderTrack(1);
+        this.renderTrack(2);
+        this.renderTrack(3);
     }
 
     /**
@@ -86,11 +86,11 @@ class Timeline {
 
     /**
      * Render a single track
-     * @param {string} trackType - 'melody', 'bass', or 'percussion'
+     * @param {number} trackNum - Track number (1, 2, or 3)
      */
-    renderTrack(trackType) {
-        const container = this.trackElements[trackType];
-        const track = this.tracks[trackType];
+    renderTrack(trackNum) {
+        const container = this.trackElements[trackNum];
+        const track = this.tracks[trackNum];
         
         container.innerHTML = '';
         
@@ -98,7 +98,7 @@ class Timeline {
             const cell = document.createElement('div');
             cell.className = 'track-cell';
             cell.dataset.beat = i;
-            cell.dataset.track = trackType;
+            cell.dataset.track = trackNum;
             
             // Mark downbeats
             if (i % 4 === 0) {
@@ -130,7 +130,7 @@ class Timeline {
                 noteEl.style.width = `calc(${duration} * var(--cell-size) - 4px)`;
                 
                 // Setup drag-to-resize
-                this.setupNoteDrag(noteEl, trackType, i, note);
+                this.setupNoteDrag(noteEl, trackNum, i, note);
                 
                 cell.appendChild(noteEl);
             }
@@ -141,10 +141,10 @@ class Timeline {
                 if (e.target.classList.contains('cell-note')) return;
                 
                 if (track.hasNote(i)) {
-                    this.onCellClick(trackType, i, null);
+                    this.onCellClick(trackNum, i, null);
                 } else if (coveringNote) {
                     // Clicking on a covered cell clears the parent note
-                    this.onCellClick(trackType, coveringNote.startBeat, null);
+                    this.onCellClick(trackNum, coveringNote.startBeat, null);
                 }
             });
             
@@ -299,24 +299,23 @@ class Timeline {
 
     /**
      * Set a note on a track
-     * @param {string} trackType - Track type
+     * @param {number} trackNum - Track number (1, 2, or 3)
      * @param {number} beat - Beat index
-     * @param {string} note - Note value
-     * @param {string} icon - Note icon
+     * @param {Object} noteData - Note data {note, icon, duration, octave}
      */
-    setNote(trackType, beat, note, icon) {
-        this.tracks[trackType].setNote(beat, note, icon);
-        this.renderTrack(trackType);
+    setNote(trackNum, beat, noteData) {
+        this.tracks[trackNum].setNote(beat, noteData);
+        this.renderTrack(trackNum);
     }
 
     /**
      * Clear a note from a track
-     * @param {string} trackType - Track type
+     * @param {number} trackNum - Track number (1, 2, or 3)
      * @param {number} beat - Beat index
      */
-    clearNote(trackType, beat) {
-        this.tracks[trackType].clearNote(beat);
-        this.renderTrack(trackType);
+    clearNote(trackNum, beat) {
+        this.tracks[trackNum].clearNote(beat);
+        this.renderTrack(trackNum);
     }
 
     /**
@@ -339,13 +338,13 @@ class Timeline {
      * Get notes at a specific beat across all tracks
      * Includes extended notes that started earlier but are still playing
      * @param {number} beat - Beat index
-     * @returns {Object} - { melody: note|null, bass: note|null, percussion: note|null }
+     * @returns {Object} - { 1: note|null, 2: note|null, 3: note|null }
      */
     getNotesAtBeat(beat) {
         const result = {};
         
-        ['melody', 'bass', 'percussion'].forEach(trackType => {
-            const track = this.tracks[trackType];
+        [1, 2, 3].forEach(trackNum => {
+            const track = this.tracks[trackNum];
             // First check if there's a note starting at this beat
             let note = track.getNote(beat);
             
@@ -358,7 +357,7 @@ class Timeline {
                 }
             }
             
-            result[trackType] = note;
+            result[trackNum] = note;
         });
         
         return result;
@@ -376,8 +375,8 @@ class Timeline {
         
         if (beat >= 0) {
             // Add highlight to current beat cells
-            Object.keys(this.trackElements).forEach(trackType => {
-                const cells = this.trackElements[trackType].children;
+            Object.keys(this.trackElements).forEach(trackNum => {
+                const cells = this.trackElements[trackNum].children;
                 if (cells[beat]) {
                     cells[beat].classList.add('playing');
                 }

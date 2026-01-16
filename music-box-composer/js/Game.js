@@ -7,6 +7,7 @@ class Game {
         this.timeline = null;
         this.character = null;
         this.dragDrop = null;
+        this.pianoKeyboard = null;
         
         this.isPlaying = false;
         this.isLooping = false;
@@ -25,6 +26,9 @@ class Game {
         
         // Beat lengths
         this.beatLengths = [8, 16, 24, 32];
+        
+        // Key selection (default: C Major - all white keys)
+        this.currentKey = 'C Major';
         
         // DOM elements
         this.elements = {};
@@ -57,10 +61,11 @@ class Game {
             timelineScroll: document.getElementById('timelineScroll'),
             beatMarkers: document.getElementById('beatMarkers'),
             playhead: document.getElementById('playhead'),
-            cellsMelody: document.getElementById('cellsMelody'),
-            cellsBass: document.getElementById('cellsBass'),
-            cellsPercussion: document.getElementById('cellsPercussion'),
+            cells1: document.getElementById('cells1'),
+            cells2: document.getElementById('cells2'),
+            cells3: document.getElementById('cells3'),
             palette: document.querySelector('.palette'),
+            pianoKeyboardContainer: document.getElementById('piano-keyboard-container'),
             characterMain: document.getElementById('characterMain'),
             characterLeft: document.getElementById('characterLeft'),
             characterRight: document.getElementById('characterRight')
@@ -78,25 +83,33 @@ class Game {
             this.elements.characterRight
         );
         
+        // Piano keyboard
+        this.pianoKeyboard = new PianoKeyboard(this.elements.pianoKeyboardContainer);
+        this.pianoKeyboard.render();
+        
+        // Enable all keys initially (C Major = all white keys)
+        this.pianoKeyboard.updateDisabledKeys([1, 3, 5, 6, 8, 10, 12]);
+        
         // Timeline
         this.timeline = new Timeline({
             container: this.elements.timeline,
             scrollContainer: this.elements.timelineScroll,
             beatMarkers: this.elements.beatMarkers,
             playhead: this.elements.playhead,
-            cellsMelody: this.elements.cellsMelody,
-            cellsBass: this.elements.cellsBass,
-            cellsPercussion: this.elements.cellsPercussion,
-            onCellClick: (track, beat, note) => this.handleCellClick(track, beat),
+            cells1: this.elements.cells1,
+            cells2: this.elements.cells2,
+            cells3: this.elements.cells3,
+            onCellClick: (trackNum, beat) => this.handleCellClick(trackNum, beat),
             onNoteChange: () => this.updateURL()
         });
         
         // Drag and drop
         this.dragDrop = new DragDrop({
             palette: this.elements.palette,
+            pianoKeyboard: this.pianoKeyboard,
             timeline: this.timeline,
-            onPreview: (note, type) => this.previewNote(note, type),
-            onDrop: (track, beat, note, icon) => this.handleNoteDrop(track, beat, note, icon)
+            onPreview: (note, trackNum) => this.previewNote(note, trackNum),
+            onDrop: (trackNum, beat, noteData) => this.handleNoteDrop(trackNum, beat, noteData)
         });
     }
 
@@ -125,25 +138,25 @@ class Game {
     /**
      * Preview a note (tap on palette)
      */
-    previewNote(note, type) {
-        this.audio.playNote(note, type);
+    previewNote(note, trackNum) {
+        this.audio.playNote(note, trackNum);
     }
 
     /**
      * Handle cell click (remove note)
      */
-    handleCellClick(track, beat) {
+    handleCellClick(trackNum, beat) {
         if (this.isPlaying) return;
-        this.timeline.clearNote(track, beat);
+        this.timeline.clearNote(trackNum, beat);
         this.updateURL();
     }
 
     /**
      * Handle note drop from palette
      */
-    handleNoteDrop(track, beat, note, icon) {
-        this.timeline.setNote(track, beat, note, icon);
-        this.audio.playNote(note, track);
+    handleNoteDrop(trackNum, beat, noteData) {
+        this.timeline.setNote(trackNum, beat, noteData);
+        this.audio.playNote(noteData.note, trackNum);
         this.updateURL();
     }
 
@@ -271,14 +284,14 @@ class Game {
     playBeat(beat) {
         const notes = this.timeline.getNotesAtBeat(beat);
         const playing = {
-            melody: false,
-            bass: false,
-            percussion: false
+            1: false,
+            2: false,
+            3: false
         };
         const durations = {
-            melody: 1,
-            bass: 1,
-            percussion: 1
+            1: 1,
+            2: 1,
+            3: 1
         };
         
         // Calculate beat duration in seconds
@@ -286,28 +299,28 @@ class Game {
         const beatDurationSec = beatDurationMs / 1000;
         
         // Only play notes that are starting (not sustained from previous beat)
-        if (notes.melody && !notes.melody.sustained) {
-            const noteDuration = (notes.melody.duration || 1) * beatDurationSec;
-            this.audio.playNote(notes.melody.note, 'melody', noteDuration);
-            playing.melody = true;
-            durations.melody = notes.melody.duration || 1;
+        if (notes[1] && !notes[1].sustained) {
+            const noteDuration = (notes[1].duration || 1) * beatDurationSec;
+            this.audio.playNote(notes[1].note, 1, noteDuration);
+            playing[1] = true;
+            durations[1] = notes[1].duration || 1;
         }
         
-        if (notes.bass && !notes.bass.sustained) {
-            const noteDuration = (notes.bass.duration || 1) * beatDurationSec;
-            this.audio.playNote(notes.bass.note, 'bass', noteDuration);
-            playing.bass = true;
-            durations.bass = notes.bass.duration || 1;
+        if (notes[2] && !notes[2].sustained) {
+            const noteDuration = (notes[2].duration || 1) * beatDurationSec;
+            this.audio.playNote(notes[2].note, 2, noteDuration);
+            playing[2] = true;
+            durations[2] = notes[2].duration || 1;
         }
         
-        if (notes.percussion && !notes.percussion.sustained) {
+        if (notes[3] && !notes[3].sustained) {
             // Percussion doesn't use duration
-            this.audio.playNote(notes.percussion.note, 'percussion');
-            playing.percussion = true;
+            this.audio.playNote(notes[3].note, 3);
+            playing[3] = true;
         }
         
         // Animate characters if any notes played
-        if (playing.melody || playing.bass || playing.percussion) {
+        if (playing[1] || playing[2] || playing[3]) {
             this.character.dance(playing, durations);
         }
     }

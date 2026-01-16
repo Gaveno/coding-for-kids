@@ -4,6 +4,7 @@
 class DragDrop {
     constructor(options) {
         this.palette = options.palette;
+        this.pianoKeyboard = options.pianoKeyboard;
         this.timeline = options.timeline;
         this.onPreview = options.onPreview || (() => {});
         this.onDrop = options.onDrop || (() => {});
@@ -20,7 +21,38 @@ class DragDrop {
      */
     init() {
         this.setupPaletteButtons();
+        this.setupPianoKeyboard();
         this.setupGlobalListeners();
+    }
+
+    /**
+     * Setup piano keyboard drag interactions
+     */
+    setupPianoKeyboard() {
+        if (!this.pianoKeyboard) return;
+        
+        this.pianoKeyboard.setDragStartHandler((e, noteData) => {
+            // Start drag from piano keyboard
+            const key = e.target.closest('.piano-key');
+            if (!key || key.classList.contains('disabled')) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Set drag state with note data (octave will be set on drop)
+            this.dragState = {
+                note: noteData.note,
+                icon: noteData.icon,
+                trackNum: null, // Piano notes can go on track 1 or 2
+                sourceBtn: key,
+                fromPiano: true
+            };
+            
+            key.classList.add('dragging');
+            
+            // Highlight piano tracks as available
+            this.updateTrackAvailability('piano');
+        });
     }
 
     /**
@@ -154,7 +186,17 @@ class DragDrop {
         const type = btn.dataset.type;
         const icon = btn.querySelector('.note-icon').textContent;
         
-        this.dragState = { note, type, icon, sourceBtn: btn };
+        // For percussion: trackNum is 3, for piano: determined on drop
+        const trackNum = type === 'percussion' ? 3 : null;
+        
+        this.dragState = { 
+            note, 
+            type, 
+            icon, 
+            trackNum,
+            sourceBtn: btn,
+            fromPiano: false
+        };
         
         btn.classList.add('dragging');
         
@@ -167,17 +209,30 @@ class DragDrop {
 
     /**
      * Update track visual states based on note type
-     * @param {string} noteType - The type of note being dragged
+     * @param {string} noteType - The type of note being dragged ('piano' or 'percussion')
      */
     updateTrackAvailability(noteType) {
         document.querySelectorAll('.track').forEach(track => {
-            const trackType = track.dataset.track;
-            if (trackType === noteType) {
-                track.classList.add('drop-available');
-                track.classList.remove('drop-unavailable');
-            } else {
-                track.classList.add('drop-unavailable');
-                track.classList.remove('drop-available');
+            const trackNum = parseInt(track.dataset.track);
+            
+            if (noteType === 'piano') {
+                // Piano notes can go on tracks 1 or 2
+                if (trackNum === 1 || trackNum === 2) {
+                    track.classList.add('drop-available');
+                    track.classList.remove('drop-unavailable');
+                } else {
+                    track.classList.add('drop-unavailable');
+                    track.classList.remove('drop-available');
+                }
+            } else if (noteType === 'percussion') {
+                // Percussion only on track 3
+                if (trackNum === 3) {
+                    track.classList.add('drop-available');
+                    track.classList.remove('drop-unavailable');
+                } else {
+                    track.classList.add('drop-unavailable');
+                    track.classList.remove('drop-available');
+                }
             }
         });
     }
@@ -263,11 +318,16 @@ class DragDrop {
     isValidDrop(cell) {
         if (!this.dragState) return false;
         
-        const trackType = cell.dataset.track;
-        const noteType = this.dragState.type;
+        const trackNum = parseInt(cell.dataset.track);
         
-        // Notes can only be dropped on matching track type
-        if (trackType !== noteType) return false;
+        // Check if note type matches track
+        if (this.dragState.type === 'percussion') {
+            // Percussion only on track 3
+            if (trackNum !== 3) return false;
+        } else {
+            // Piano notes on tracks 1 or 2
+            if (trackNum !== 1 && trackNum !== 2) return false;
+        }
         
         // Don't allow dropping on cells covered by extended notes
         if (cell.classList.contains('covered-by-note')) return false;
@@ -288,10 +348,18 @@ class DragDrop {
         const targetCell = document.querySelector('.track-cell.drop-target');
         
         if (targetCell) {
-            const trackType = targetCell.dataset.track;
+            const trackNum = parseInt(targetCell.dataset.track);
             const beat = parseInt(targetCell.dataset.beat);
             
-            this.onDrop(trackType, beat, this.dragState.note, this.dragState.icon);
+            // Create note data with octave based on track
+            const noteData = {
+                note: this.dragState.note,
+                icon: this.dragState.icon,
+                duration: 1,
+                octave: trackNum === 3 ? null : (trackNum === 1 ? 5 : 3)
+            };
+            
+            this.onDrop(trackNum, beat, noteData);
         }
         
         this.cancelDrag();

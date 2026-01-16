@@ -1,46 +1,26 @@
 /**
  * Audio.js - Web Audio API wrapper for multi-track music
- * Supports melody notes, bass notes, and percussion sounds
+ * Supports piano notes with octave transposition and percussion sounds
  */
 class Audio {
     constructor() {
         this.audioContext = null;
         this.isInitialized = false;
         
-        // Melody frequencies (Hz) - C4 to B5 range
-        this.melodyFrequencies = {
-            'C4': 261.63,
-            'D4': 293.66,
-            'E4': 329.63,
-            'F4': 349.23,
-            'G4': 392.00,
-            'A4': 440.00,
-            'B4': 493.88,
-            'C5': 523.25,
-            'D5': 587.33,
-            'E5': 659.25,
-            'F5': 698.46,
-            'G5': 783.99,
-            'A5': 880.00,
-            'B5': 987.77
-        };
-        
-        // Bass frequencies (Hz) - Lower octave
-        this.bassFrequencies = {
-            'C2': 65.41,
-            'D2': 73.42,
-            'E2': 82.41,
-            'F2': 87.31,
-            'G2': 98.00,
-            'A2': 110.00,
-            'B2': 123.47,
-            'C3': 130.81,
-            'D3': 146.83,
-            'E3': 164.81,
-            'F3': 174.61,
-            'G3': 196.00,
-            'A3': 220.00,
-            'B3': 246.94
+        // Note to frequency mapping (A4 = 440 Hz)
+        this.noteFrequencies = {
+            'C': 261.63,
+            'C#': 277.18,
+            'D': 293.66,
+            'D#': 311.13,
+            'E': 329.63,
+            'F': 349.23,
+            'F#': 369.99,
+            'G': 392.00,
+            'G#': 415.30,
+            'A': 440.00,
+            'A#': 466.16,
+            'B': 493.88
         };
     }
 
@@ -55,31 +35,52 @@ class Audio {
     }
 
     /**
-     * Play a melody note
-     * @param {string} note - Note name (e.g., 'C5', 'D5')
-     * @param {number} duration - Duration in seconds
+     * Get octave for a track number
+     * @param {number} trackNumber - Track number (1 = high piano, 2 = low piano, 3 = percussion)
+     * @returns {number|null} - Octave number or null for percussion
      */
-    playMelody(note, duration = 0.25) {
-        if (!this.isInitialized) this.init();
-        
-        const frequency = this.melodyFrequencies[note];
-        if (!frequency) return;
-        
-        this.playTone(frequency, 'sine', duration, 0.4);
+    getOctaveForTrack(trackNumber) {
+        if (trackNumber === 1) return 5; // High piano
+        if (trackNumber === 2) return 3; // Low piano
+        return null; // Percussion (no octave)
     }
 
     /**
-     * Play a bass note
-     * @param {string} note - Note name (e.g., 'C3', 'D3')
+     * Calculate frequency for note with octave
+     * @param {string} note - Note name (e.g., 'C', 'D#')
+     * @param {number} octave - Octave number (e.g., 3, 5)
+     * @returns {number} - Frequency in Hz
+     */
+    noteToFrequency(note, octave) {
+        const baseFreq = this.noteFrequencies[note];
+        if (!baseFreq) return 0;
+        
+        // Base frequencies are at octave 4
+        // Each octave doubles the frequency
+        const octaveDiff = octave - 4;
+        return baseFreq * Math.pow(2, octaveDiff);
+    }
+
+    /**
+     * Play a piano note with octave transposition
+     * @param {string} note - Note name (e.g., 'C', 'D#')
+     * @param {number} trackNumber - Track number (1 or 2)
      * @param {number} duration - Duration in seconds
      */
-    playBass(note, duration = 0.3) {
+    playPianoNote(note, trackNumber, duration = 0.25) {
         if (!this.isInitialized) this.init();
         
-        const frequency = this.bassFrequencies[note];
+        const octave = this.getOctaveForTrack(trackNumber);
+        if (octave === null) return;
+        
+        const frequency = this.noteToFrequency(note, octave);
         if (!frequency) return;
         
-        this.playTone(frequency, 'triangle', duration, 0.5);
+        // Use different waveforms for different tracks
+        const waveform = trackNumber === 1 ? 'sine' : 'triangle';
+        const volume = trackNumber === 1 ? 0.4 : 0.5;
+        
+        this.playTone(frequency, waveform, duration, volume);
     }
 
     /**
@@ -268,22 +269,18 @@ class Audio {
     }
 
     /**
-     * Play a note based on type
+     * Play a note based on track number and note data
      * @param {string} note - Note name or percussion type
-     * @param {string} type - 'melody', 'bass', or 'percussion'
+     * @param {number} trackNumber - Track number (1 = high piano, 2 = low piano, 3 = percussion)
      * @param {number} duration - Duration in seconds (optional)
      */
-    playNote(note, type, duration) {
-        switch (type) {
-            case 'melody':
-                this.playMelody(note, duration);
-                break;
-            case 'bass':
-                this.playBass(note, duration);
-                break;
-            case 'percussion':
-                this.playPercussion(note);
-                break;
+    playNote(note, trackNumber, duration) {
+        if (trackNumber === 3) {
+            // Percussion track
+            this.playPercussion(note);
+        } else {
+            // Piano tracks (1 or 2)
+            this.playPianoNote(note, trackNumber, duration);
         }
     }
 
@@ -293,9 +290,13 @@ class Audio {
     playSuccess() {
         if (!this.isInitialized) this.init();
         
-        const notes = ['C5', 'E5', 'G5'];
+        const notes = ['C', 'E', 'G'];
+        const octave = 5;
         notes.forEach((note, i) => {
-            setTimeout(() => this.playMelody(note, 0.15), i * 80);
+            setTimeout(() => {
+                const freq = this.noteToFrequency(note, octave);
+                this.playTone(freq, 'sine', 0.15, 0.4);
+            }, i * 80);
         });
     }
 }

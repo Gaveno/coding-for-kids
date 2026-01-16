@@ -2,8 +2,8 @@
  * Track.js - Manages a single track's note data
  */
 class Track {
-    constructor(type, length = 16) {
-        this.type = type; // 'melody', 'bass', or 'percussion'
+    constructor(trackNumber, length = 16) {
+        this.trackNumber = trackNumber; // 1 = high piano, 2 = low piano, 3 = percussion
         this.length = length;
         this.notes = new Array(length).fill(null);
     }
@@ -11,13 +11,25 @@ class Track {
     /**
      * Set a note at a beat position
      * @param {number} beat - Beat index (0-based)
+     * @param {Object|null} noteData - Note data {note, icon, duration, octave} or null to clear
+     */
+    setNote(beat, noteData) {
+        if (beat >= 0 && beat < this.length) {
+            this.notes[beat] = noteData;
+        }
+    }
+
+    /**
+     * Set note using legacy parameters (for backwards compatibility)
+     * @param {number} beat - Beat index (0-based)
      * @param {string|null} note - Note value or null to clear
      * @param {string} icon - Emoji icon for the note
      * @param {number} duration - Note duration in beats (default 1)
+     * @param {number|null} octave - Octave number or null
      */
-    setNote(beat, note, icon = null, duration = 1) {
+    setNoteLegacy(beat, note, icon = null, duration = 1, octave = null) {
         if (beat >= 0 && beat < this.length) {
-            this.notes[beat] = note ? { note, icon, duration } : null;
+            this.notes[beat] = note ? { note, icon, duration, octave } : null;
         }
     }
 
@@ -146,22 +158,29 @@ class Track {
     }
 
     /**
-     * Serialize track to compact array of [beat, note, icon, duration] tuples
-     * Only includes beats that have notes
+     * Serialize track to compact array
+     * For v3 format, stores note indices instead of note names
      * @returns {Array}
      */
     serialize() {
         const data = [];
-        this.notes.forEach((note, beat) => {
-            if (note) {
-                data.push([beat, note.note, note.icon, note.duration || 1]);
+        this.notes.forEach((noteData, beat) => {
+            if (noteData) {
+                // Store with octave for v3 format
+                data.push([
+                    beat,
+                    noteData.note,
+                    noteData.icon,
+                    noteData.duration || 1,
+                    noteData.octave || null
+                ]);
             }
         });
         return data;
     }
 
     /**
-     * Deserialize track from array of [beat, note, icon, duration] tuples
+     * Deserialize track from array
      * @param {Array} data - Serialized data
      */
     deserialize(data) {
@@ -170,9 +189,9 @@ class Track {
         
         data.forEach(item => {
             if (Array.isArray(item) && item.length >= 3) {
-                const [beat, note, icon, duration = 1] = item;
+                const [beat, note, icon, duration = 1, octave = null] = item;
                 if (beat >= 0 && beat < this.length) {
-                    this.notes[beat] = { note, icon, duration };
+                    this.notes[beat] = { note, icon, duration, octave };
                 }
             }
         });

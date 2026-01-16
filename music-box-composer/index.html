@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles/stage.css">
     <link rel="stylesheet" href="styles/timeline.css">
     <link rel="stylesheet" href="styles/palette.css">
+    <link rel="stylesheet" href="styles/piano.css">
     <link rel="stylesheet" href="styles/controls.css">
     <link rel="stylesheet" href="styles/animations.css">
 </head>
@@ -44,17 +45,17 @@
                 <div class="timeline" id="timeline">
                     <div class="playhead" id="playhead"></div>
                     <div class="beat-markers" id="beatMarkers"></div>
-                    <div class="track" data-track="melody" id="trackMelody">
-                        <div class="track-label">🎵</div>
-                        <div class="track-cells" id="cellsMelody"></div>
+                    <div class="track" data-track="1" id="track1">
+                        <div class="track-label">🎹</div>
+                        <div class="track-cells" id="cells1"></div>
                     </div>
-                    <div class="track" data-track="bass" id="trackBass">
-                        <div class="track-label">🎸</div>
-                        <div class="track-cells" id="cellsBass"></div>
+                    <div class="track" data-track="2" id="track2">
+                        <div class="track-label">🎹</div>
+                        <div class="track-cells" id="cells2"></div>
                     </div>
-                    <div class="track" data-track="percussion" id="trackPercussion">
+                    <div class="track" data-track="3" id="track3">
                         <div class="track-label">🥁</div>
-                        <div class="track-cells" id="cellsPercussion"></div>
+                        <div class="track-cells" id="cells3"></div>
                     </div>
                 </div>
             </div>
@@ -62,54 +63,9 @@
 
         <!-- Note Palette -->
         <section class="palette" aria-label="Sound Palette">
-            <!-- Melody Notes - Full octave C4 to C5 -->
-            <div class="palette-row" data-type="melody">
-                <button class="note-btn" data-note="C4" data-type="melody" aria-label="C">
-                    <span class="note-icon">🔴</span>
-                </button>
-                <button class="note-btn" data-note="D4" data-type="melody" aria-label="D">
-                    <span class="note-icon">🟠</span>
-                </button>
-                <button class="note-btn" data-note="E4" data-type="melody" aria-label="E">
-                    <span class="note-icon">🟡</span>
-                </button>
-                <button class="note-btn" data-note="F4" data-type="melody" aria-label="F">
-                    <span class="note-icon">🟢</span>
-                </button>
-                <button class="note-btn" data-note="G4" data-type="melody" aria-label="G">
-                    <span class="note-icon">🔵</span>
-                </button>
-                <button class="note-btn" data-note="A4" data-type="melody" aria-label="A">
-                    <span class="note-icon">🟣</span>
-                </button>
-                <button class="note-btn" data-note="B4" data-type="melody" aria-label="B">
-                    <span class="note-icon">⚪</span>
-                </button>
-                <button class="note-btn" data-note="C5" data-type="melody" aria-label="High C">
-                    <span class="note-icon">❤️</span>
-                </button>
-            </div>
-            <!-- Bass Notes -->
-            <div class="palette-row" data-type="bass">
-                <button class="note-btn" data-note="C3" data-type="bass" aria-label="Bass C">
-                    <span class="note-icon">🟦</span>
-                </button>
-                <button class="note-btn" data-note="D3" data-type="bass" aria-label="Bass D">
-                    <span class="note-icon">🟪</span>
-                </button>
-                <button class="note-btn" data-note="E3" data-type="bass" aria-label="Bass E">
-                    <span class="note-icon">🟫</span>
-                </button>
-                <button class="note-btn" data-note="F3" data-type="bass" aria-label="Bass F">
-                    <span class="note-icon">⬛</span>
-                </button>
-                <button class="note-btn" data-note="G3" data-type="bass" aria-label="Bass G">
-                    <span class="note-icon">💙</span>
-                </button>
-                <button class="note-btn" data-note="A3" data-type="bass" aria-label="Bass A">
-                    <span class="note-icon">💜</span>
-                </button>
-            </div>
+            <!-- Piano Keyboard (replaces melody and bass rows) -->
+            <div id="piano-keyboard-container" class="piano-keyboard-wrapper"></div>
+            
             <!-- Percussion -->
             <div class="palette-row" data-type="percussion">
                 <button class="note-btn" data-note="kick" data-type="percussion" aria-label="Kick">
@@ -148,6 +104,7 @@
     <script src="js/Character.js"></script>
     <script src="js/Track.js"></script>
     <script src="js/Timeline.js"></script>
+    <script src="js/PianoKeyboard.js"></script>
     <script src="js/DragDrop.js"></script>
     <script src="js/Game.js"></script>
     <script src="js/main.js"></script>

@@ -1,0 +1,152 @@
+/**
+ * piano.css - Piano keyboard styles
+ */
+
+.piano-keyboard-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 20px 10px;
+    background: var(--bg-secondary, #f5f5f5);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.piano-keyboard {
+    position: relative;
+    margin: 0 auto;
+    width: fit-content;
+    user-select: none;
+}
+
+.white-keys {
+    display: flex;
+    gap: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+.black-keys {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.piano-key {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    cursor: grab;
+    border: 2px solid #333;
+    border-radius: 4px;
+    transition: transform 0.1s, opacity 0.2s, filter 0.2s;
+    touch-action: none;
+    pointer-events: all;
+}
+
+.piano-key:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+}
+
+.piano-key.dragging {
+    opacity: 0.5;
+}
+
+/* White keys */
+.white-key {
+    width: 48px;
+    height: 120px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.white-key:hover {
+    background: #f5f5f5;
+}
+
+/* Black keys */
+.black-key {
+    position: absolute;
+    width: 32px;
+    height: 80px;
+    background: #222;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.black-key:hover {
+    background: #333;
+}
+
+.black-key .key-label {
+    color: white;
+}
+
+/* Key labels */
+.key-label {
+    font-size: 24px;
+    padding: 8px;
+    user-select: none;
+}
+
+/* Disabled state */
+.piano-key.disabled {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Enabled state */
+.piano-key.enabled {
+    opacity: 1;
+    filter: none;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .white-key {
+        width: 40px;
+        height: 100px;
+    }
+    
+    .black-key {
+        width: 28px;
+        height: 70px;
+    }
+    
+    .black-key[style*="left: 0px"] { left: 28px !important; }
+    .black-key[style*="left: 48px"] { left: 68px !important; }
+    .black-key[style*="left: 144px"] { left: 148px !important; }
+    .black-key[style*="left: 192px"] { left: 188px !important; }
+    .black-key[style*="left: 240px"] { left: 228px !important; }
+    
+    .key-label {
+        font-size: 20px;
+        padding: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .white-key {
+        width: 36px;
+        height: 90px;
+    }
+    
+    .black-key {
+        width: 24px;
+        height: 60px;
+    }
+    
+    .black-key[style*="left: 0px"] { left: 24px !important; }
+    .black-key[style*="left: 48px"] { left: 60px !important; }
+    .black-key[style*="left: 144px"] { left: 132px !important; }
+    .black-key[style*="left: 192px"] { left: 168px !important; }
+    .black-key[style*="left: 240px"] { left: 204px !important; }
+    
+    .key-label {
+        font-size: 18px;
+        padding: 4px;
+    }
+}
