@@ -4,8 +4,8 @@
 
 const PIANO_NOTES = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const PIANO_ICONS = {
-    'C': '🔴', 'C#': '🟠', 'D': '🟡', 'D#': '🟢', 'E': '🔵', 'F': '🟣',
-    'F#': '🟤', 'G': '⚪', 'G#': '🟥', 'A': '🟧', 'A#': '🟨', 'B': '🟩'
+    'C': 'C', 'C#': 'C♯', 'D': 'D', 'D#': 'D♯', 'E': 'E', 'F': 'F',
+    'F#': 'F♯', 'G': 'G', 'G#': 'G♯', 'A': 'A', 'A#': 'A♯', 'B': 'B'
 };
 
 class PianoKeyboard {
@@ -78,6 +78,7 @@ class PianoKeyboard {
         
         key.className = `piano-key ${keyType}-key enabled`;
         key.dataset.noteIndex = noteIndex;
+        key.dataset.note = note;
         
         // Add note label
         const label = document.createElement('div');

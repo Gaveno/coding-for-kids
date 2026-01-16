@@ -288,7 +288,9 @@ class DragDrop {
         btn.classList.add('playing');
         setTimeout(() => btn.classList.remove('playing'), 300);
         
-        this.onPreview(note, type);
+        // Convert type to track number (percussion = track 3)
+        const trackNum = type === 'percussion' ? 3 : 1;
+        this.onPreview(note, trackNum);
     }
 
     /**

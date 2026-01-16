@@ -122,6 +122,7 @@ class Timeline {
                 noteEl.className = 'cell-note';
                 noteEl.textContent = note.icon;
                 noteEl.dataset.duration = duration;
+                noteEl.dataset.note = note.note; // For color styling
                 
                 // Set width based on duration (always use calc for consistency)
                 if (duration > 1) {

@@ -94,9 +94,25 @@
 /* Key labels */
 .key-label {
     font-size: 24px;
+    font-weight: bold;
     padding: 8px;
     user-select: none;
 }
+
+/* Note-specific colors for visual differentiation */
+.white-key[data-note="C"] .key-label { color: #e74c3c; } /* Red */
+.white-key[data-note="D"] .key-label { color: #f39c12; } /* Orange */
+.white-key[data-note="E"] .key-label { color: #3498db; } /* Blue */
+.white-key[data-note="F"] .key-label { color: #9b59b6; } /* Purple */
+.white-key[data-note="G"] .key-label { color: #2ecc71; } /* Green */
+.white-key[data-note="A"] .key-label { color: #e67e22; } /* Dark Orange */
+.white-key[data-note="B"] .key-label { color: #1abc9c; } /* Teal */
+
+.black-key[data-note="C#"] .key-label { color: #ff6b6b; } /* Light Red */
+.black-key[data-note="D#"] .key-label { color: #ffd93d; } /* Yellow */
+.black-key[data-note="F#"] .key-label { color: #a29bfe; } /* Light Purple */
+.black-key[data-note="G#"] .key-label { color: #6bcf7f; } /* Light Green */
+.black-key[data-note="A#"] .key-label { color: #fab1a0; } /* Peach */
 
 /* Disabled state */
 .piano-key.disabled {

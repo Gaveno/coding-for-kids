@@ -259,6 +259,8 @@
 
 .track-cell .cell-note {
     font-size: 1.3rem;
+    font-weight: bold;
+    color: white;
     animation: notePopIn 0.2s ease-out;
     cursor: grab;
     display: flex;
@@ -279,6 +281,20 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
+/* Note-specific background colors matching piano key text colors */
+.track-cell .cell-note[data-note="C"] { background: #e74c3c; } /* Red */
+.track-cell .cell-note[data-note="C#"] { background: #ff6b6b; } /* Light Red */
+.track-cell .cell-note[data-note="D"] { background: #f39c12; } /* Orange */
+.track-cell .cell-note[data-note="D#"] { background: #ffd93d; color: #333; } /* Yellow - dark text */
+.track-cell .cell-note[data-note="E"] { background: #3498db; } /* Blue */
+.track-cell .cell-note[data-note="F"] { background: #9b59b6; } /* Purple */
+.track-cell .cell-note[data-note="F#"] { background: #a29bfe; } /* Light Purple */
+.track-cell .cell-note[data-note="G"] { background: #2ecc71; } /* Green */
+.track-cell .cell-note[data-note="G#"] { background: #6bcf7f; } /* Light Green */
+.track-cell .cell-note[data-note="A"] { background: #e67e22; } /* Dark Orange */
+.track-cell .cell-note[data-note="A#"] { background: #fab1a0; } /* Peach */
+.track-cell .cell-note[data-note="B"] { background: #1abc9c; } /* Teal */
+
 /* Extended note styling */
 .track-cell .cell-note.extended {
     border-radius: var(--radius-md);
@@ -288,6 +304,34 @@
         rgba(255, 255, 255, 0.35) 100%);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
+
+/* Note-specific background colors matching piano key text colors */
+.track-cell .cell-note[data-note="C"] { background: #e74c3c; } /* Red */
+.track-cell .cell-note[data-note="C#"] { background: #ff6b6b; } /* Light Red */
+.track-cell .cell-note[data-note="D"] { background: #f39c12; } /* Orange */
+.track-cell .cell-note[data-note="D#"] { background: #ffd93d; color: #333; } /* Yellow - dark text */
+.track-cell .cell-note[data-note="E"] { background: #3498db; } /* Blue */
+.track-cell .cell-note[data-note="F"] { background: #9b59b6; } /* Purple */
+.track-cell .cell-note[data-note="F#"] { background: #a29bfe; } /* Light Purple */
+.track-cell .cell-note[data-note="G"] { background: #2ecc71; } /* Green */
+.track-cell .cell-note[data-note="G#"] { background: #6bcf7f; } /* Light Green */
+.track-cell .cell-note[data-note="A"] { background: #e67e22; } /* Dark Orange */
+.track-cell .cell-note[data-note="A#"] { background: #fab1a0; } /* Peach */
+.track-cell .cell-note[data-note="B"] { background: #1abc9c; } /* Teal */
+
+/* Extended note colors - use gradients for visual interest */
+.track-cell .cell-note.extended[data-note="C"] { background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%); }
+.track-cell .cell-note.extended[data-note="C#"] { background: linear-gradient(90deg, #ff6b6b 0%, #ee5a5a 100%); }
+.track-cell .cell-note.extended[data-note="D"] { background: linear-gradient(90deg, #f39c12 0%, #d68910 100%); }
+.track-cell .cell-note.extended[data-note="D#"] { background: linear-gradient(90deg, #ffd93d 0%, #f4ca30 100%); }
+.track-cell .cell-note.extended[data-note="E"] { background: linear-gradient(90deg, #3498db 0%, #2980b9 100%); }
+.track-cell .cell-note.extended[data-note="F"] { background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%); }
+.track-cell .cell-note.extended[data-note="F#"] { background: linear-gradient(90deg, #a29bfe 0%, #7b6ef6 100%); }
+.track-cell .cell-note.extended[data-note="G"] { background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%); }
+.track-cell .cell-note.extended[data-note="G#"] { background: linear-gradient(90deg, #6bcf7f 0%, #55b46b 100%); }
+.track-cell .cell-note.extended[data-note="A"] { background: linear-gradient(90deg, #e67e22 0%, #ca6c1d 100%); }
+.track-cell .cell-note.extended[data-note="A#"] { background: linear-gradient(90deg, #fab1a0 0%, #f29d87 100%); }
+.track-cell .cell-note.extended[data-note="B"] { background: linear-gradient(90deg, #1abc9c 0%, #16a085 100%); }
 
 /* Resizing state */
 .track-cell .cell-note.resizing {
