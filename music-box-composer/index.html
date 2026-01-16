@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="styles/palette.css">
     <link rel="stylesheet" href="styles/piano.css">
     <link rel="stylesheet" href="styles/controls.css">
+    <link rel="stylesheet" href="styles/overlays.css">
     <link rel="stylesheet" href="styles/animations.css">
 </head>
 <body>
@@ -103,14 +104,38 @@
             <button class="control-btn loop-btn" id="loopBtn" aria-label="Loop">
                 🔁
             </button>
+            <button class="control-btn share-btn" id="shareBtn" aria-label="Share Song" title="Share Song">
+                💾
+            </button>
+            <button class="control-btn qr-btn hidden" id="qrBtn" aria-label="QR Code" title="Share via QR Code">
+                📱
+            </button>
         </section>
+
+        <!-- Share Message -->
+        <div id="share-message" class="share-message hidden"></div>
     </main>
+
+    <!-- QR Code Modal -->
+    <div id="qr-modal" class="modal hidden">
+        <div class="modal-overlay" id="qr-modal-overlay"></div>
+        <div class="modal-content">
+            <h2>📱 Share QR Code</h2>
+            <canvas id="qr-canvas"></canvas>
+            <p class="modal-hint">Scan with your camera or save the image</p>
+            <div class="modal-buttons">
+                <button id="download-qr-btn" class="modal-btn primary">💾 Download</button>
+                <button id="close-qr-btn" class="modal-btn secondary">✖️ Close</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/Audio.js"></script>
     <script src="js/Character.js"></script>
     <script src="js/Track.js"></script>
     <script src="js/Timeline.js"></script>
     <script src="js/PianoKeyboard.js"></script>
+    <script src="js/QRCode.js"></script>
     <script src="js/DragDrop.js"></script>
     <script src="js/Game.js"></script>
     <script src="js/main.js"></script>

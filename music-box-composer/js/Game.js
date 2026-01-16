@@ -65,6 +65,7 @@ class Game {
         this.initComponents();
         this.bindEvents();
         this.loadFromURL();
+        this.updateShareButtons();
     }
 
     /**
@@ -77,6 +78,8 @@ class Game {
             speedBtn: document.getElementById('speedBtn'),
             loopBtn: document.getElementById('loopBtn'),
             clearBtn: document.getElementById('clearBtn'),
+            shareBtn: document.getElementById('shareBtn'),
+            qrBtn: document.getElementById('qrBtn'),
             lengthUpBtn: document.getElementById('lengthUpBtn'),
             lengthDownBtn: document.getElementById('lengthDownBtn'),
             beatCount: document.getElementById('beatCount'),
@@ -92,7 +95,12 @@ class Game {
             keySelect: document.getElementById('key-select'),
             characterMain: document.getElementById('characterMain'),
             characterLeft: document.getElementById('characterLeft'),
-            characterRight: document.getElementById('characterRight')
+            characterRight: document.getElementById('characterRight'),
+            qrModal: document.getElementById('qr-modal'),
+            qrModalOverlay: document.getElementById('qr-modal-overlay'),
+            qrCanvas: document.getElementById('qr-canvas'),
+            closeQrBtn: document.getElementById('close-qr-btn'),
+            downloadQrBtn: document.getElementById('download-qr-btn')
         };
     }
 
@@ -164,9 +172,16 @@ class Game {
         this.elements.speedBtn.addEventListener('click', () => this.cycleSpeed());
         this.elements.loopBtn.addEventListener('click', () => this.toggleLoop());
         this.elements.clearBtn.addEventListener('click', () => this.clear());
+        this.elements.shareBtn.addEventListener('click', () => this.shareURL());
+        this.elements.qrBtn.addEventListener('click', () => this.showQRCode());
         this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
         this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
+        
+        // QR modal events
+        this.elements.closeQrBtn.addEventListener('click', () => this.closeQRModal());
+        this.elements.qrModalOverlay.addEventListener('click', () => this.closeQRModal());
+        this.elements.downloadQrBtn.addEventListener('click', () => this.downloadQRCode());
         
         // Initialize audio on first interaction
         const initAudio = () => {
@@ -825,6 +840,83 @@ class Game {
         const encoded = this.serializeState();
         const newURL = `${window.location.pathname}?c=${encoded}`;
         window.history.replaceState(null, '', newURL);
+        this.updateShareButtons();
+    }
+
+    /**
+     * Share current song URL using Web Share API or clipboard fallback
+     */
+    async shareURL() {
+        const url = window.location.href;
+        
+        // Try Web Share API first (mobile support)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Music Box Composer',
+                    text: 'Check out my song!',
+                    url: url
+                });
+            } catch (err) {
+                // User cancelled share or error occurred
+                if (err.name !== 'AbortError') {
+                    console.error('Share failed:', err);
+                    this.fallbackCopyURL(url);
+                }
+            }
+        } else {
+            // Fallback to clipboard copy
+            this.fallbackCopyURL(url);
+        }
+    }
+
+    /**
+     * Fallback method to copy URL to clipboard
+     */
+    fallbackCopyURL(url) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url)
+                .then(() => {
+                    this.showShareMessage('Copied to clipboard!');
+                })
+                .catch(err => {
+                    console.error('Clipboard copy failed:', err);
+                    this.showShareMessage('Failed to copy', true);
+                });
+        } else {
+            // Ultra-fallback: use older execCommand
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                this.showShareMessage('Copied to clipboard!');
+            } catch (err) {
+                console.error('Copy failed:', err);
+                this.showShareMessage('Failed to copy', true);
+            }
+            document.body.removeChild(textArea);
+        }
+    }
+
+    /**
+     * Show temporary message to user
+     */
+    showShareMessage(message, isError = false) {
+        const messageEl = document.getElementById('share-message');
+        if (!messageEl) return;
+        
+        messageEl.textContent = message;
+        messageEl.className = isError ? 'share-message error' : 'share-message success';
+        messageEl.classList.remove('hidden');
+        
+        // Hide after 2 seconds
+        setTimeout(() => {
+            messageEl.classList.add('hidden');
+        }, 2000);
     }
 
     /**
@@ -866,6 +958,70 @@ class Game {
         // Apply tracks
         if (state.t) {
             this.timeline.deserializeTracks(state.t);
+        }
+    }
+
+    /**
+     * Generate and display QR code for current song URL
+     */
+    showQRCode() {
+        const url = window.location.href;
+        
+        // Generate QR code
+        const canvas = QRCodeGenerator.generate(url, 256);
+        
+        // Replace existing canvas
+        const oldCanvas = this.elements.qrCanvas;
+        canvas.id = 'qr-canvas';
+        oldCanvas.replaceWith(canvas);
+        
+        // Update cache reference
+        this.elements.qrCanvas = canvas;
+        
+        // Show modal
+        this.elements.qrModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scroll
+    }
+
+    /**
+     * Close QR code modal
+     */
+    closeQRModal() {
+        this.elements.qrModal.classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scroll
+    }
+
+    /**
+     * Download QR code as PNG image
+     */
+    downloadQRCode() {
+        const canvas = this.elements.qrCanvas;
+        
+        // Convert canvas to blob and download
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'music-box-song-qr.png';
+            link.href = url;
+            link.click();
+            
+            // Clean up
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }, 'image/png');
+    }
+
+    /**
+     * Update share button visibility based on song length
+     * Shows QR button for songs >32 beats or long URLs
+     */
+    updateShareButtons() {
+        const urlLength = window.location.href.length;
+        const shouldShowQR = this.timeline.beatCount > 32 || urlLength > 160;
+        
+        if (shouldShowQR) {
+            this.elements.qrBtn.classList.remove('hidden');
+        } else {
+            this.elements.qrBtn.classList.add('hidden');
         }
     }
 }
