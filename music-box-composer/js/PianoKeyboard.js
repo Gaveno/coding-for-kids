@@ -1,42 +1,20 @@
 /**
  * PianoKeyboard.js - Piano keyboard component with chromatic notes
- * Provides 12-note chromatic piano keyboard for note selection
  */
 
-// Piano note constants (index 0 is empty/no note)
 const PIANO_NOTES = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-// Emoji icons for each note
 const PIANO_ICONS = {
-    'C': '🔴',
-    'C#': '🟠',
-    'D': '🟡',
-    'D#': '🟢',
-    'E': '🔵',
-    'F': '🟣',
-    'F#': '🟤',
-    'G': '⚪',
-    'G#': '🟥',
-    'A': '🟧',
-    'A#': '🟨',
-    'B': '🟩'
+    'C': '🔴', 'C#': '🟠', 'D': '🟡', 'D#': '🟢', 'E': '🔵', 'F': '🟣',
+    'F#': '🟤', 'G': '⚪', 'G#': '🟥', 'A': '🟧', 'A#': '🟨', 'B': '🟩'
 };
 
 class PianoKeyboard {
-    /**
-     * Initialize piano keyboard
-     * @param {HTMLElement} containerElement - Container element for keyboard
-     */
     constructor(containerElement) {
         this.container = containerElement;
         this.keys = [];
         this.dragStartHandler = null;
-        
-        // White keys: C, D, E, F, G, A, B (indices 1, 3, 5, 6, 8, 10, 12)
-        this.whiteKeyIndices = [1, 3, 5, 6, 8, 10, 12];
-        
-        // Black keys: C#, D#, F#, G#, A# (indices 2, 4, 7, 9, 11)
-        this.blackKeyIndices = [2, 4, 7, 9, 11];
+        this.whiteKeyIndices = [1, 3, 5, 6, 8, 10, 12]; // C, D, E, F, G, A, B
+        this.blackKeyIndices = [2, 4, 7, 9, 11]; // C#, D#, F#, G#, A#
     }
 
     /**
@@ -63,11 +41,11 @@ class PianoKeyboard {
         const blackKeysContainer = document.createElement('div');
         blackKeysContainer.className = 'black-keys';
         
-        // Create black keys with positioning
+        // Create black keys with dynamic positioning
         this.blackKeyIndices.forEach((index, i) => {
             const key = this.createKey(index, 'black');
             
-            // Position black keys between white keys
+            // Position black keys between white keys using CSS calc
             // C# is between C and D, D# is between D and E, etc.
             const positionMap = {
                 2: 0,   // C# - after C
@@ -77,7 +55,9 @@ class PianoKeyboard {
                 11: 5   // A# - after A
             };
             
-            key.style.left = `${positionMap[index] * 48 + 32}px`;
+            const offset = positionMap[index];
+            key.style.left = `calc(${offset} * (var(--white-key-width) + var(--white-key-gap)) + var(--white-key-width) * 0.67)`;
+            
             blackKeysContainer.appendChild(key);
             this.keys[index] = key;
         });
@@ -114,11 +94,6 @@ class PianoKeyboard {
         return key;
     }
 
-    /**
-     * Handle pointer down on key
-     * @param {PointerEvent} e - Pointer event
-     * @param {number} noteIndex - Note index
-     */
     handleKeyPointerDown(e, noteIndex) {
         const key = this.keys[noteIndex];
         if (!key || key.classList.contains('disabled')) {
@@ -127,62 +102,30 @@ class PianoKeyboard {
         }
     }
 
-    /**
-     * Handle drag start
-     * @param {DragEvent} e - Drag event
-     * @param {number} noteIndex - Note index
-     */
     handleDragStart(e, noteIndex) {
         const key = this.keys[noteIndex];
-        
-        // Don't allow drag if key is disabled
         if (key.classList.contains('disabled')) {
             e.preventDefault();
             return;
         }
-        
         key.classList.add('dragging');
-        
-        // Call external drag start handler if set
         if (this.dragStartHandler) {
-            const noteData = this.getNoteData(noteIndex);
-            this.dragStartHandler(e, noteData);
+            this.dragStartHandler(e, this.getNoteData(noteIndex));
         }
     }
 
-    /**
-     * Handle drag end
-     * @param {DragEvent} e - Drag event
-     */
     handleDragEnd(e) {
-        // Remove dragging class from all keys
-        this.keys.forEach(key => {
-            if (key) {
-                key.classList.remove('dragging');
-            }
-        });
+        this.keys.forEach(key => key?.classList.remove('dragging'));
     }
 
-    /**
-     * Get note data for a note index
-     * @param {number} noteIndex - Note index in PIANO_NOTES array
-     * @returns {Object} - Note data {note, icon, octave}
-     */
     getNoteData(noteIndex) {
-        const note = PIANO_NOTES[noteIndex];
-        const icon = PIANO_ICONS[note];
-        
         return {
-            note: note,
-            icon: icon,
-            octave: null // Octave will be set based on target track
+            note: PIANO_NOTES[noteIndex],
+            icon: PIANO_ICONS[PIANO_NOTES[noteIndex]],
+            octave: null
         };
     }
 
-    /**
-     * Update which keys are enabled/disabled based on musical key
-     * @param {Array<number>} allowedNoteIndices - Array of allowed note indices (1-12)
-     */
     updateDisabledKeys(allowedNoteIndices) {
         // Disable all keys first
         this.keys.forEach((key, index) => {
@@ -192,7 +135,6 @@ class PianoKeyboard {
                 key.draggable = false;
             }
         });
-        
         // Enable allowed keys
         allowedNoteIndices.forEach(index => {
             const key = this.keys[index];
@@ -204,10 +146,6 @@ class PianoKeyboard {
         });
     }
 
-    /**
-     * Set drag start handler callback
-     * @param {Function} callback - Callback function(event, noteData)
-     */
     setDragStartHandler(callback) {
         this.dragStartHandler = callback;
     }
