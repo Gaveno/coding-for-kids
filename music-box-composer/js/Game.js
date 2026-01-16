@@ -689,7 +689,10 @@ class Game {
         const loop = this.readBits(bits, offset, 1); offset += 1;
         const lengthIndex = this.readBits(bits, offset, 2); offset += 2;
         
-        const beatCount = this.beatLengths[lengthIndex] || 16;
+        // v1 used [8, 16, 24, 32], map to v3's [16, 32, 48, 64]
+        const v1BeatLengths = [8, 16, 24, 32];
+        const v1BeatCount = v1BeatLengths[lengthIndex] || 16;
+        const beatCount = v1BeatCount <= 16 ? 16 : v1BeatCount <= 32 ? 32 : v1BeatCount <= 48 ? 48 : 64;
         
         // Read track data (v1: no duration)
         const melody = [];
@@ -702,13 +705,21 @@ class Game {
             const percIdx = this.readBits(bits, offset, 3); offset += 3;
             
             if (melodyIdx > 0 && melodyIdx < Game.MELODY_NOTES.length) {
-                melody.push([i, Game.MELODY_NOTES[melodyIdx], Game.MELODY_ICONS[melodyIdx], 1]);
+                // Convert old format (C4) to new format (C with octave 5)
+                const oldNote = Game.MELODY_NOTES[melodyIdx];
+                const note = oldNote.replace(/\d+$/, ''); // Remove octave from note name
+                const icon = note; // New format uses note name as icon
+                melody.push([i, note, icon, 1, 5]); // Add octave 5 for melody track
             }
             if (bassIdx > 0 && bassIdx < Game.BASS_NOTES.length) {
-                bass.push([i, Game.BASS_NOTES[bassIdx], Game.BASS_ICONS[bassIdx], 1]);
+                // Convert old format (C3) to new format (C with octave 3)
+                const oldNote = Game.BASS_NOTES[bassIdx];
+                const note = oldNote.replace(/\d+$/, ''); // Remove octave from note name
+                const icon = note; // New format uses note name as icon
+                bass.push([i, note, icon, 1, 3]); // Add octave 3 for bass track
             }
             if (percIdx > 0 && percIdx < Game.PERC_NOTES.length) {
-                percussion.push([i, Game.PERC_NOTES[percIdx], Game.PERC_ICONS[percIdx], 1]);
+                percussion.push([i, Game.PERC_NOTES[percIdx], Game.PERC_ICONS[percIdx], 1, null]);
             }
         }
         
@@ -732,7 +743,10 @@ class Game {
         const loop = this.readBits(bits, offset, 1); offset += 1;
         const lengthIndex = this.readBits(bits, offset, 2); offset += 2;
         
-        const beatCount = this.beatLengths[lengthIndex] || 16;
+        // v2 used [8, 16, 24, 32], map to v3's [16, 32, 48, 64]
+        const v2BeatLengths = [8, 16, 24, 32];
+        const v2BeatCount = v2BeatLengths[lengthIndex] || 16;
+        const beatCount = v2BeatCount <= 16 ? 16 : v2BeatCount <= 32 ? 32 : v2BeatCount <= 48 ? 48 : 64;
         
         // Read track data
         const melody = [];
@@ -752,13 +766,21 @@ class Game {
             const percIdx = this.readBits(bits, offset, 3); offset += 3;
             
             if (melodyIdx > 0 && melodyIdx < Game.MELODY_NOTES.length) {
-                melody.push([i, Game.MELODY_NOTES[melodyIdx], Game.MELODY_ICONS[melodyIdx], melodyDur]);
+                // Convert old format (C4) to new format (C with octave 5)
+                const oldNote = Game.MELODY_NOTES[melodyIdx];
+                const note = oldNote.replace(/\d+$/, ''); // Remove octave from note name
+                const icon = note; // New format uses note name as icon
+                melody.push([i, note, icon, melodyDur, 5]); // Add octave 5 for melody track
             }
             if (bassIdx > 0 && bassIdx < Game.BASS_NOTES.length) {
-                bass.push([i, Game.BASS_NOTES[bassIdx], Game.BASS_ICONS[bassIdx], bassDur]);
+                // Convert old format (C3) to new format (C with octave 3)
+                const oldNote = Game.BASS_NOTES[bassIdx];
+                const note = oldNote.replace(/\d+$/, ''); // Remove octave from note name
+                const icon = note; // New format uses note name as icon
+                bass.push([i, note, icon, bassDur, 3]); // Add octave 3 for bass track
             }
             if (percIdx > 0 && percIdx < Game.PERC_NOTES.length) {
-                percussion.push([i, Game.PERC_NOTES[percIdx], Game.PERC_ICONS[percIdx], 1]);
+                percussion.push([i, Game.PERC_NOTES[percIdx], Game.PERC_ICONS[percIdx], 1, null]);
             }
         }
         

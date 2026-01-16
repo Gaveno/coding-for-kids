@@ -902,7 +902,7 @@ Checked method name consistency:
 
 ### Task 4.5: Test Backwards Compatibility
 **Estimated Time:** 1 hour
-**Status:** ✅ COMPLETE
+**Status:** ✅ COMPLETE & VERIFIED (January 16, 2026)
 
 - [x] Create test URLs for v1 format (unversioned)
 - [x] Create test URLs for v2 format (`v2_...`)
@@ -913,12 +913,22 @@ Checked method name consistency:
 - [x] Verify no errors in console
 - [x] Verify songs play correctly after loading
 - [x] Test edge cases (empty songs, maximum songs, corrupted data)
+- [x] **Fixed v1/v2 note conversion** - Now properly converts old format (C4, D3) to new piano keyboard format (C with octave 5/3)
+
+**Implementation Details:**
+- v1 and v2 deserializers now convert old note format to new piano keyboard format:
+  - Old melody notes (C4, D4, etc.) → New format (C, D with octave=5)
+  - Old bass notes (C3, D3, etc.) → New format (C, D with octave=3)
+  - Icons updated from emojis to note names (C, D, E, etc.)
+  - Percussion notes preserved with octave=null
 
 **Acceptance Criteria:**
 - All three URL formats load successfully ✅
 - Older formats gracefully upgrade to v3 ✅
 - No loss of data during migration ✅
 - UI updates correctly after loading ✅
+- Old notes properly convert to new piano keyboard system ✅
+- Octaves correctly assigned (melody=5, bass=3, percussion=null) ✅
 
 **Review:**
 - [x] **REVIEW: Task 4.5 complete, Phase 4 complete, all acceptance criteria met, ready for Phase 5**
