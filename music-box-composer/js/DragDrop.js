@@ -29,30 +29,145 @@ class DragDrop {
      * Setup piano keyboard drag interactions
      */
     setupPianoKeyboard() {
-        if (!this.pianoKeyboard) return;
+        if (!this.pianoKeyboard || !this.pianoKeyboard.container) return;
         
-        this.pianoKeyboard.setDragStartHandler((e, noteData) => {
-            // Start drag from piano keyboard
-            const key = e.target.closest('.piano-key');
-            if (!key || key.classList.contains('disabled')) {
-                e.preventDefault();
-                return;
-            }
+        const keys = this.pianoKeyboard.container.querySelectorAll('.piano-key');
+        
+        keys.forEach(key => {
+            let startPos = null;
+            let isDragging = false;
             
-            // Set drag state with note data (octave will be set on drop)
-            this.dragState = {
-                note: noteData.note,
-                icon: noteData.icon,
-                trackNum: null, // Piano notes can go on track 1 or 2
-                sourceBtn: key,
-                fromPiano: true
-            };
+            // Touch events
+            key.addEventListener('touchstart', (e) => {
+                if (key.classList.contains('disabled')) {
+                    e.preventDefault();
+                    return;
+                }
+                const touch = e.touches[0];
+                startPos = { x: touch.clientX, y: touch.clientY };
+                isDragging = false;
+            }, { passive: true });
             
-            key.classList.add('dragging');
+            key.addEventListener('touchmove', (e) => {
+                if (!startPos || key.classList.contains('disabled')) return;
+                
+                const touch = e.touches[0];
+                const dx = Math.abs(touch.clientX - startPos.x);
+                const dy = Math.abs(touch.clientY - startPos.y);
+                
+                if (!isDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
+                    isDragging = true;
+                    e.preventDefault();
+                    this.startPianoDrag(touch, key);
+                }
+                
+                if (isDragging && this.dragState) {
+                    e.preventDefault();
+                    this.handleDragMove(touch);
+                }
+            }, { passive: false });
             
-            // Highlight piano tracks as available
-            this.updateTrackAvailability('piano');
+            key.addEventListener('touchend', (e) => {
+                if (isDragging && this.dragState) {
+                    e.preventDefault();
+                    this.handleDrop();
+                } else if (!isDragging && startPos) {
+                    // It was a tap - preview the sound
+                    this.previewPianoKey(key);
+                }
+                startPos = null;
+                isDragging = false;
+            }, { passive: false });
+            
+            // Mouse events
+            key.addEventListener('mousedown', (e) => {
+                if (key.classList.contains('disabled')) {
+                    e.preventDefault();
+                    return;
+                }
+                
+                startPos = { x: e.clientX, y: e.clientY };
+                isDragging = false;
+                
+                const handleMouseMove = (moveEvent) => {
+                    if (!startPos) return;
+                    
+                    const dx = Math.abs(moveEvent.clientX - startPos.x);
+                    const dy = Math.abs(moveEvent.clientY - startPos.y);
+                    
+                    if (!isDragging && (dx > this.dragThreshold || dy > this.dragThreshold)) {
+                        isDragging = true;
+                        this.startPianoDrag(moveEvent, key);
+                    }
+                    
+                    if (isDragging && this.dragState) {
+                        this.handleDragMove(moveEvent);
+                    }
+                };
+                
+                const handleMouseUp = (upEvent) => {
+                    if (isDragging && this.dragState) {
+                        this.handleDrop();
+                    } else if (!isDragging && startPos) {
+                        this.previewPianoKey(key);
+                    }
+                    
+                    startPos = null;
+                    isDragging = false;
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            });
         });
+    }
+    
+    /**
+     * Preview a piano key sound
+     * @param {HTMLElement} key - Piano key element
+     */
+    previewPianoKey(key) {
+        const noteIndex = parseInt(key.dataset.noteIndex);
+        if (isNaN(noteIndex)) return;
+        
+        const noteData = this.pianoKeyboard.getNoteData(noteIndex);
+        
+        key.classList.add('playing');
+        setTimeout(() => key.classList.remove('playing'), 300);
+        
+        // Preview with track 1 (high octave)
+        this.onPreview(noteData.note, 1);
+    }
+    
+    /**
+     * Start dragging from piano keyboard
+     * @param {Touch|MouseEvent} pointer - Pointer position
+     * @param {HTMLElement} key - Piano key element
+     */
+    startPianoDrag(pointer, key) {
+        const noteIndex = parseInt(key.dataset.noteIndex);
+        if (isNaN(noteIndex)) return;
+        
+        const noteData = this.pianoKeyboard.getNoteData(noteIndex);
+        
+        this.dragState = {
+            note: noteData.note,
+            type: 'piano',
+            icon: noteData.icon,
+            trackNum: null, // Will be determined on drop (1 or 2)
+            sourceBtn: key,
+            fromPiano: true
+        };
+        
+        key.classList.add('dragging');
+        
+        // Highlight piano tracks as available
+        this.updateTrackAvailability('piano');
+        
+        this.createDragGhost(pointer, noteData.icon);
+        this.updateDropTargets(pointer);
     }
 
     /**

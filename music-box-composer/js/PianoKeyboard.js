@@ -78,7 +78,6 @@ class PianoKeyboard {
         
         key.className = `piano-key ${keyType}-key enabled`;
         key.dataset.noteIndex = noteIndex;
-        key.draggable = true;
         
         // Add note label
         const label = document.createElement('div');
@@ -86,36 +85,7 @@ class PianoKeyboard {
         label.textContent = icon;
         key.appendChild(label);
         
-        // Add pointer events for drag and drop
-        key.addEventListener('pointerdown', (e) => this.handleKeyPointerDown(e, noteIndex));
-        key.addEventListener('dragstart', (e) => this.handleDragStart(e, noteIndex));
-        key.addEventListener('dragend', (e) => this.handleDragEnd(e));
-        
         return key;
-    }
-
-    handleKeyPointerDown(e, noteIndex) {
-        const key = this.keys[noteIndex];
-        if (!key || key.classList.contains('disabled')) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    }
-
-    handleDragStart(e, noteIndex) {
-        const key = this.keys[noteIndex];
-        if (key.classList.contains('disabled')) {
-            e.preventDefault();
-            return;
-        }
-        key.classList.add('dragging');
-        if (this.dragStartHandler) {
-            this.dragStartHandler(e, this.getNoteData(noteIndex));
-        }
-    }
-
-    handleDragEnd(e) {
-        this.keys.forEach(key => key?.classList.remove('dragging'));
     }
 
     getNoteData(noteIndex) {
@@ -132,7 +102,6 @@ class PianoKeyboard {
             if (key && index > 0) {
                 key.classList.remove('enabled');
                 key.classList.add('disabled');
-                key.draggable = false;
             }
         });
         // Enable allowed keys
@@ -141,12 +110,7 @@ class PianoKeyboard {
             if (key) {
                 key.classList.remove('disabled');
                 key.classList.add('enabled');
-                key.draggable = true;
             }
         });
-    }
-
-    setDragStartHandler(callback) {
-        this.dragStartHandler = callback;
     }
 }

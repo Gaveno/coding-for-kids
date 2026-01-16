@@ -488,9 +488,18 @@ class Timeline {
      * @param {Object} data - Serialized track data
      */
     deserializeTracks(data) {
-        if (data.melody) this.tracks.melody.deserialize(data.melody);
-        if (data.bass) this.tracks.bass.deserialize(data.bass);
-        if (data.percussion) this.tracks.percussion.deserialize(data.percussion);
+        // Handle v3 format (track1, track2, track3)
+        if (data.track1 || data.track2 || data.track3) {
+            if (data.track1) this.tracks[1].deserialize(data.track1);
+            if (data.track2) this.tracks[2].deserialize(data.track2);
+            if (data.track3) this.tracks[3].deserialize(data.track3);
+        }
+        // Handle v1/v2 format (melody, bass, percussion)
+        else {
+            if (data.melody) this.tracks[1].deserialize(data.melody);
+            if (data.bass) this.tracks[2].deserialize(data.bass);
+            if (data.percussion) this.tracks[3].deserialize(data.percussion);
+        }
         this.render();
     }
 }
