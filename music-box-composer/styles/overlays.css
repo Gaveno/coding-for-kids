@@ -32,7 +32,7 @@
 /* Modal Content */
 .modal-content {
     position: relative;
-    background: white;
+    background: var(--color-surface);
     padding: var(--spacing-lg);
     border-radius: var(--radius-lg);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);

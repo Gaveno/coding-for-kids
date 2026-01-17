@@ -2634,6 +2634,14 @@ class Game {
             octaveControls.style.display = this.currentMode === Game.MODES.STUDIO ? 'flex' : 'none';
         }
         
+        // Disable effects in kid and tween modes (not modifiable)
+        if (this.currentMode !== Game.MODES.STUDIO) {
+            for (let trackNum = 1; trackNum <= 3; trackNum++) {
+                this.audio.setReverbEnabled(trackNum, false);
+                this.audio.setDelayEnabled(trackNum, false);
+            }
+        }
+        
         console.log('Applied mode config:', config);
     }
     

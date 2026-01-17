@@ -237,7 +237,7 @@ v4_{mode}{base64data}
   - Add reverb toggle (ConvolverNode)
   - Add delay toggle (DelayNode)
   - Per-track or global effect routing
-  - ✅ **Completed Jan 17, 2026** - Implemented per-track reverb and delay effects with ConvolverNode impulse response (2s decay) and DelayNode (300ms, 40% feedback). Effect buttons (🌊 reverb, ⏱️ delay) visible in Studio Mode with active state styling. Effects route through parallel wet/dry mixing with proper gain staging.
+  - ✅ **Completed Jan 17, 2026** - Implemented per-track reverb and delay effects with ConvolverNode impulse response (2s decay) and DelayNode (300ms, 40% feedback). Effect buttons (🌊 reverb, ⏱️ delay) visible in Studio Mode with active state styling. Effects route through parallel wet/dry mixing with proper gain staging. Effects are automatically disabled for all tracks in Kid and Tween modes since they are not modifiable in those modes.
 
 - [x] **Task 4.5** - Export Features
   - WAV export using OfflineAudioContext
