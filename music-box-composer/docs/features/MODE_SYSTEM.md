@@ -213,32 +213,37 @@ v4_{mode}{base64data}
   - Create smooth transition animations
 
 ### Phase 4: Studio Mode Features
-**Status:** ⏸️ Deferred to v4.2
+**Status:** 🔄 In Progress (Tasks 4.1-4.2 Complete, Jan 17, 2026)
 
-- [ ] **Task 4.1** - Multi-Octave Keyboard
+- [x] **Task 4.1** - Multi-Octave Keyboard
   - Extend PianoKeyboard for 2-3 octaves
   - Add octave shift controls
   - Update Audio.js for extended range
+  - ✅ **Completed Jan 17, 2026** - Implemented 5-octave range (2-6) with up/down controls, octave indicators on timeline, full URL serialization support (v5)
   
-- [ ] **Task 4.2** - BPM Input
+- [x] **Task 4.2** - BPM Input
   - Replace speed buttons with BPM number input
   - Range: 40-200 BPM
   - Tap tempo integration
+  - ✅ **Completed Jan 17, 2026** - BPM input field shown in Studio Mode, tap tempo updates BPM directly, getBeatDuration() returns exact timing
   
 - [ ] **Task 4.3** - Waveform Selection
   - Add waveform dropdown per track (sine, triangle, square, sawtooth)
   - Update Audio.js oscillator creation
   - Visual indicator on track labels
+  - ⏸️ **Deferred to v4.2** - Audio.js has setTrackWaveform/getTrackWaveform methods ready, needs UI
   
 - [ ] **Task 4.4** - Basic Effects
   - Add reverb toggle (ConvolverNode)
   - Add delay toggle (DelayNode)
   - Per-track or global effect routing
+  - ⏸️ **Deferred to v4.2** - Audio.js has effectsEnabled structure, needs ConvolverNode/DelayNode implementation
 
 - [ ] **Task 4.5** - Export Features
   - WAV export using OfflineAudioContext
   - MIDI export (basic note data)
   - Show export buttons in Studio Mode only
+  - ⏸️ **Deferred to v4.2**
 
 ### Phase 5: URL Serialization Update
 **Status:** ✅ Complete (Jan 17, 2026)
