@@ -860,6 +860,9 @@ class Game {
             this.audio.setDelayEnabled(trackNum, !currentState);
             this.elements.modalDelayBtn.classList.toggle('active', !currentState);
         }
+        
+        // Update URL to persist effect changes
+        this.updateURL();
     }
 
     /**
