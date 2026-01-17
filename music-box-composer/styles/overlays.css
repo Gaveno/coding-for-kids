@@ -138,6 +138,115 @@
     }
 }
 
+/* ===== Track Settings Modal ===== */
+.modal-content.track-settings {
+    min-width: 320px;
+    max-width: 400px;
+}
+
+.track-setting-group {
+    margin-bottom: var(--spacing-lg);
+    text-align: left;
+}
+
+.setting-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Waveform Buttons */
+.waveform-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.waveform-btn {
+    min-height: 60px;
+    border: 2px solid var(--color-surface-light);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--spacing-xs);
+}
+
+.waveform-btn span {
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+.waveform-btn:hover {
+    transform: scale(1.05);
+    border-color: var(--color-primary);
+}
+
+.waveform-btn.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+}
+
+.waveform-btn.active span {
+    opacity: 1;
+}
+
+/* Effect Toggles */
+.effect-toggles {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.effect-toggle-btn {
+    min-height: 60px;
+    border: 2px solid var(--color-surface-light);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--spacing-sm);
+}
+
+.effect-toggle-btn .effect-icon {
+    font-size: 1.8rem;
+}
+
+.effect-toggle-btn .effect-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.effect-toggle-btn:hover {
+    transform: scale(1.05);
+    border-color: var(--color-primary);
+}
+
+.effect-toggle-btn.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+    box-shadow: 0 0 12px var(--color-primary);
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .modal-content {

@@ -67,45 +67,15 @@
                     <div class="playhead" id="playhead"></div>
                     <div class="beat-markers" id="beatMarkers"></div>
                     <div class="track" data-track="1" id="track1">
-                        <div class="track-label-container">
-                            <div class="track-label">🎹</div>
-                            <select class="waveform-select" id="waveform1" aria-label="Track 1 Waveform" style="display: none;">
-                                <option value="sine">~</option>
-                                <option value="triangle">△</option>
-                                <option value="square">⊓</option>
-                                <option value="sawtooth">⩘</option>
-                            </select>
-                            <div class="effects-controls" style="display: none;">
-                                <button class="effect-btn reverb-btn" data-track="1" data-effect="reverb" aria-label="Reverb" title="Reverb">🌊</button>
-                                <button class="effect-btn delay-btn" data-track="1" data-effect="delay" aria-label="Delay" title="Delay">⏱️</button>
-                            </div>
-                        </div>
+                        <button class="track-label clickable" data-track="1" aria-label="Track 1 Settings">🎹</button>
                         <div class="track-cells" id="cells1"></div>
                     </div>
                     <div class="track" data-track="2" id="track2">
-                        <div class="track-label-container">
-                            <div class="track-label">🎹</div>
-                            <select class="waveform-select" id="waveform2" aria-label="Track 2 Waveform" style="display: none;">
-                                <option value="sine">~</option>
-                                <option value="triangle" selected>△</option>
-                                <option value="square">⊓</option>
-                                <option value="sawtooth">⩘</option>
-                            </select>
-                            <div class="effects-controls" style="display: none;">
-                                <button class="effect-btn reverb-btn" data-track="2" data-effect="reverb" aria-label="Reverb" title="Reverb">🌊</button>
-                                <button class="effect-btn delay-btn" data-track="2" data-effect="delay" aria-label="Delay" title="Delay">⏱️</button>
-                            </div>
-                        </div>
+                        <button class="track-label clickable" data-track="2" aria-label="Track 2 Settings">🎹</button>
                         <div class="track-cells" id="cells2"></div>
                     </div>
                     <div class="track" data-track="3" id="track3">
-                        <div class="track-label-container">
-                            <div class="track-label">🥁</div>
-                            <div class="effects-controls" style="display: none;">
-                                <button class="effect-btn reverb-btn" data-track="3" data-effect="reverb" aria-label="Reverb" title="Reverb">🌊</button>
-                                <button class="effect-btn delay-btn" data-track="3" data-effect="delay" aria-label="Delay" title="Delay">⏱️</button>
-                            </div>
-                        </div>
+                        <button class="track-label clickable" data-track="3" aria-label="Track 3 Settings">🥁</button>
                         <div class="track-cells" id="cells3"></div>
                     </div>
                 </div>
@@ -212,6 +182,42 @@
             <div class="modal-buttons">
                 <button id="confirm-clear-btn" class="modal-btn danger">🗑️ Clear All</button>
                 <button id="cancel-clear-btn" class="modal-btn secondary">✖️ Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Track Settings Modal (Studio Mode) -->
+    <div id="track-settings-modal" class="modal hidden">
+        <div class="modal-overlay" id="track-settings-overlay"></div>
+        <div class="modal-content track-settings">
+            <h2 id="track-settings-title">🎹 Track Settings</h2>
+            
+            <div class="track-setting-group">
+                <label class="setting-label">Waveform</label>
+                <div class="waveform-buttons" id="waveform-buttons">
+                    <button class="waveform-btn" data-waveform="sine" aria-label="Sine Wave">~<br><span>Sine</span></button>
+                    <button class="waveform-btn" data-waveform="triangle" aria-label="Triangle Wave">△<br><span>Triangle</span></button>
+                    <button class="waveform-btn" data-waveform="square" aria-label="Square Wave">⊓<br><span>Square</span></button>
+                    <button class="waveform-btn" data-waveform="sawtooth" aria-label="Sawtooth Wave">⩘<br><span>Sawtooth</span></button>
+                </div>
+            </div>
+            
+            <div class="track-setting-group">
+                <label class="setting-label">Effects</label>
+                <div class="effect-toggles">
+                    <button class="effect-toggle-btn" id="modal-reverb-btn" data-effect="reverb" aria-label="Toggle Reverb">
+                        <span class="effect-icon">🌊</span>
+                        <span class="effect-name">Reverb</span>
+                    </button>
+                    <button class="effect-toggle-btn" id="modal-delay-btn" data-effect="delay" aria-label="Toggle Delay">
+                        <span class="effect-icon">⏱️</span>
+                        <span class="effect-name">Delay</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="close-track-settings-btn" class="modal-btn primary">✓ Done</button>
             </div>
         </div>
     </div>

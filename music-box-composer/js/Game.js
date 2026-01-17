@@ -132,8 +132,6 @@ class Game {
             qrFileInput: document.getElementById('qrFileInput'),
             exportWavBtn: document.getElementById('exportWavBtn'),
             exportMidiBtn: document.getElementById('exportMidiBtn'),
-            waveform1: document.getElementById('waveform1'),
-            waveform2: document.getElementById('waveform2'),
             lengthUpBtn: document.getElementById('lengthUpBtn'),
             lengthDownBtn: document.getElementById('lengthDownBtn'),
             beatCount: document.getElementById('beatCount'),
@@ -160,8 +158,18 @@ class Game {
             clearModal: document.getElementById('clear-modal'),
             clearModalOverlay: document.getElementById('clear-modal-overlay'),
             confirmClearBtn: document.getElementById('confirm-clear-btn'),
-            cancelClearBtn: document.getElementById('cancel-clear-btn')
+            cancelClearBtn: document.getElementById('cancel-clear-btn'),
+            trackSettingsModal: document.getElementById('track-settings-modal'),
+            trackSettingsOverlay: document.getElementById('track-settings-overlay'),
+            trackSettingsTitle: document.getElementById('track-settings-title'),
+            closeTrackSettingsBtn: document.getElementById('close-track-settings-btn'),
+            waveformButtons: document.getElementById('waveform-buttons'),
+            modalReverbBtn: document.getElementById('modal-reverb-btn'),
+            modalDelayBtn: document.getElementById('modal-delay-btn')
         };
+        
+        // Cache track label buttons
+        this.trackLabelButtons = document.querySelectorAll('.track-label.clickable');
     }
 
     /**
@@ -250,21 +258,9 @@ class Game {
         this.elements.qrFileInput.addEventListener('change', (e) => this.handleQRFileSelected(e));
         this.elements.exportWavBtn.addEventListener('click', () => this.exportWAV());
         this.elements.exportMidiBtn.addEventListener('click', () => this.exportMIDI());
-        this.elements.waveform1.addEventListener('change', (e) => this.setWaveform(1, e.target.value));
-        this.elements.waveform2.addEventListener('change', (e) => this.setWaveform(2, e.target.value));
         this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
         this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
-        
-        // Effect buttons (Studio Mode)
-        const effectBtns = document.querySelectorAll('.effect-btn');
-        effectBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const trackNum = parseInt(btn.getAttribute('data-track'));
-                const effect = btn.getAttribute('data-effect');
-                this.toggleEffect(trackNum, effect, btn);
-            });
-        });
         
         // Octave controls (Studio Mode)
         if (this.elements.octaveUpBtn) {
@@ -309,6 +305,32 @@ class Game {
         this.elements.confirmClearBtn.addEventListener('click', () => this.confirmClear());
         this.elements.cancelClearBtn.addEventListener('click', () => this.closeClearModal());
         this.elements.clearModalOverlay.addEventListener('click', () => this.closeClearModal());
+        
+        // Track settings modal events (Studio Mode)
+        this.trackLabelButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (this.currentMode === Game.MODES.STUDIO) {
+                    const trackNum = parseInt(btn.getAttribute('data-track'));
+                    this.showTrackSettings(trackNum);
+                }
+            });
+        });
+        
+        this.elements.closeTrackSettingsBtn.addEventListener('click', () => this.closeTrackSettings());
+        this.elements.trackSettingsOverlay.addEventListener('click', () => this.closeTrackSettings());
+        
+        // Waveform buttons in modal
+        const waveformBtns = this.elements.waveformButtons.querySelectorAll('.waveform-btn');
+        waveformBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const waveform = btn.getAttribute('data-waveform');
+                this.setModalWaveform(waveform);
+            });
+        });
+        
+        // Effect toggles in modal
+        this.elements.modalReverbBtn.addEventListener('click', () => this.toggleModalEffect('reverb'));
+        this.elements.modalDelayBtn.addEventListener('click', () => this.toggleModalEffect('delay'));
         
         // Initialize audio on first interaction
         const initAudio = () => {
@@ -737,9 +759,6 @@ class Game {
     }
 
     /**
-     * Clear all tracks
-     */
-    /**
      * Show clear confirmation modal
      */
     showClearConfirmation() {
@@ -762,29 +781,85 @@ class Game {
         this.closeClearModal();
         this.clear();
     }
-
+    
     /**
-     * Show clear confirmation modal
+     * Show track settings modal (Studio Mode)
+     * @param {number} trackNum - Track number (1-3)
      */
-    showClearConfirmation() {
-        this.elements.clearModal.classList.remove('hidden');
+    showTrackSettings(trackNum) {
+        this.currentSettingsTrack = trackNum;
+        
+        // Update modal title
+        const trackNames = ['', '🎹 Track 1 Settings', '🎹 Track 2 Settings', '🥁 Track 3 Settings'];
+        this.elements.trackSettingsTitle.textContent = trackNames[trackNum];
+        
+        // Show/hide waveform section for non-percussion tracks
+        const waveformGroup = this.elements.waveformButtons.closest('.track-setting-group');
+        if (trackNum === 3) {
+            waveformGroup.style.display = 'none';
+        } else {
+            waveformGroup.style.display = 'block';
+            
+            // Update waveform button states
+            const currentWaveform = this.audio.getTrackWaveform(trackNum);
+            const waveformBtns = this.elements.waveformButtons.querySelectorAll('.waveform-btn');
+            waveformBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-waveform') === currentWaveform);
+            });
+        }
+        
+        // Update effect button states
+        this.elements.modalReverbBtn.classList.toggle('active', this.audio.isReverbEnabled(trackNum));
+        this.elements.modalDelayBtn.classList.toggle('active', this.audio.isDelayEnabled(trackNum));
+        
+        // Show modal
+        this.elements.trackSettingsModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
-
+    
     /**
-     * Close clear confirmation modal
+     * Close track settings modal
      */
-    closeClearModal() {
-        this.elements.clearModal.classList.add('hidden');
+    closeTrackSettings() {
+        this.elements.trackSettingsModal.classList.add('hidden');
         document.body.style.overflow = '';
+        this.currentSettingsTrack = null;
     }
-
+    
     /**
-     * Confirm and execute clear
+     * Set waveform from modal
+     * @param {string} waveform - Waveform type
      */
-    confirmClear() {
-        this.closeClearModal();
-        this.clear();
+    setModalWaveform(waveform) {
+        if (this.currentSettingsTrack && (this.currentSettingsTrack === 1 || this.currentSettingsTrack === 2)) {
+            this.setWaveform(this.currentSettingsTrack, waveform);
+            
+            // Update button states
+            const waveformBtns = this.elements.waveformButtons.querySelectorAll('.waveform-btn');
+            waveformBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-waveform') === waveform);
+            });
+        }
+    }
+    
+    /**
+     * Toggle effect from modal
+     * @param {string} effect - Effect type ('reverb' or 'delay')
+     */
+    toggleModalEffect(effect) {
+        if (!this.currentSettingsTrack) return;
+        
+        const trackNum = this.currentSettingsTrack;
+        
+        if (effect === 'reverb') {
+            const currentState = this.audio.isReverbEnabled(trackNum);
+            this.audio.setReverbEnabled(trackNum, !currentState);
+            this.elements.modalReverbBtn.classList.toggle('active', !currentState);
+        } else if (effect === 'delay') {
+            const currentState = this.audio.isDelayEnabled(trackNum);
+            this.audio.setDelayEnabled(trackNum, !currentState);
+            this.elements.modalDelayBtn.classList.toggle('active', !currentState);
+        }
     }
 
     /**
@@ -821,24 +896,6 @@ class Game {
         }
     }
     
-    /**
-     * Toggle audio effect for a track
-     * @param {number} trackNum - Track number (1-3)
-     * @param {string} effect - Effect type ('reverb' or 'delay')
-     * @param {HTMLElement} btn - Button element to toggle active state
-     */
-    toggleEffect(trackNum, effect, btn) {
-        if (effect === 'reverb') {
-            const currentState = this.audio.isReverbEnabled(trackNum);
-            this.audio.setReverbEnabled(trackNum, !currentState);
-            btn.classList.toggle('active', !currentState);
-        } else if (effect === 'delay') {
-            const currentState = this.audio.isDelayEnabled(trackNum);
-            this.audio.setDelayEnabled(trackNum, !currentState);
-            btn.classList.toggle('active', !currentState);
-        }
-    }
-
     /**
      * Get the index of the current key for serialization
      * @returns {number} - Index in KEY_NAMES array
@@ -2533,20 +2590,6 @@ class Game {
         if (this.elements.exportMidiBtn) {
             this.elements.exportMidiBtn.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-flex' : 'none';
         }
-        
-        // Update waveform selector visibility (Studio Mode only)
-        if (this.elements.waveform1) {
-            this.elements.waveform1.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-block' : 'none';
-        }
-        if (this.elements.waveform2) {
-            this.elements.waveform2.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-block' : 'none';
-        }
-        
-        // Update effects controls visibility (Studio Mode only)
-        const effectsControls = document.querySelectorAll('.effects-controls');
-        effectsControls.forEach(control => {
-            control.style.display = this.currentMode === Game.MODES.STUDIO ? 'flex' : 'none';
-        });
         
         // Update octave controls visibility (Studio Mode only)
         const octaveControls = document.querySelector('.octave-controls');
