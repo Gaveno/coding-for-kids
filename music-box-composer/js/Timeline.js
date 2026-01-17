@@ -395,23 +395,21 @@ class Timeline {
         const position = trackLabelWidth + (beat * this.cellSize);
         this.playhead.style.left = `${position}px`;
         
-        // Auto-scroll to keep playhead centered during playback
-        // Use requestAnimationFrame to ensure DOM has updated before scrolling
+        // Auto-scroll to keep playhead centered during playback (instant snap, no smooth scroll)
         if (this.playhead.classList.contains('active')) {
-            requestAnimationFrame(() => {
-                // Check again in case playback stopped during the frame
-                if (!this.playhead.classList.contains('active')) return;
-                
-                const scrollContainer = this.scrollContainer;
-                const containerWidth = scrollContainer.clientWidth;
-                const maxScroll = scrollContainer.scrollWidth - containerWidth;
-                
-                // Center the playhead in viewport, clamped to valid scroll range
-                const centeredScroll = position - (containerWidth / 2);
-                const clampedScroll = Math.max(0, Math.min(centeredScroll, maxScroll));
-                
-                scrollContainer.scrollLeft = clampedScroll;
-            });
+            const scrollContainer = this.scrollContainer;
+            const containerWidth = scrollContainer.clientWidth;
+            const maxScroll = scrollContainer.scrollWidth - containerWidth;
+            
+            // Center the playhead in viewport, clamped to valid scroll range
+            const centeredScroll = position - (containerWidth / 2);
+            const clampedScroll = Math.max(0, Math.min(centeredScroll, maxScroll));
+            
+            // Disable smooth scrolling during playback for instant response
+            const originalBehavior = scrollContainer.style.scrollBehavior;
+            scrollContainer.style.scrollBehavior = 'auto';
+            scrollContainer.scrollLeft = clampedScroll;
+            scrollContainer.style.scrollBehavior = originalBehavior;
         }
     }
 
