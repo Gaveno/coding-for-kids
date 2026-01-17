@@ -132,6 +132,8 @@ class Game {
             qrFileInput: document.getElementById('qrFileInput'),
             exportWavBtn: document.getElementById('exportWavBtn'),
             exportMidiBtn: document.getElementById('exportMidiBtn'),
+            waveform1: document.getElementById('waveform1'),
+            waveform2: document.getElementById('waveform2'),
             lengthUpBtn: document.getElementById('lengthUpBtn'),
             lengthDownBtn: document.getElementById('lengthDownBtn'),
             beatCount: document.getElementById('beatCount'),
@@ -248,6 +250,8 @@ class Game {
         this.elements.qrFileInput.addEventListener('change', (e) => this.handleQRFileSelected(e));
         this.elements.exportWavBtn.addEventListener('click', () => this.exportWAV());
         this.elements.exportMidiBtn.addEventListener('click', () => this.exportMIDI());
+        this.elements.waveform1.addEventListener('change', (e) => this.setWaveform(1, e.target.value));
+        this.elements.waveform2.addEventListener('change', (e) => this.setWaveform(2, e.target.value));
         this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
         this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
@@ -796,6 +800,18 @@ class Game {
     }
 
     /**
+     * Set waveform for a piano track
+     * @param {number} trackNum - Track number (1 or 2)
+     * @param {string} waveform - Waveform type ('sine', 'square', 'sawtooth', 'triangle')
+     */
+    setWaveform(trackNum, waveform) {
+        if (trackNum === 1 || trackNum === 2) {
+            this.audio.trackWaveforms[trackNum] = waveform;
+            this.updateURL();
+        }
+    }
+
+    /**
      * Get the index of the current key for serialization
      * @returns {number} - Index in KEY_NAMES array
      */
@@ -831,7 +847,12 @@ class Game {
     // v2: 16 bits per beat (with duration for melody/bass)
     // v3: 17 bits per beat (piano notes with octave, key signature)
     // v4: 19 bits header (adds 2 bits for mode), same beat structure as v3
-    static ENCODING_VERSION = 5;
+    // v5: 11 bits header (octave support 3 bits), 35 bits per beat
+    // v6: 15 bits header (adds waveform 2+2 bits), 35 bits per beat
+    static ENCODING_VERSION = 6;
+    
+    // Waveform encoding (2 bits per track)
+    static WAVEFORMS = ['sine', 'triangle', 'square', 'sawtooth'];
 
     /**
      * Serialize current state to a compact binary URL-safe string
@@ -839,11 +860,82 @@ class Game {
      * @returns {string}
      */
     serializeState() {
-        return this.serializeV5();
+        return this.serializeV6();
     }
 
     /**
-     * Serialize v5 format with octave support
+     * Serialize v6 format with waveform support
+     * 
+     * v6 Binary format:
+     * Header: 15 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4, waveform1:2, waveform2:2)
+     * Per beat: 35 bits (piano1:4+3+4+3, piano2:4+3+4+3, percussion:3+4)
+     * Piano tracks: note(4) + duration(3) + velocity(4) + octave(3)
+     * @returns {string}
+     */
+    serializeV6() {
+        const beatCount = this.timeline.getBeatCount();
+        const lengthIndex = this.beatLengths.indexOf(beatCount);
+        const keyIndex = Game.KEY_NAMES.indexOf(this.currentKey);
+        
+        // Mode index (0=kid, 1=tween, 2=studio)
+        const modeIndex = Object.values(Game.MODES).indexOf(this.currentMode);
+        
+        // Waveform indices
+        const waveform1Index = Game.WAVEFORMS.indexOf(this.audio.trackWaveforms[1] || 'sine');
+        const waveform2Index = Game.WAVEFORMS.indexOf(this.audio.trackWaveforms[2] || 'triangle');
+        
+        // Build bit array
+        const bits = [];
+        
+        // Header: mode (2 bits), speed (2 bits), loop (1 bit), length index (2 bits), key (4 bits), waveforms (2+2 bits)
+        this.pushBits(bits, modeIndex, 2);
+        this.pushBits(bits, this.currentSpeedIndex, 2);
+        this.pushBits(bits, this.isLooping ? 1 : 0, 1);
+        this.pushBits(bits, lengthIndex, 2);
+        this.pushBits(bits, keyIndex, 4);
+        this.pushBits(bits, waveform1Index, 2);
+        this.pushBits(bits, waveform2Index, 2);
+        
+        // Track data with velocity and octave: 35 bits per beat
+        // piano1 (4 note + 3 dur + 4 vel + 3 oct) + piano2 (4 note + 3 dur + 4 vel + 3 oct) + perc (3 note + 4 vel)
+        for (let beat = 0; beat < beatCount; beat++) {
+            const notes = this.timeline.getNotesAtBeat(beat);
+            
+            // Piano track 1: note (4 bits) + duration (3 bits) + velocity (4 bits) + octave (3 bits)
+            const note1 = notes[1];
+            const note1Index = note1 && !note1.sustained ? this.getNoteIndex(note1.note) : 0;
+            const duration1 = note1 && !note1.sustained ? note1.duration : 1;
+            const velocity1 = note1 && !note1.sustained ? Math.round((note1.velocity || 0.8) * 15) : 12;
+            const octave1 = note1 && !note1.sustained && note1.octave !== null ? note1.octave - 2 : 2; // Map octaves 2-6 to 0-4
+            this.pushBits(bits, note1Index, 4);
+            this.pushBits(bits, Math.min(7, Math.max(0, duration1 - 1)), 3);
+            this.pushBits(bits, velocity1, 4);
+            this.pushBits(bits, octave1, 3);
+            
+            // Piano track 2: note (4 bits) + duration (3 bits) + velocity (4 bits) + octave (3 bits)
+            const note2 = notes[2];
+            const note2Index = note2 && !note2.sustained ? this.getNoteIndex(note2.note) : 0;
+            const duration2 = note2 && !note2.sustained ? note2.duration : 1;
+            const velocity2 = note2 && !note2.sustained ? Math.round((note2.velocity || 0.8) * 15) : 12;
+            const octave2 = note2 && !note2.sustained && note2.octave !== null ? note2.octave - 2 : 1; // Map octaves 2-6 to 0-4
+            this.pushBits(bits, note2Index, 4);
+            this.pushBits(bits, Math.min(7, Math.max(0, duration2 - 1)), 3);
+            this.pushBits(bits, velocity2, 4);
+            this.pushBits(bits, octave2, 3);
+            
+            // Percussion track: note index (3 bits) + velocity (4 bits)
+            const note3 = notes[3];
+            const note3Index = note3 && !note3.sustained ? Game.PERC_NOTES.indexOf(note3.note) : 0;
+            const velocity3 = note3 && !note3.sustained ? Math.round((note3.velocity || 0.8) * 15) : 12;
+            this.pushBits(bits, Math.max(0, note3Index), 3);
+            this.pushBits(bits, velocity3, 4);
+        }
+        
+        return this.encodeToBase64(bits);
+    }
+    
+    /**
+     * Serialize v5 format with octave support (legacy)
      * 
      * v5 Binary format:
      * Header: 11 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4)
@@ -1095,6 +1187,8 @@ class Game {
                 return this.deserializeV4(bits);
             } else if (version === 5) {
                 return this.deserializeV5(bits);
+            } else if (version === 6) {
+                return this.deserializeV6(bits);
             } else {
                 console.warn(`Unknown encoding version: ${version}`);
                 return null;
@@ -1372,7 +1466,86 @@ class Game {
     }
 
     /**
-     * Deserialize v5 format with octave support
+     * Deserialize v6 format with waveform support
+     * Header: 15 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4, waveform1:2, waveform2:2)
+     * Per beat: 35 bits - piano1(14) + piano2(14) + percussion(7)
+     * Piano: note(4) + duration(3) + velocity(4) + octave(3)
+     * Percussion: note(3) + velocity(4)
+     */
+    deserializeV6(bits) {
+        const PIANO_NOTES = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const PIANO_ICONS = {
+            'C': 'C', 'C#': 'C♯', 'D': 'D', 'D#': 'D♯', 'E': 'E', 'F': 'F',
+            'F#': 'F♯', 'G': 'G', 'G#': 'G♯', 'A': 'A', 'A#': 'A♯', 'B': 'B'
+        };
+        
+        let offset = 0;
+        
+        // Read header (15 bits)
+        const modeIndex = this.readBits(bits, offset, 2); offset += 2;
+        const speedIndex = this.readBits(bits, offset, 2); offset += 2;
+        const loop = this.readBits(bits, offset, 1); offset += 1;
+        const lengthIndex = this.readBits(bits, offset, 2); offset += 2;
+        const keyIndex = this.readBits(bits, offset, 4); offset += 4;
+        const waveform1Index = this.readBits(bits, offset, 2); offset += 2;
+        const waveform2Index = this.readBits(bits, offset, 2); offset += 2;
+        
+        const beatCount = this.beatLengths[lengthIndex] || 16;
+        const keyName = Game.KEY_NAMES[keyIndex] || 'C Major';
+        const mode = Object.values(Game.MODES)[modeIndex] || Game.MODES.KID;
+        const waveform1 = Game.WAVEFORMS[waveform1Index] || 'sine';
+        const waveform2 = Game.WAVEFORMS[waveform2Index] || 'triangle';
+        
+        // Read track data with velocity and octave
+        const track1 = [];
+        const track2 = [];
+        const track3 = [];
+        
+        for (let beat = 0; beat < beatCount; beat++) {
+            // Piano track 1: 4 bits note + 3 bits duration + 4 bits velocity + 3 bits octave
+            const note1Index = this.readBits(bits, offset, 4); offset += 4;
+            const duration1 = this.readBits(bits, offset, 3) + 1; offset += 3;
+            const velocity1 = this.readBits(bits, offset, 4) / 15; offset += 4;
+            const octave1 = this.readBits(bits, offset, 3) + 2; offset += 3; // Map 0-4 to octaves 2-6
+            
+            // Piano track 2: 4 bits note + 3 bits duration + 4 bits velocity + 3 bits octave
+            const note2Index = this.readBits(bits, offset, 4); offset += 4;
+            const duration2 = this.readBits(bits, offset, 3) + 1; offset += 3;
+            const velocity2 = this.readBits(bits, offset, 4) / 15; offset += 4;
+            const octave2 = this.readBits(bits, offset, 3) + 2; offset += 3; // Map 0-4 to octaves 2-6
+            
+            // Percussion: 3 bits note + 4 bits velocity
+            const percIndex = this.readBits(bits, offset, 3); offset += 3;
+            const velocity3 = this.readBits(bits, offset, 4) / 15; offset += 4;
+            
+            // Add notes if valid (with octave and velocity)
+            if (note1Index > 0 && note1Index < PIANO_NOTES.length) {
+                const note = PIANO_NOTES[note1Index];
+                track1.push([beat, note, PIANO_ICONS[note], duration1, octave1, velocity1]);
+            }
+            if (note2Index > 0 && note2Index < PIANO_NOTES.length) {
+                const note = PIANO_NOTES[note2Index];
+                track2.push([beat, note, PIANO_ICONS[note], duration2, octave2, velocity2]);
+            }
+            if (percIndex > 0 && percIndex < Game.PERC_NOTES.length) {
+                track3.push([beat, Game.PERC_NOTES[percIndex], Game.PERC_ICONS[percIndex], 1, null, velocity3]);
+            }
+        }
+        
+        return {
+            mode: mode,
+            s: speedIndex,
+            l: loop,
+            b: beatCount,
+            k: keyName,
+            w1: waveform1,
+            w2: waveform2,
+            t: { track1, track2, track3 }
+        };
+    }
+
+    /**
+     * Deserialize v5 format with octave support (legacy)
      * Header: 11 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4)
      * Per beat: 35 bits - piano1(14) + piano2(14) + percussion(7)
      * Piano: note(4) + duration(3) + velocity(4) + octave(3)
@@ -2176,6 +2349,16 @@ class Game {
             this.elements.keySelect.value = state.k;
         }
         
+        // Apply waveforms (v6 only)
+        if (state.w1 && Game.WAVEFORMS.includes(state.w1)) {
+            this.audio.trackWaveforms[1] = state.w1;
+            this.elements.waveform1.value = state.w1;
+        }
+        if (state.w2 && Game.WAVEFORMS.includes(state.w2)) {
+            this.audio.trackWaveforms[2] = state.w2;
+            this.elements.waveform2.value = state.w2;
+        }
+        
         // Apply tracks
         if (state.t) {
             this.timeline.deserializeTracks(state.t);
@@ -2310,6 +2493,14 @@ class Game {
         }
         if (this.elements.exportMidiBtn) {
             this.elements.exportMidiBtn.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-flex' : 'none';
+        }
+        
+        // Update waveform selector visibility (Studio Mode only)
+        if (this.elements.waveform1) {
+            this.elements.waveform1.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-block' : 'none';
+        }
+        if (this.elements.waveform2) {
+            this.elements.waveform2.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-block' : 'none';
         }
         
         console.log('Applied mode config:', config);

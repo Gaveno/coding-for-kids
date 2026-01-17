@@ -67,11 +67,27 @@
                     <div class="playhead" id="playhead"></div>
                     <div class="beat-markers" id="beatMarkers"></div>
                     <div class="track" data-track="1" id="track1">
-                        <div class="track-label">🎹</div>
+                        <div class="track-label-container">
+                            <div class="track-label">🎹</div>
+                            <select class="waveform-select" id="waveform1" aria-label="Track 1 Waveform" style="display: none;">
+                                <option value="sine">~</option>
+                                <option value="triangle">△</option>
+                                <option value="square">⊓</option>
+                                <option value="sawtooth">⩘</option>
+                            </select>
+                        </div>
                         <div class="track-cells" id="cells1"></div>
                     </div>
                     <div class="track" data-track="2" id="track2">
-                        <div class="track-label">🎹</div>
+                        <div class="track-label-container">
+                            <div class="track-label">🎹</div>
+                            <select class="waveform-select" id="waveform2" aria-label="Track 2 Waveform" style="display: none;">
+                                <option value="sine">~</option>
+                                <option value="triangle" selected>△</option>
+                                <option value="square">⊓</option>
+                                <option value="sawtooth">⩘</option>
+                            </select>
+                        </div>
                         <div class="track-cells" id="cells2"></div>
                     </div>
                     <div class="track" data-track="3" id="track3">
