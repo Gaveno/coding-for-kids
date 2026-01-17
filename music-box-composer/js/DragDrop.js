@@ -470,12 +470,19 @@ class DragDrop {
             const trackNum = parseInt(targetCell.dataset.track);
             const beat = parseInt(targetCell.dataset.beat);
             
-            // Create note data using octave from drag state (set by piano keyboard)
+            // Create note data using octave from drag state
+            // If octave is not set (e.g., from palette in Studio Mode), use piano keyboard's current octave
+            let octave = this.dragState.octave;
+            if (octave === undefined && this.pianoKeyboard && this.pianoKeyboard.multiOctaveMode && trackNum !== 3) {
+                // In Studio Mode, use the keyboard's current octave for piano tracks
+                octave = this.pianoKeyboard.currentOctave;
+            }
+            
             const noteData = {
                 note: this.dragState.note,
                 icon: this.dragState.icon,
                 duration: 1,
-                octave: this.dragState.octave // Use octave from piano keyboard
+                octave: octave
             };
             
             this.onDrop(trackNum, beat, noteData);
