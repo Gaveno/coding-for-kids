@@ -605,10 +605,10 @@ class Game {
     // Note mappings for compact encoding (index 0 = empty)
     static MELODY_NOTES = ['', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
     static BASS_NOTES = ['', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3'];
-    static PERC_NOTES = ['', 'kick', 'snare', 'hihat', 'clap'];
+    static PERC_NOTES = ['', 'kick', 'snare', 'hihat', 'clap', 'tom', 'cymbal', 'shaker', 'cowbell'];
     static MELODY_ICONS = ['', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚪', '❤️'];
     static BASS_ICONS = ['', '🟦', '🟪', '🟫', '⬛', '💙', '💜'];
-    static PERC_ICONS = ['', '🥁', '🪘', '🔔', '👏'];
+    static PERC_ICONS = ['', '🥁', '🪘', '🔔', '👏', '🎵', '💥', '🎶', '🔊'];
     
     // Piano keyboard icon mapping (matches PianoKeyboard.js)
     static PIANO_ICONS = {

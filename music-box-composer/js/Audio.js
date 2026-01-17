@@ -103,6 +103,18 @@ class Audio {
             case 'clap':
                 this.playClap();
                 break;
+            case 'tom':
+                this.playTom();
+                break;
+            case 'cymbal':
+                this.playCymbal();
+                break;
+            case 'shaker':
+                this.playShaker();
+                break;
+            case 'cowbell':
+                this.playCowbell();
+                break;
         }
     }
 
@@ -266,6 +278,118 @@ class Audio {
             
             noise.start(startTime);
         }
+    }
+
+    /**
+     * Play tom drum sound
+     */
+    playTom() {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        const now = this.audioContext.currentTime;
+        
+        oscillator.frequency.setValueAtTime(120, now);
+        oscillator.frequency.exponentialRampToValueAtTime(60, now + 0.2);
+        
+        gainNode.gain.setValueAtTime(0.7, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+        oscillator.start(now);
+        oscillator.stop(now + 0.4);
+    }
+
+    /**
+     * Play cymbal sound
+     */
+    playCymbal() {
+        const bufferSize = this.audioContext.sampleRate * 0.5;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = this.audioContext.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = this.audioContext.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 5000;
+        
+        const gainNode = this.audioContext.createGain();
+        const now = this.audioContext.currentTime;
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        noise.start(now);
+    }
+
+    /**
+     * Play shaker sound
+     */
+    playShaker() {
+        const bufferSize = this.audioContext.sampleRate * 0.06;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = this.audioContext.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = this.audioContext.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 8000;
+        
+        const gainNode = this.audioContext.createGain();
+        const now = this.audioContext.currentTime;
+        gainNode.gain.setValueAtTime(0.15, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+        
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        noise.start(now);
+    }
+
+    /**
+     * Play cowbell sound
+     */
+    playCowbell() {
+        const oscillator1 = this.audioContext.createOscillator();
+        const oscillator2 = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        const now = this.audioContext.currentTime;
+        
+        oscillator1.type = 'square';
+        oscillator2.type = 'square';
+        oscillator1.frequency.setValueAtTime(800, now);
+        oscillator2.frequency.setValueAtTime(540, now);
+        
+        gainNode.gain.setValueAtTime(0.3, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        oscillator1.start(now);
+        oscillator2.start(now);
+        oscillator1.stop(now + 0.15);
+        oscillator2.stop(now + 0.15);
     }
 
     /**

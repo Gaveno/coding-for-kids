@@ -32,6 +32,15 @@
     background: var(--track-percussion);
 }
 
+/* Extended percussion - hidden in Kid Mode */
+.extended-perc {
+    display: flex;
+}
+
+[data-mode="kid"] .extended-perc {
+    display: none;
+}
+
 /* ===== Note Button ===== */
 .note-btn {
     width: 44px;
