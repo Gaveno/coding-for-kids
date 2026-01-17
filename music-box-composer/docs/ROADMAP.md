@@ -30,9 +30,7 @@ Each major feature release increments the major version number:
 | Version | Feature | Status |
 |---------|---------|--------|
 | v3.0 | Current - Piano keyboard, key signatures, 64 beats | ✅ Complete |
-| v4.0 | Multi-Mode Complexity System (Core) | ✅ Complete (Jan 17, 2026) |
-| v4.1 | Tween Mode Extended Features | 🔲 Not Started |
-| v4.2 | Studio Mode Advanced Features | 🔲 Not Started |
+| v4.0 | Multi-Mode Complexity System (Full) | ✅ Complete (Jan 17, 2026) |
 | v5.0 | Pattern Library & Loop Builder | 🔲 Not Started |
 | v6.0 | Live Performance / Jam Mode | 🔲 Not Started |
 
@@ -73,16 +71,12 @@ Three distinct experience modes that unlock features progressively:
 - 🎸 **Tween Mode** (ages 7-12): Intermediate features
 - 🎛️ **Studio Mode** (ages 13+): Full DAW-lite experience
 
-**Status:** ✅ Complete (Core) - Jan 17, 2026
+**Status:** ✅ Complete - Jan 17, 2026
 **Completed:**
-- Mode selector UI with persistence
-- CSS theming system
-- Kid Mode restrictions (larger UI, simplified controls)
-- URL serialization with mode support
-
-**Deferred to v4.1/v4.2:**
-- Tween Mode extended features (percussion, velocity)
-- Studio Mode advanced features (multi-octave, BPM input)
+- Phase 1: Core infrastructure (mode selector, CSS theming, feature flags)
+- Phase 2: Kid Mode restrictions (simplified UI, C Major lock, 16 beat max)
+- Phase 3: Tween Mode features (extended percussion, velocity control, tap tempo, visual polish)
+- Phase 5: URL serialization v4 with backward compatibility
 
 **Design Doc:** [docs/features/MODE_SYSTEM.md](features/MODE_SYSTEM.md)
 
