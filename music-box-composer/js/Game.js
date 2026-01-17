@@ -256,6 +256,16 @@ class Game {
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
         this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
         
+        // Effect buttons (Studio Mode)
+        const effectBtns = document.querySelectorAll('.effect-btn');
+        effectBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const trackNum = parseInt(btn.getAttribute('data-track'));
+                const effect = btn.getAttribute('data-effect');
+                this.toggleEffect(trackNum, effect, btn);
+            });
+        });
+        
         // Octave controls (Studio Mode)
         if (this.elements.octaveUpBtn) {
             this.elements.octaveUpBtn.addEventListener('click', () => {
@@ -808,6 +818,24 @@ class Game {
         if (trackNum === 1 || trackNum === 2) {
             this.audio.trackWaveforms[trackNum] = waveform;
             this.updateURL();
+        }
+    }
+    
+    /**
+     * Toggle audio effect for a track
+     * @param {number} trackNum - Track number (1-3)
+     * @param {string} effect - Effect type ('reverb' or 'delay')
+     * @param {HTMLElement} btn - Button element to toggle active state
+     */
+    toggleEffect(trackNum, effect, btn) {
+        if (effect === 'reverb') {
+            const currentState = this.audio.isReverbEnabled(trackNum);
+            this.audio.setReverbEnabled(trackNum, !currentState);
+            btn.classList.toggle('active', !currentState);
+        } else if (effect === 'delay') {
+            const currentState = this.audio.isDelayEnabled(trackNum);
+            this.audio.setDelayEnabled(trackNum, !currentState);
+            btn.classList.toggle('active', !currentState);
         }
     }
 
@@ -2512,6 +2540,18 @@ class Game {
         }
         if (this.elements.waveform2) {
             this.elements.waveform2.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-block' : 'none';
+        }
+        
+        // Update effects controls visibility (Studio Mode only)
+        const effectsControls = document.querySelectorAll('.effects-controls');
+        effectsControls.forEach(control => {
+            control.style.display = this.currentMode === Game.MODES.STUDIO ? 'flex' : 'none';
+        });
+        
+        // Update octave controls visibility (Studio Mode only)
+        const octaveControls = document.querySelector('.octave-controls');
+        if (octaveControls) {
+            octaveControls.style.display = this.currentMode === Game.MODES.STUDIO ? 'flex' : 'none';
         }
         
         console.log('Applied mode config:', config);

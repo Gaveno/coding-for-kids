@@ -213,7 +213,7 @@ v4_{mode}{base64data}
   - Create smooth transition animations
 
 ### Phase 4: Studio Mode Features
-**Status:** 🔄 In Progress (Tasks 4.1-4.2 Complete, Jan 17, 2026)
+**Status:** ✅ Complete (Jan 17, 2026)
 
 - [x] **Task 4.1** - Multi-Octave Keyboard
   - Extend PianoKeyboard for 2-3 octaves
@@ -233,11 +233,11 @@ v4_{mode}{base64data}
   - Visual indicator on track labels
   - ✅ **Completed Jan 17, 2026** - Waveform selectors on piano tracks with visual symbols (~, △, ⊓, ⩘), URL v6 encoding with 4 additional header bits, mode-based visibility
   
-- [ ] **Task 4.4** - Basic Effects
+- [x] **Task 4.4** - Basic Effects
   - Add reverb toggle (ConvolverNode)
   - Add delay toggle (DelayNode)
   - Per-track or global effect routing
-  - ⏸️ **Deferred to v4.2** - Audio.js has effectsEnabled structure, needs ConvolverNode/DelayNode implementation
+  - ✅ **Completed Jan 17, 2026** - Implemented per-track reverb and delay effects with ConvolverNode impulse response (2s decay) and DelayNode (300ms, 40% feedback). Effect buttons (🌊 reverb, ⏱️ delay) visible in Studio Mode with active state styling. Effects route through parallel wet/dry mixing with proper gain staging.
 
 - [x] **Task 4.5** - Export Features
   - WAV export using OfflineAudioContext

@@ -75,6 +75,10 @@
                                 <option value="square">⊓</option>
                                 <option value="sawtooth">⩘</option>
                             </select>
+                            <div class="effects-controls" style="display: none;">
+                                <button class="effect-btn reverb-btn" data-track="1" data-effect="reverb" aria-label="Reverb" title="Reverb">🌊</button>
+                                <button class="effect-btn delay-btn" data-track="1" data-effect="delay" aria-label="Delay" title="Delay">⏱️</button>
+                            </div>
                         </div>
                         <div class="track-cells" id="cells1"></div>
                     </div>
@@ -87,11 +91,21 @@
                                 <option value="square">⊓</option>
                                 <option value="sawtooth">⩘</option>
                             </select>
+                            <div class="effects-controls" style="display: none;">
+                                <button class="effect-btn reverb-btn" data-track="2" data-effect="reverb" aria-label="Reverb" title="Reverb">🌊</button>
+                                <button class="effect-btn delay-btn" data-track="2" data-effect="delay" aria-label="Delay" title="Delay">⏱️</button>
+                            </div>
                         </div>
                         <div class="track-cells" id="cells2"></div>
                     </div>
                     <div class="track" data-track="3" id="track3">
-                        <div class="track-label">🥁</div>
+                        <div class="track-label-container">
+                            <div class="track-label">🥁</div>
+                            <div class="effects-controls" style="display: none;">
+                                <button class="effect-btn reverb-btn" data-track="3" data-effect="reverb" aria-label="Reverb" title="Reverb">🌊</button>
+                                <button class="effect-btn delay-btn" data-track="3" data-effect="delay" aria-label="Delay" title="Delay">⏱️</button>
+                            </div>
+                        </div>
                         <div class="track-cells" id="cells3"></div>
                     </div>
                 </div>

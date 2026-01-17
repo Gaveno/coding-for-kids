@@ -20,6 +20,12 @@ class Audio {
             delay: [false, false, false]   // Per track
         };
         
+        // Effect nodes (initialized in init())
+        this.reverbNode = null;
+        this.delayNode = null;
+        this.delayFeedback = null;
+        this.delayMix = null;
+        
         // Note to frequency mapping (A4 = 440 Hz)
         this.noteFrequencies = {
             'C': 261.63,
@@ -44,7 +50,61 @@ class Audio {
         if (this.isInitialized) return;
         
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.initEffects();
         this.isInitialized = true;
+    }
+    
+    /**
+     * Initialize audio effects (reverb and delay)
+     */
+    initEffects() {
+        // Create reverb using ConvolverNode with impulse response
+        this.reverbNode = this.audioContext.createConvolver();
+        this.reverbNode.buffer = this.createReverbImpulse(2, 2, false);
+        
+        // Create delay using DelayNode
+        this.delayNode = this.audioContext.createDelay(1.0);
+        this.delayNode.delayTime.value = 0.3; // 300ms delay
+        
+        // Delay feedback loop
+        this.delayFeedback = this.audioContext.createGain();
+        this.delayFeedback.gain.value = 0.4; // 40% feedback
+        
+        // Delay wet/dry mix
+        this.delayMix = this.audioContext.createGain();
+        this.delayMix.gain.value = 0.5; // 50% mix
+        
+        // Connect delay feedback loop
+        this.delayNode.connect(this.delayFeedback);
+        this.delayFeedback.connect(this.delayNode);
+        this.delayNode.connect(this.delayMix);
+        
+        // Connect effects to destination
+        this.reverbNode.connect(this.audioContext.destination);
+        this.delayMix.connect(this.audioContext.destination);
+    }
+    
+    /**
+     * Create impulse response for reverb
+     * @param {number} duration - Duration in seconds
+     * @param {number} decay - Decay factor
+     * @param {boolean} reverse - Whether to reverse the impulse
+     * @returns {AudioBuffer} - Impulse response buffer
+     */
+    createReverbImpulse(duration, decay, reverse) {
+        const sampleRate = this.audioContext.sampleRate;
+        const length = sampleRate * duration;
+        const impulse = this.audioContext.createBuffer(2, length, sampleRate);
+        const leftChannel = impulse.getChannelData(0);
+        const rightChannel = impulse.getChannelData(1);
+        
+        for (let i = 0; i < length; i++) {
+            const n = reverse ? length - i : i;
+            leftChannel[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+            rightChannel[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+        }
+        
+        return impulse;
     }
 
     /**
@@ -96,7 +156,7 @@ class Audio {
         const waveform = this.trackWaveforms[trackNumber] || (trackNumber === 1 ? 'sine' : 'triangle');
         const baseVolume = trackNumber === 1 ? 0.4 : 0.5;
         
-        this.playTone(frequency, waveform, duration, baseVolume * velocity);
+        this.playTone(frequency, waveform, duration, baseVolume * velocity, trackNumber);
     }
 
     /**
@@ -137,13 +197,20 @@ class Audio {
 
     /**
      * Play a tone with specified parameters
+     * @param {number} frequency - Frequency in Hz
+     * @param {string} waveform - Waveform type
+     * @param {number} duration - Duration in seconds
+     * @param {number} volume - Volume level
+     * @param {number} trackNumber - Track number for effects routing (default: 1)
      */
-    playTone(frequency, waveform, duration, volume) {
+    playTone(frequency, waveform, duration, volume, trackNumber = 1) {
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
 
         oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
+        
+        // Route through effects if enabled
+        this.connectWithEffects(gainNode, trackNumber);
 
         oscillator.type = waveform;
         oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
@@ -156,6 +223,41 @@ class Audio {
 
         oscillator.start(now);
         oscillator.stop(now + duration);
+    }
+    
+    /**
+     * Connect audio node through effects chain
+     * @param {AudioNode} sourceNode - Source audio node to connect
+     * @param {number} trackNumber - Track number (1-3)
+     */
+    connectWithEffects(sourceNode, trackNumber) {
+        const trackIndex = trackNumber - 1;
+        const reverbEnabled = this.effectsEnabled.reverb[trackIndex];
+        const delayEnabled = this.effectsEnabled.delay[trackIndex];
+        
+        // Always connect dry signal to destination
+        const dryGain = this.audioContext.createGain();
+        dryGain.gain.value = 1.0;
+        sourceNode.connect(dryGain);
+        dryGain.connect(this.audioContext.destination);
+        
+        // Connect to reverb if enabled
+        if (reverbEnabled && this.reverbNode) {
+            const reverbGain = this.audioContext.createGain();
+            reverbGain.gain.value = 0.3; // Reverb mix
+            sourceNode.connect(reverbGain);
+            reverbGain.connect(this.reverbNode);
+            dryGain.gain.value = 0.7; // Reduce dry signal
+        }
+        
+        // Connect to delay if enabled
+        if (delayEnabled && this.delayNode) {
+            const delayInputGain = this.audioContext.createGain();
+            delayInputGain.gain.value = 0.6; // Delay input level
+            sourceNode.connect(delayInputGain);
+            delayInputGain.connect(this.delayNode);
+            dryGain.gain.value *= 0.8; // Reduce dry signal
+        }
     }
 
     /**
@@ -453,6 +555,50 @@ class Audio {
      */
     getTrackWaveform(trackNumber) {
         return this.trackWaveforms[trackNumber] || 'sine';
+    }
+    
+    /**
+     * Toggle reverb effect for a track
+     * @param {number} trackNumber - Track number (1-3)
+     * @param {boolean} enabled - Whether to enable reverb
+     */
+    setReverbEnabled(trackNumber, enabled) {
+        const trackIndex = trackNumber - 1;
+        if (trackIndex >= 0 && trackIndex < 3) {
+            this.effectsEnabled.reverb[trackIndex] = enabled;
+        }
+    }
+    
+    /**
+     * Toggle delay effect for a track
+     * @param {number} trackNumber - Track number (1-3)
+     * @param {boolean} enabled - Whether to enable delay
+     */
+    setDelayEnabled(trackNumber, enabled) {
+        const trackIndex = trackNumber - 1;
+        if (trackIndex >= 0 && trackIndex < 3) {
+            this.effectsEnabled.delay[trackIndex] = enabled;
+        }
+    }
+    
+    /**
+     * Check if reverb is enabled for a track
+     * @param {number} trackNumber - Track number (1-3)
+     * @returns {boolean} - Whether reverb is enabled
+     */
+    isReverbEnabled(trackNumber) {
+        const trackIndex = trackNumber - 1;
+        return this.effectsEnabled.reverb[trackIndex] || false;
+    }
+    
+    /**
+     * Check if delay is enabled for a track
+     * @param {number} trackNumber - Track number (1-3)
+     * @returns {boolean} - Whether delay is enabled
+     */
+    isDelayEnabled(trackNumber) {
+        const trackIndex = trackNumber - 1;
+        return this.effectsEnabled.delay[trackIndex] || false;
     }
 
     /**
