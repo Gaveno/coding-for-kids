@@ -26,6 +26,7 @@ class Timeline {
         this.onCellClick = options.onCellClick || (() => {});
         this.onCellDrop = options.onCellDrop || (() => {});
         this.onNoteChange = options.onNoteChange || (() => {});
+        this.onBeatClick = options.onBeatClick || (() => {});
         
         this.init();
     }
@@ -71,6 +72,7 @@ class Timeline {
         for (let i = 0; i < this.beatCount; i++) {
             const marker = document.createElement('div');
             marker.className = 'beat-marker';
+            marker.dataset.beat = i;
             
             // Mark downbeats (every 4th beat)
             if (i % 4 === 0) {
@@ -79,6 +81,14 @@ class Timeline {
             } else {
                 marker.textContent = '·';
             }
+            
+            // Click to seek to this beat
+            marker.addEventListener('click', () => {
+                this.onBeatClick(i);
+            });
+            
+            // Add hover effect via CSS cursor
+            marker.style.cursor = 'pointer';
             
             this.beatMarkersEl.appendChild(marker);
         }

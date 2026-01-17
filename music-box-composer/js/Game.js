@@ -184,7 +184,8 @@ class Game {
             cells2: this.elements.cells2,
             cells3: this.elements.cells3,
             onCellClick: (trackNum, beat) => this.handleCellClick(trackNum, beat),
-            onNoteChange: () => this.updateURL()
+            onNoteChange: () => this.updateURL(),
+            onBeatClick: (beat) => this.seekToBeat(beat)
         });
         
         // Drag and drop
@@ -283,6 +284,18 @@ class Game {
         this.timeline.setNote(trackNum, beat, noteData);
         this.audio.playNote(noteData.note, trackNum);
         this.updateURL();
+    }
+
+    /**
+     * Seek playhead to a specific beat
+     * @param {number} beat - Beat index to seek to
+     */
+    seekToBeat(beat) {
+        // Don't seek if currently playing
+        if (this.isPlaying) return;
+        
+        this.currentBeat = beat;
+        this.timeline.updatePlayheadPosition(beat);
     }
 
     /**

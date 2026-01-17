@@ -181,12 +181,28 @@
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.4);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.beat-marker:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+[data-mode="tween"] .beat-marker:hover {
+    background-color: rgba(0, 245, 212, 0.2);
+    color: var(--color-accent);
 }
 
 .beat-marker.downbeat {
     color: rgba(255, 255, 255, 0.7);
     font-weight: bold;
     border-right-color: rgba(255, 255, 255, 0.2);
+}
+
+.beat-marker.downbeat:hover {
+    color: white;
 }
 
 /* ===== Track ===== */
