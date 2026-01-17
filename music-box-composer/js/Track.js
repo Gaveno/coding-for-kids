@@ -11,7 +11,7 @@ class Track {
     /**
      * Set a note at a beat position
      * @param {number} beat - Beat index (0-based)
-     * @param {Object|null} noteData - Note data {note, icon, duration, octave} or null to clear
+     * @param {Object|null} noteData - Note data {note, icon, duration, octave, velocity} or null to clear
      */
     setNote(beat, noteData) {
         if (beat >= 0 && beat < this.length) {
@@ -26,10 +26,11 @@ class Track {
      * @param {string} icon - Emoji icon for the note
      * @param {number} duration - Note duration in beats (default 1)
      * @param {number|null} octave - Octave number or null
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    setNoteLegacy(beat, note, icon = null, duration = 1, octave = null) {
+    setNoteLegacy(beat, note, icon = null, duration = 1, octave = null, velocity = 0.8) {
         if (beat >= 0 && beat < this.length) {
-            this.notes[beat] = note ? { note, icon, duration, octave } : null;
+            this.notes[beat] = note ? { note, icon, duration, octave, velocity } : null;
         }
     }
 
@@ -100,6 +101,20 @@ class Track {
     }
 
     /**
+     * Set velocity for a note
+     * @param {number} beat - Beat index of note
+     * @param {number} velocity - Velocity value 0.0-1.0
+     * @returns {boolean} - Whether velocity was set
+     */
+    setNoteVelocity(beat, velocity) {
+        const note = this.notes[beat];
+        if (!note) return false;
+        
+        note.velocity = Math.max(0, Math.min(1, velocity));
+        return true;
+    }
+
+    /**
      * Check if a beat is covered by an extended note starting earlier
      * @param {number} beat - Beat index to check
      * @returns {Object|null} - { startBeat, note } if covered, null otherwise
@@ -159,20 +174,21 @@ class Track {
 
     /**
      * Serialize track to compact array
-     * For v3 format, stores note indices instead of note names
+     * For v4 format, stores note indices with velocity
      * @returns {Array}
      */
     serialize() {
         const data = [];
         this.notes.forEach((noteData, beat) => {
             if (noteData) {
-                // Store with octave for v3 format
+                // Store with octave and velocity for v4 format
                 data.push([
                     beat,
                     noteData.note,
                     noteData.icon,
                     noteData.duration || 1,
-                    noteData.octave || null
+                    noteData.octave || null,
+                    noteData.velocity || 0.8
                 ]);
             }
         });
@@ -189,9 +205,9 @@ class Track {
         
         data.forEach(item => {
             if (Array.isArray(item) && item.length >= 3) {
-                const [beat, note, icon, duration = 1, octave = null] = item;
+                const [beat, note, icon, duration = 1, octave = null, velocity = 0.8] = item;
                 if (beat >= 0 && beat < this.length) {
-                    this.notes[beat] = { note, icon, duration, octave };
+                    this.notes[beat] = { note, icon, duration, octave, velocity };
                 }
             }
         });

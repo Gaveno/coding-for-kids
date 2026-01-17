@@ -66,8 +66,9 @@ class Audio {
      * @param {string} note - Note name (e.g., 'C', 'D#')
      * @param {number} trackNumber - Track number (1 or 2)
      * @param {number} duration - Duration in seconds
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playPianoNote(note, trackNumber, duration = 0.25) {
+    playPianoNote(note, trackNumber, duration = 0.25, velocity = 0.8) {
         if (!this.isInitialized) this.init();
         
         const octave = this.getOctaveForTrack(trackNumber);
@@ -78,42 +79,43 @@ class Audio {
         
         // Use different waveforms for different tracks
         const waveform = trackNumber === 1 ? 'sine' : 'triangle';
-        const volume = trackNumber === 1 ? 0.4 : 0.5;
+        const baseVolume = trackNumber === 1 ? 0.4 : 0.5;
         
-        this.playTone(frequency, waveform, duration, volume);
+        this.playTone(frequency, waveform, duration, baseVolume * velocity);
     }
 
     /**
      * Play a percussion sound
      * @param {string} type - Percussion type (kick, snare, hihat, clap)
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playPercussion(type) {
+    playPercussion(type, velocity = 0.8) {
         if (!this.isInitialized) this.init();
         
         switch (type) {
             case 'kick':
-                this.playKick();
+                this.playKick(velocity);
                 break;
             case 'snare':
-                this.playSnare();
+                this.playSnare(velocity);
                 break;
             case 'hihat':
-                this.playHihat();
+                this.playHihat(velocity);
                 break;
             case 'clap':
-                this.playClap();
+                this.playClap(velocity);
                 break;
             case 'tom':
-                this.playTom();
+                this.playTom(velocity);
                 break;
             case 'cymbal':
-                this.playCymbal();
+                this.playCymbal(velocity);
                 break;
             case 'shaker':
-                this.playShaker();
+                this.playShaker(velocity);
                 break;
             case 'cowbell':
-                this.playCowbell();
+                this.playCowbell(velocity);
                 break;
         }
     }
@@ -143,8 +145,9 @@ class Audio {
 
     /**
      * Play kick drum sound
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playKick() {
+    playKick(velocity = 0.8) {
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
 
@@ -156,7 +159,7 @@ class Audio {
         oscillator.frequency.setValueAtTime(150, now);
         oscillator.frequency.exponentialRampToValueAtTime(40, now + 0.1);
         
-        gainNode.gain.setValueAtTime(0.8, now);
+        gainNode.gain.setValueAtTime(0.8 * velocity, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
 
         oscillator.start(now);
@@ -165,8 +168,9 @@ class Audio {
 
     /**
      * Play snare drum sound
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playSnare() {
+    playSnare(velocity = 0.8) {
         // Noise component
         const bufferSize = this.audioContext.sampleRate * 0.15;
         const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
@@ -185,7 +189,7 @@ class Audio {
         
         const noiseGain = this.audioContext.createGain();
         const now = this.audioContext.currentTime;
-        noiseGain.gain.setValueAtTime(0.5, now);
+        noiseGain.gain.setValueAtTime(0.5 * velocity, now);
         noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
         
         noise.connect(noiseFilter);
@@ -202,7 +206,7 @@ class Audio {
         oscillator.frequency.setValueAtTime(180, now);
         oscillator.frequency.exponentialRampToValueAtTime(80, now + 0.05);
         
-        oscGain.gain.setValueAtTime(0.4, now);
+        oscGain.gain.setValueAtTime(0.4 * velocity, now);
         oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
         
         oscillator.connect(oscGain);
@@ -214,8 +218,9 @@ class Audio {
 
     /**
      * Play hi-hat sound
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playHihat() {
+    playHihat(velocity = 0.8) {
         const bufferSize = this.audioContext.sampleRate * 0.08;
         const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
         const data = buffer.getChannelData(0);
@@ -233,7 +238,7 @@ class Audio {
         
         const gainNode = this.audioContext.createGain();
         const now = this.audioContext.currentTime;
-        gainNode.gain.setValueAtTime(0.3, now);
+        gainNode.gain.setValueAtTime(0.3 * velocity, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
         
         noise.connect(filter);
@@ -245,8 +250,9 @@ class Audio {
 
     /**
      * Play clap sound
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playClap() {
+    playClap(velocity = 0.8) {
         const now = this.audioContext.currentTime;
         
         // Multiple short noise bursts for clap texture
@@ -269,7 +275,7 @@ class Audio {
             
             const gainNode = this.audioContext.createGain();
             const startTime = now + i * 0.01;
-            gainNode.gain.setValueAtTime(0.4, startTime);
+            gainNode.gain.setValueAtTime(0.4 * velocity, startTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
             
             noise.connect(filter);
@@ -282,8 +288,9 @@ class Audio {
 
     /**
      * Play tom drum sound
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playTom() {
+    playTom(velocity = 0.8) {
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
 
@@ -295,7 +302,7 @@ class Audio {
         oscillator.frequency.setValueAtTime(120, now);
         oscillator.frequency.exponentialRampToValueAtTime(60, now + 0.2);
         
-        gainNode.gain.setValueAtTime(0.7, now);
+        gainNode.gain.setValueAtTime(0.7 * velocity, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
 
         oscillator.start(now);
@@ -304,8 +311,9 @@ class Audio {
 
     /**
      * Play cymbal sound
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playCymbal() {
+    playCymbal(velocity = 0.8) {
         const bufferSize = this.audioContext.sampleRate * 0.5;
         const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
         const data = buffer.getChannelData(0);
@@ -323,7 +331,7 @@ class Audio {
         
         const gainNode = this.audioContext.createGain();
         const now = this.audioContext.currentTime;
-        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.setValueAtTime(0.2 * velocity, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
         
         noise.connect(filter);
@@ -335,8 +343,9 @@ class Audio {
 
     /**
      * Play shaker sound
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playShaker() {
+    playShaker(velocity = 0.8) {
         const bufferSize = this.audioContext.sampleRate * 0.06;
         const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
         const data = buffer.getChannelData(0);
@@ -354,7 +363,7 @@ class Audio {
         
         const gainNode = this.audioContext.createGain();
         const now = this.audioContext.currentTime;
-        gainNode.gain.setValueAtTime(0.15, now);
+        gainNode.gain.setValueAtTime(0.15 * velocity, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
         
         noise.connect(filter);
@@ -366,8 +375,9 @@ class Audio {
 
     /**
      * Play cowbell sound
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playCowbell() {
+    playCowbell(velocity = 0.8) {
         const oscillator1 = this.audioContext.createOscillator();
         const oscillator2 = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
@@ -383,7 +393,7 @@ class Audio {
         oscillator1.frequency.setValueAtTime(800, now);
         oscillator2.frequency.setValueAtTime(540, now);
         
-        gainNode.gain.setValueAtTime(0.3, now);
+        gainNode.gain.setValueAtTime(0.3 * velocity, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
 
         oscillator1.start(now);
@@ -397,14 +407,15 @@ class Audio {
      * @param {string} note - Note name or percussion type
      * @param {number} trackNumber - Track number (1 = high piano, 2 = low piano, 3 = percussion)
      * @param {number} duration - Duration in seconds (optional)
+     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
      */
-    playNote(note, trackNumber, duration) {
+    playNote(note, trackNumber, duration, velocity = 0.8) {
         if (trackNumber === 3) {
             // Percussion track
-            this.playPercussion(note);
+            this.playPercussion(note, velocity);
         } else {
             // Piano tracks (1 or 2)
-            this.playPianoNote(note, trackNumber, duration);
+            this.playPianoNote(note, trackNumber, duration, velocity);
         }
     }
 

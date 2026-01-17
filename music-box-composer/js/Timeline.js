@@ -116,6 +116,7 @@ class Timeline {
             if (note) {
                 cell.classList.add('has-note');
                 const duration = note.duration || 1;
+                const velocity = note.velocity || 0.8;
                 
                 // Create note element that can span multiple cells
                 const noteEl = document.createElement('div');
@@ -123,6 +124,7 @@ class Timeline {
                 noteEl.textContent = note.icon;
                 noteEl.dataset.duration = duration;
                 noteEl.dataset.note = note.note; // For color styling
+                noteEl.dataset.velocity = velocity;
                 
                 // Set width based on duration (always use calc for consistency)
                 if (duration > 1) {
@@ -130,8 +132,15 @@ class Timeline {
                 }
                 noteEl.style.width = `calc(${duration} * var(--cell-size) - 4px)`;
                 
-                // Setup drag-to-resize
+                // Add velocity indicator (only in Tween/Studio modes)
+                const velocityBar = document.createElement('div');
+                velocityBar.className = 'velocity-indicator';
+                velocityBar.style.height = `${velocity * 100}%`;
+                noteEl.appendChild(velocityBar);
+                
+                // Setup drag-to-resize and long-press for velocity
                 this.setupNoteDrag(noteEl, trackNum, i, note);
+                this.setupVelocityControl(noteEl, trackNum, i, note);
                 
                 cell.appendChild(noteEl);
             }
@@ -257,6 +266,94 @@ class Timeline {
                 e.stopPropagation();
                 this.onCellClick(trackType, beat, null);
             }
+        });
+    }
+
+    /**
+     * Setup velocity control for a note (long-press to adjust)
+     * @param {HTMLElement} noteEl - Note element
+     * @param {number} trackNum - Track number
+     * @param {number} beat - Beat index
+     * @param {Object} note - Note data
+     */
+    setupVelocityControl(noteEl, trackNum, beat, note) {
+        let longPressTimer = null;
+        let isAdjustingVelocity = false;
+        let startY = null;
+        let startVelocity = note.velocity || 0.8;
+        
+        const startLongPress = (clientY) => {
+            startY = clientY;
+            startVelocity = note.velocity || 0.8;
+            longPressTimer = setTimeout(() => {
+                isAdjustingVelocity = true;
+                noteEl.classList.add('adjusting-velocity');
+            }, 500); // 500ms long-press threshold
+        };
+        
+        const cancelLongPress = () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
+        
+        const adjustVelocity = (clientY) => {
+            if (!isAdjustingVelocity || startY === null) return;
+            
+            // Vertical drag: up increases velocity, down decreases
+            const dy = startY - clientY; // Inverted: drag up = positive
+            const velocityChange = dy / 100; // 100px = full velocity range
+            let newVelocity = Math.max(0.1, Math.min(1.0, startVelocity + velocityChange));
+            
+            // Update visual indicator
+            const velocityBar = noteEl.querySelector('.velocity-indicator');
+            if (velocityBar) {
+                velocityBar.style.height = `${newVelocity * 100}%`;
+            }
+            noteEl.dataset.velocity = newVelocity;
+        };
+        
+        const endVelocityAdjust = () => {
+            cancelLongPress();
+            
+            if (isAdjustingVelocity) {
+                const newVelocity = parseFloat(noteEl.dataset.velocity);
+                if (!isNaN(newVelocity)) {
+                    this.tracks[trackNum].setNoteVelocity(beat, newVelocity);
+                    this.onNoteChange();
+                }
+                noteEl.classList.remove('adjusting-velocity');
+                isAdjustingVelocity = false;
+            }
+            startY = null;
+        };
+        
+        // Touch events for velocity control
+        noteEl.addEventListener('touchstart', (e) => {
+            startLongPress(e.touches[0].clientY);
+        });
+        
+        noteEl.addEventListener('touchmove', (e) => {
+            if (isAdjustingVelocity) {
+                e.preventDefault();
+                adjustVelocity(e.touches[0].clientY);
+            } else if (longPressTimer) {
+                // Cancel long-press if user moves before threshold
+                const dy = Math.abs(e.touches[0].clientY - startY);
+                if (dy > 10) {
+                    cancelLongPress();
+                }
+            }
+        }, { passive: false });
+        
+        noteEl.addEventListener('touchend', () => {
+            endVelocityAdjust();
+        });
+        
+        noteEl.addEventListener('touchcancel', () => {
+            cancelLongPress();
+            isAdjustingVelocity = false;
         });
     }
 

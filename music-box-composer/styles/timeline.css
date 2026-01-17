@@ -329,6 +329,41 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* Velocity Indicator */
+.velocity-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 2px 0 0 2px;
+    transition: height 0.1s ease-out;
+    pointer-events: none;
+}
+
+/* Hide velocity indicator in Kid Mode */
+[data-mode="kid"] .velocity-indicator {
+    display: none;
+}
+
+/* Enhanced velocity indicator in Tween Mode */
+[data-mode="tween"] .velocity-indicator {
+    background: rgba(0, 245, 212, 0.9);
+    box-shadow: 0 0 4px rgba(0, 245, 212, 0.6);
+}
+
+/* Adjusting velocity state */
+.cell-note.adjusting-velocity {
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    cursor: ns-resize;
+}
+
+[data-mode="tween"] .cell-note.adjusting-velocity {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 15px var(--color-accent);
+}
+
+
 /* Note-specific background colors matching piano key text colors */
 .track-cell .cell-note[data-note="C"] { background: #e74c3c; } /* Red */
 .track-cell .cell-note[data-note="C#"] { background: #ff6b6b; } /* Light Red */

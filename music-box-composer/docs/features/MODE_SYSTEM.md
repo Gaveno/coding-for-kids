@@ -197,12 +197,12 @@ v4_{mode}{base64data}
   - Create palette buttons for new sounds
   - Gate behind Tween Mode check
   
-- [ ] **Task 3.2** - Velocity/Volume Control (Deferred to v4.1)
+- [x] **Task 3.2** - Velocity/Volume Control
   - Add velocity property to note data model
   - Create volume slider on note long-press
   - Display volume indicator on timeline notes
   
-- [ ] **Task 3.3** - Tap Tempo (Deferred to v4.1)
+- [x] **Task 3.3** - Tap Tempo
   - Add tap tempo button
   - Calculate BPM from tap intervals
   - Convert to nearest speed preset

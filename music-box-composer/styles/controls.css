@@ -132,6 +132,26 @@
     background: linear-gradient(135deg, var(--color-primary) 0%, #5550e5 100%);
 }
 
+/* Tap Tempo Button */
+.tap-tempo-btn {
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+}
+
+[data-mode="kid"] .tap-tempo-btn {
+    display: none;
+}
+
+.tap-tempo-btn.tap-active {
+    transform: scale(0.9);
+    box-shadow: 0 0 20px rgba(230, 126, 34, 0.8),
+                0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-mode="tween"] .tap-tempo-btn.tap-active {
+    box-shadow: 0 0 25px var(--color-accent),
+                0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 /* Loop Button */
 .loop-btn {
     background: linear-gradient(135deg, #888 0%, #666 100%);

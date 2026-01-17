@@ -118,6 +118,7 @@ class Game {
             playBtn: document.getElementById('playBtn'),
             stopBtn: document.getElementById('stopBtn'),
             speedBtn: document.getElementById('speedBtn'),
+            tapTempoBtn: document.getElementById('tapTempoBtn'),
             loopBtn: document.getElementById('loopBtn'),
             clearBtn: document.getElementById('clearBtn'),
             shareBtn: document.getElementById('shareBtn'),
@@ -228,6 +229,7 @@ class Game {
         this.elements.playBtn.addEventListener('click', () => this.togglePlay());
         this.elements.stopBtn.addEventListener('click', () => this.stop());
         this.elements.speedBtn.addEventListener('click', () => this.cycleSpeed());
+        this.elements.tapTempoBtn.addEventListener('click', () => this.handleTapTempo());
         this.elements.loopBtn.addEventListener('click', () => this.toggleLoop());
         this.elements.clearBtn.addEventListener('click', () => this.showClearConfirmation());
         this.elements.shareBtn.addEventListener('click', () => this.shareURL());
@@ -423,21 +425,24 @@ class Game {
         // Only play notes that are starting (not sustained from previous beat)
         if (notes[1] && !notes[1].sustained) {
             const noteDuration = (notes[1].duration || 1) * beatDurationSec;
-            this.audio.playNote(notes[1].note, 1, noteDuration);
+            const velocity = notes[1].velocity || 0.8;
+            this.audio.playNote(notes[1].note, 1, noteDuration, velocity);
             playing[1] = true;
             durations[1] = notes[1].duration || 1;
         }
         
         if (notes[2] && !notes[2].sustained) {
             const noteDuration = (notes[2].duration || 1) * beatDurationSec;
-            this.audio.playNote(notes[2].note, 2, noteDuration);
+            const velocity = notes[2].velocity || 0.8;
+            this.audio.playNote(notes[2].note, 2, noteDuration, velocity);
             playing[2] = true;
             durations[2] = notes[2].duration || 1;
         }
         
         if (notes[3] && !notes[3].sustained) {
             // Percussion doesn't use duration
-            this.audio.playNote(notes[3].note, 3);
+            const velocity = notes[3].velocity || 0.8;
+            this.audio.playNote(notes[3].note, 3, undefined, velocity);
             playing[3] = true;
         }
         
@@ -475,6 +480,92 @@ class Game {
         
         this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
         this.updateURL();
+    }
+
+    /**
+     * Handle tap tempo button press
+     * Tracks tap intervals to calculate BPM and set nearest speed
+     */
+    handleTapTempo() {
+        const now = Date.now();
+        
+        // Initialize tap history if not exists
+        if (!this.tapHistory) {
+            this.tapHistory = [];
+        }
+        
+        // Add current tap
+        this.tapHistory.push(now);
+        
+        // Keep only last 4 taps (3 intervals)
+        if (this.tapHistory.length > 4) {
+            this.tapHistory.shift();
+        }
+        
+        // Need at least 2 taps to calculate interval
+        if (this.tapHistory.length < 2) {
+            // Visual feedback for first tap
+            this.elements.tapTempoBtn.classList.add('tap-active');
+            setTimeout(() => {
+                this.elements.tapTempoBtn.classList.remove('tap-active');
+            }, 100);
+            return;
+        }
+        
+        // Calculate average interval between taps
+        const intervals = [];
+        for (let i = 1; i < this.tapHistory.length; i++) {
+            intervals.push(this.tapHistory[i] - this.tapHistory[i - 1]);
+        }
+        const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
+        
+        // Convert interval to BPM
+        const bpm = 60000 / avgInterval;
+        
+        // Convert BPM to ms per beat (quarter note)
+        const msPerBeat = 60000 / bpm;
+        
+        // Find closest speed preset
+        let closestIndex = 0;
+        let closestDiff = Math.abs(this.speeds[0].ms - msPerBeat);
+        
+        for (let i = 1; i < this.speeds.length; i++) {
+            const diff = Math.abs(this.speeds[i].ms - msPerBeat);
+            if (diff < closestDiff) {
+                closestDiff = diff;
+                closestIndex = i;
+            }
+        }
+        
+        // Check if speed is allowed in current mode
+        const config = this.getModeConfig();
+        if (this.currentMode === Game.MODES.KID) {
+            // Kid mode only allows certain speeds
+            const kidSpeeds = config.speeds; // [0, 2]
+            if (!kidSpeeds.includes(closestIndex)) {
+                // Find closest allowed speed
+                closestIndex = kidSpeeds.reduce((prev, curr) => {
+                    return Math.abs(this.speeds[curr].ms - msPerBeat) < Math.abs(this.speeds[prev].ms - msPerBeat) 
+                        ? curr : prev;
+                });
+            }
+        }
+        
+        this.currentSpeedIndex = closestIndex;
+        this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
+        this.updateURL();
+        
+        // Visual feedback
+        this.elements.tapTempoBtn.classList.add('tap-active');
+        setTimeout(() => {
+            this.elements.tapTempoBtn.classList.remove('tap-active');
+        }, 100);
+        
+        // Reset tap history after 2 seconds of inactivity
+        clearTimeout(this.tapResetTimer);
+        this.tapResetTimer = setTimeout(() => {
+            this.tapHistory = [];
+        }, 2000);
     }
 
     /**
