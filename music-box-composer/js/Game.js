@@ -1020,14 +1020,9 @@ class Game {
      * Shows QR button for songs >32 beats or long URLs
      */
     updateShareButtons() {
-        const urlLength = window.location.href.length;
-        const shouldShowQR = this.timeline.beatCount > 32 || urlLength > 160;
-        
-        if (shouldShowQR) {
-            this.elements.qrBtn.classList.remove('hidden');
-        } else {
-            this.elements.qrBtn.classList.add('hidden');
-        }
+        // Both QR buttons are always visible now
+        // Generate QR: useful for all song lengths
+        // Load QR: essential for PWA users
     }
 
     /**
