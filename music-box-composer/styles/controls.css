@@ -65,6 +65,14 @@
     background: linear-gradient(135deg, #6c5ce7 0%, #5c4ec7 100%);
 }
 
+.qr-btn {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+.load-qr-btn {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
 .control-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;

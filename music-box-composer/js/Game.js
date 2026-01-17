@@ -80,6 +80,8 @@ class Game {
             clearBtn: document.getElementById('clearBtn'),
             shareBtn: document.getElementById('shareBtn'),
             qrBtn: document.getElementById('qrBtn'),
+            loadQrBtn: document.getElementById('loadQrBtn'),
+            qrFileInput: document.getElementById('qrFileInput'),
             lengthUpBtn: document.getElementById('lengthUpBtn'),
             lengthDownBtn: document.getElementById('lengthDownBtn'),
             beatCount: document.getElementById('beatCount'),
@@ -174,6 +176,8 @@ class Game {
         this.elements.clearBtn.addEventListener('click', () => this.clear());
         this.elements.shareBtn.addEventListener('click', () => this.shareURL());
         this.elements.qrBtn.addEventListener('click', () => this.showQRCode());
+        this.elements.loadQrBtn.addEventListener('click', () => this.loadFromQRCode());
+        this.elements.qrFileInput.addEventListener('change', (e) => this.handleQRFileSelected(e));
         this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
         this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
@@ -917,7 +921,7 @@ class Game {
                 this.showShareMessage('Copied to clipboard!');
             } catch (err) {
                 console.error('Copy failed:', err);
-                this.showShareMessage('Failed to copy', true);
+                this.showShareMessage('Failed to copy', 'error');
             }
             document.body.removeChild(textArea);
         }
@@ -926,18 +930,19 @@ class Game {
     /**
      * Show temporary message to user
      */
-    showShareMessage(message, isError = false) {
+    showShareMessage(message, type = 'success') {
         const messageEl = document.getElementById('share-message');
         if (!messageEl) return;
         
         messageEl.textContent = message;
-        messageEl.className = isError ? 'share-message error' : 'share-message success';
+        messageEl.className = `share-message ${type}`;
         messageEl.classList.remove('hidden');
         
-        // Hide after 2 seconds
+        // Hide after 3 seconds (longer for info messages)
+        const duration = type === 'info' ? 3000 : 2000;
         setTimeout(() => {
             messageEl.classList.add('hidden');
-        }, 2000);
+        }, duration);
     }
 
     /**
@@ -952,34 +957,7 @@ class Game {
         const state = this.deserializeState(encoded);
         if (!state) return;
         
-        // Apply speed
-        if (typeof state.s === 'number' && state.s >= 0 && state.s < this.speeds.length) {
-            this.currentSpeedIndex = state.s;
-            this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
-        }
-        
-        // Apply loop
-        if (state.l === 1) {
-            this.isLooping = true;
-            this.elements.loopBtn.classList.add('active');
-        }
-        
-        // Apply beat count
-        if (typeof state.b === 'number' && this.beatLengths.includes(state.b)) {
-            this.timeline.setBeatCount(state.b);
-            this.elements.beatCount.textContent = state.b;
-        }
-        
-        // Apply key (v3 only)
-        if (state.k && Game.KEY_NAMES.includes(state.k)) {
-            this.setKey(state.k);
-            this.elements.keySelect.value = state.k;
-        }
-        
-        // Apply tracks
-        if (state.t) {
-            this.timeline.deserializeTracks(state.t);
-        }
+        this.applyState(state);
     }
 
     /**
@@ -1050,6 +1028,129 @@ class Game {
         } else {
             this.elements.qrBtn.classList.add('hidden');
         }
+    }
+
+    /**
+     * Trigger file picker to load QR code from image
+     */
+    loadFromQRCode() {
+        this.elements.qrFileInput.click();
+    }
+
+    /**
+     * Handle QR code image file selection
+     * @param {Event} event - File input change event
+     */
+    async handleQRFileSelected(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+            // Show loading message
+            this.showShareMessage('📷 Reading QR code...', 'info');
+
+            // Read file as data URL
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const imageData = e.target.result;
+                
+                // Use API to decode QR code
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch('https://api.qrserver.com/v1/read-qr-code/', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result && result[0] && result[0].symbol && result[0].symbol[0]) {
+                        const qrData = result[0].symbol[0].data;
+                        
+                        if (qrData) {
+                            // Extract the 'c' parameter from the URL
+                            const url = new URL(qrData);
+                            const encoded = url.searchParams.get('c');
+                            
+                            if (encoded) {
+                                // Load the song
+                                const state = this.deserializeState(encoded);
+                                if (state) {
+                                    this.applyState(state);
+                                    this.showShareMessage('✅ Song loaded!', 'success');
+                                } else {
+                                    this.showShareMessage('❌ Invalid song data', 'error');
+                                }
+                            } else {
+                                this.showShareMessage('❌ No song data in QR code', 'error');
+                            }
+                        } else {
+                            this.showShareMessage('❌ Could not read QR code', 'error');
+                        }
+                    } else {
+                        this.showShareMessage('❌ No QR code found in image', 'error');
+                    }
+                } catch (error) {
+                    console.error('QR decode error:', error);
+                    this.showShareMessage('❌ Failed to decode QR code', 'error');
+                }
+            };
+            
+            reader.onerror = () => {
+                this.showShareMessage('❌ Failed to read image file', 'error');
+            };
+            
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('QR load error:', error);
+            this.showShareMessage('❌ Failed to load QR code', 'error');
+        } finally {
+            // Reset file input
+            event.target.value = '';
+        }
+    }
+
+    /**
+     * Apply deserialized state to the game
+     * @param {Object} state - Deserialized state object
+     */
+    applyState(state) {
+        // Apply speed
+        if (typeof state.s === 'number' && state.s >= 0 && state.s < this.speeds.length) {
+            this.currentSpeedIndex = state.s;
+            this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
+        }
+        
+        // Apply loop
+        if (state.l === 1) {
+            this.isLooping = true;
+            this.elements.loopBtn.classList.add('active');
+        } else {
+            this.isLooping = false;
+            this.elements.loopBtn.classList.remove('active');
+        }
+        
+        // Apply beat count
+        if (typeof state.b === 'number' && this.beatLengths.includes(state.b)) {
+            this.timeline.setBeatCount(state.b);
+            this.elements.beatCount.textContent = state.b;
+        }
+        
+        // Apply key (v3 only)
+        if (state.k && Game.KEY_NAMES.includes(state.k)) {
+            this.setKey(state.k);
+            this.elements.keySelect.value = state.k;
+        }
+        
+        // Apply tracks
+        if (state.t) {
+            this.timeline.deserializeTracks(state.t);
+        }
+        
+        // Update URL
+        this.updateURL();
     }
 }
 
