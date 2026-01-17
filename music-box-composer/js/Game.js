@@ -2445,14 +2445,12 @@ class Game {
             this.elements.keySelect.value = state.k;
         }
         
-        // Apply waveforms (v6 only)
+        // Apply waveforms (v6 only) - directly to audio system
         if (state.w1 && Game.WAVEFORMS.includes(state.w1)) {
             this.audio.trackWaveforms[1] = state.w1;
-            this.elements.waveform1.value = state.w1;
         }
         if (state.w2 && Game.WAVEFORMS.includes(state.w2)) {
             this.audio.trackWaveforms[2] = state.w2;
-            this.elements.waveform2.value = state.w2;
         }
         
         // Apply tracks
