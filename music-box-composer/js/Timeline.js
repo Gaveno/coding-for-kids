@@ -395,19 +395,18 @@ class Timeline {
         const position = trackLabelWidth + (beat * this.cellSize);
         this.playhead.style.left = `${position}px`;
         
-        // Auto-scroll to keep playhead visible during playback
+        // Auto-scroll to keep playhead centered during playback
         if (this.playhead.classList.contains('active')) {
             const scrollContainer = this.scrollContainer;
             const playheadOffset = beat * this.cellSize;
-            const scrollLeft = scrollContainer.scrollLeft;
             const containerWidth = scrollContainer.clientWidth;
+            const maxScroll = scrollContainer.scrollWidth - containerWidth;
             
-            // Scroll if playhead is near edges
-            if (playheadOffset < scrollLeft + 50) {
-                scrollContainer.scrollLeft = Math.max(0, playheadOffset - 100);
-            } else if (playheadOffset > scrollLeft + containerWidth - 50) {
-                scrollContainer.scrollLeft = playheadOffset - containerWidth + 100;
-            }
+            // Center the playhead, clamped to valid scroll range
+            const centeredScroll = playheadOffset - (containerWidth / 2);
+            const clampedScroll = Math.max(0, Math.min(centeredScroll, maxScroll));
+            
+            scrollContainer.scrollLeft = clampedScroll;
         }
     }
 
