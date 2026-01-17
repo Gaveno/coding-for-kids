@@ -398,12 +398,11 @@ class Timeline {
         // Auto-scroll to keep playhead centered during playback
         if (this.playhead.classList.contains('active')) {
             const scrollContainer = this.scrollContainer;
-            const playheadOffset = beat * this.cellSize;
             const containerWidth = scrollContainer.clientWidth;
             const maxScroll = scrollContainer.scrollWidth - containerWidth;
             
-            // Center the playhead, clamped to valid scroll range
-            const centeredScroll = playheadOffset - (containerWidth / 2);
+            // Center the playhead in viewport, clamped to valid scroll range
+            const centeredScroll = position - (containerWidth / 2);
             const clampedScroll = Math.max(0, Math.min(centeredScroll, maxScroll));
             
             scrollContainer.scrollLeft = clampedScroll;
