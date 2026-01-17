@@ -396,16 +396,22 @@ class Timeline {
         this.playhead.style.left = `${position}px`;
         
         // Auto-scroll to keep playhead centered during playback
+        // Use requestAnimationFrame to ensure DOM has updated before scrolling
         if (this.playhead.classList.contains('active')) {
-            const scrollContainer = this.scrollContainer;
-            const containerWidth = scrollContainer.clientWidth;
-            const maxScroll = scrollContainer.scrollWidth - containerWidth;
-            
-            // Center the playhead in viewport, clamped to valid scroll range
-            const centeredScroll = position - (containerWidth / 2);
-            const clampedScroll = Math.max(0, Math.min(centeredScroll, maxScroll));
-            
-            scrollContainer.scrollLeft = clampedScroll;
+            requestAnimationFrame(() => {
+                // Check again in case playback stopped during the frame
+                if (!this.playhead.classList.contains('active')) return;
+                
+                const scrollContainer = this.scrollContainer;
+                const containerWidth = scrollContainer.clientWidth;
+                const maxScroll = scrollContainer.scrollWidth - containerWidth;
+                
+                // Center the playhead in viewport, clamped to valid scroll range
+                const centeredScroll = position - (containerWidth / 2);
+                const clampedScroll = Math.max(0, Math.min(centeredScroll, maxScroll));
+                
+                scrollContainer.scrollLeft = clampedScroll;
+            });
         }
     }
 

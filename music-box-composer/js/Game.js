@@ -314,7 +314,6 @@ class Game {
                 
                 this.playBeat(this.currentBeat);
                 this.timeline.highlightBeat(this.currentBeat);
-                this.timeline.scrollToBeat(this.currentBeat);
                 
                 this.currentBeat++;
                 
