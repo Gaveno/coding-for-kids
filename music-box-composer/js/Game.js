@@ -200,7 +200,7 @@ class Game {
             palette: this.elements.palette,
             pianoKeyboard: this.pianoKeyboard,
             timeline: this.timeline,
-            onPreview: (note, trackNum) => this.previewNote(note, trackNum),
+            onPreview: (note, trackNum, octave) => this.previewNote(note, trackNum, octave),
             onDrop: (trackNum, beat, noteData) => this.handleNoteDrop(trackNum, beat, noteData)
         });
     }

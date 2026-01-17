@@ -291,7 +291,8 @@ class DragDrop {
         
         // Convert type to track number (percussion = track 3)
         const trackNum = type === 'percussion' ? 3 : 1;
-        this.onPreview(note, trackNum);
+        // Percussion notes don't use octave (null), piano notes use null for track default
+        this.onPreview(note, trackNum, null);
     }
 
     /**
