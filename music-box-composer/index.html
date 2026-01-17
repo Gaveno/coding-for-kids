@@ -20,6 +20,12 @@
         <header class="game-header">
             <a href="../index.html" class="home-btn" aria-label="Back to Home">🏠</a>
             <h1 class="game-title">🎵</h1>
+            <div class="header-buttons">
+                <button class="header-btn" id="shareBtn" aria-label="Share Song" title="Share Song">💾</button>
+                <button class="header-btn" id="qrBtn" aria-label="QR Code" title="Share via QR Code">📱</button>
+                <button class="header-btn" id="loadQrBtn" aria-label="Load from QR Code" title="Load Song from QR Code">📷</button>
+                <input type="file" id="qrFileInput" accept="image/*" style="display: none;" aria-hidden="true">
+            </div>
         </header>
 
         <!-- Character Stage -->
@@ -104,16 +110,6 @@
             <button class="control-btn loop-btn" id="loopBtn" aria-label="Loop">
                 🔁
             </button>
-            <button class="control-btn share-btn" id="shareBtn" aria-label="Share Song" title="Share Song">
-                💾
-            </button>
-            <button class="control-btn qr-btn" id="qrBtn" aria-label="QR Code" title="Share via QR Code">
-                📱
-            </button>
-            <button class="control-btn load-qr-btn" id="loadQrBtn" aria-label="Load from QR Code" title="Load Song from QR Code">
-                📷
-            </button>
-            <input type="file" id="qrFileInput" accept="image/*" style="display: none;" aria-hidden="true">
         </section>
 
         <!-- Share Message -->
