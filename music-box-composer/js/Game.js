@@ -102,7 +102,11 @@ class Game {
             qrModalOverlay: document.getElementById('qr-modal-overlay'),
             qrCanvas: document.getElementById('qr-canvas'),
             closeQrBtn: document.getElementById('close-qr-btn'),
-            downloadQrBtn: document.getElementById('download-qr-btn')
+            downloadQrBtn: document.getElementById('download-qr-btn'),
+            clearModal: document.getElementById('clear-modal'),
+            clearModalOverlay: document.getElementById('clear-modal-overlay'),
+            confirmClearBtn: document.getElementById('confirm-clear-btn'),
+            cancelClearBtn: document.getElementById('cancel-clear-btn')
         };
     }
 
@@ -173,7 +177,7 @@ class Game {
         this.elements.stopBtn.addEventListener('click', () => this.stop());
         this.elements.speedBtn.addEventListener('click', () => this.cycleSpeed());
         this.elements.loopBtn.addEventListener('click', () => this.toggleLoop());
-        this.elements.clearBtn.addEventListener('click', () => this.clear());
+        this.elements.clearBtn.addEventListener('click', () => this.showClearConfirmation());
         this.elements.shareBtn.addEventListener('click', () => this.shareURL());
         this.elements.qrBtn.addEventListener('click', () => this.showQRCode());
         this.elements.loadQrBtn.addEventListener('click', () => this.loadFromQRCode());
@@ -186,6 +190,11 @@ class Game {
         this.elements.closeQrBtn.addEventListener('click', () => this.closeQRModal());
         this.elements.qrModalOverlay.addEventListener('click', () => this.closeQRModal());
         this.elements.downloadQrBtn.addEventListener('click', () => this.downloadQRCode());
+        
+        // Clear modal events
+        this.elements.confirmClearBtn.addEventListener('click', () => this.confirmClear());
+        this.elements.cancelClearBtn.addEventListener('click', () => this.closeClearModal());
+        this.elements.clearModalOverlay.addEventListener('click', () => this.closeClearModal());
         
         // Initialize audio on first interaction
         const initAudio = () => {
@@ -437,6 +446,57 @@ class Game {
 
     /**
      * Clear all tracks
+     */
+    /**
+     * Show clear confirmation modal
+     */
+    showClearConfirmation() {
+        this.elements.clearModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * Close clear confirmation modal
+     */
+    closeClearModal() {
+        this.elements.clearModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    /**
+     * Confirm and execute clear
+     */
+    confirmClear() {
+        this.closeClearModal();
+        this.clear();
+    }
+
+    /**
+     * Show clear confirmation modal
+     */
+    showClearConfirmation() {
+        this.elements.clearModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * Close clear confirmation modal
+     */
+    closeClearModal() {
+        this.elements.clearModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    /**
+     * Confirm and execute clear
+     */
+    confirmClear() {
+        this.closeClearModal();
+        this.clear();
+    }
+
+    /**
+     * Clear all notes from timeline
      */
     clear() {
         if (this.isPlaying) {
