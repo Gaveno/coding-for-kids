@@ -227,11 +227,11 @@ v4_{mode}{base64data}
   - Tap tempo integration
   - ✅ **Completed Jan 17, 2026** - BPM input field shown in Studio Mode, tap tempo updates BPM directly, getBeatDuration() returns exact timing
   
-- [ ] **Task 4.3** - Waveform Selection
+- [x] **Task 4.3** - Waveform Selection
   - Add waveform dropdown per track (sine, triangle, square, sawtooth)
   - Update Audio.js oscillator creation
   - Visual indicator on track labels
-  - ⏸️ **Deferred to v4.2** - Audio.js has setTrackWaveform/getTrackWaveform methods ready, needs UI
+  - ✅ **Completed Jan 17, 2026** - Waveform selectors on piano tracks with visual symbols (~, △, ⊓, ⩘), URL v6 encoding with 4 additional header bits, mode-based visibility
   
 - [ ] **Task 4.4** - Basic Effects
   - Add reverb toggle (ConvolverNode)
@@ -239,11 +239,11 @@ v4_{mode}{base64data}
   - Per-track or global effect routing
   - ⏸️ **Deferred to v4.2** - Audio.js has effectsEnabled structure, needs ConvolverNode/DelayNode implementation
 
-- [ ] **Task 4.5** - Export Features
+- [x] **Task 4.5** - Export Features
   - WAV export using OfflineAudioContext
   - MIDI export (basic note data)
   - Show export buttons in Studio Mode only
-  - ⏸️ **Deferred to v4.2**
+  - ✅ **Completed Jan 17, 2026** - WAV export with ADSR envelopes, MIDI Type 1 file generation, export buttons (🎵 🎹) visible in Studio Mode
 
 ### Phase 5: URL Serialization Update
 **Status:** ✅ Complete (Jan 17, 2026)
