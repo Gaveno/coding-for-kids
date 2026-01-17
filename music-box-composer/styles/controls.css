@@ -45,6 +45,23 @@
     transform: scale(1.1);
 }
 
+/* Tween Mode: Neon glow effects */
+[data-mode="tween"] .mode-btn.active {
+    animation: neonGlow 2s ease-in-out infinite;
+}
+
+[data-mode="tween"] .control-btn:hover {
+    box-shadow: 0 0 15px var(--color-primary);
+}
+
+[data-mode="tween"] .play-btn {
+    background: linear-gradient(135deg, var(--color-success), #00ff88);
+}
+
+[data-mode="tween"] .control-btn {
+    box-shadow: 0 0 10px rgba(0, 245, 212, 0.3);
+}
+
 .mode-btn:active {
     transform: scale(0.95);
 }

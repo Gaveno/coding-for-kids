@@ -16,6 +16,25 @@
     75% { transform: translateX(5px); }
 }
 
+@keyframes neonGlow {
+    0%, 100% { 
+        box-shadow: 0 0 5px var(--color-primary),
+                    0 0 10px var(--color-primary),
+                    0 0 15px var(--color-primary);
+    }
+    50% { 
+        box-shadow: 0 0 10px var(--color-primary),
+                    0 0 20px var(--color-primary),
+                    0 0 30px var(--color-primary);
+    }
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 /* ===== Accessibility ===== */
 @media (prefers-reduced-motion: reduce) {
     *,
