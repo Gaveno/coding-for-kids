@@ -989,6 +989,12 @@ class Game {
     showQRCode() {
         const url = window.location.href;
         
+        // For local development, suggest using network IP instead of localhost
+        if (url.includes('localhost') || url.includes('127.0.0.1')) {
+            console.warn('QR code contains localhost URL - this will not work on other devices.');
+            console.log('To test on mobile, access the site using your computer\'s network IP address.');
+        }
+        
         // Generate QR code
         const canvas = QRCodeGenerator.generate(url, 256);
         
