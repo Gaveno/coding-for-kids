@@ -173,12 +173,14 @@ class Timeline {
         let startX = null;
         let startDuration = note.duration || 1;
         let isDragging = false;
+        let hadLongPress = false; // Track if long-press occurred
         const dragThreshold = 10;
         
         const handleDragStart = (clientX) => {
             startX = clientX;
             startDuration = note.duration || 1;
             isDragging = false;
+            hadLongPress = false;
         };
         
         const handleDragMove = (clientX) => {
@@ -225,7 +227,7 @@ class Timeline {
         }, { passive: true });
         
         noteEl.addEventListener('touchmove', (e) => {
-            if (startX !== null) {
+            if (startX !== null && !noteEl.velocityAdjusting) {
                 e.preventDefault();
                 e.stopPropagation();
                 handleDragMove(e.touches[0].clientX);
@@ -234,6 +236,10 @@ class Timeline {
         
         noteEl.addEventListener('touchend', (e) => {
             e.stopPropagation();
+            // Check if velocity was being adjusted
+            if (noteEl.velocityAdjusting) {
+                hadLongPress = true;
+            }
             handleDragEnd();
         });
         
@@ -249,8 +255,15 @@ class Timeline {
             e.preventDefault();
             handleDragStart(e.clientX);
             
-            const onMouseMove = (moveE) => handleDragMove(moveE.clientX);
+            const onMouseMove = (moveE) => {
+                if (!noteEl.velocityAdjusting) {
+                    handleDragMove(moveE.clientX);
+                }
+            };
             const onMouseUp = () => {
+                if (noteEl.velocityAdjusting) {
+                    hadLongPress = true;
+                }
                 handleDragEnd();
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
@@ -260,12 +273,14 @@ class Timeline {
             document.addEventListener('mouseup', onMouseUp);
         });
         
-        // Click to delete (if not dragged)
+        // Click to delete (if not dragged and no long-press)
         noteEl.addEventListener('click', (e) => {
-            if (!isDragging) {
+            if (!isDragging && !hadLongPress) {
                 e.stopPropagation();
                 this.onCellClick(trackType, beat, null);
             }
+            // Reset flag after handling click
+            setTimeout(() => hadLongPress = false, 100);
         });
     }
 
@@ -281,14 +296,22 @@ class Timeline {
         let isAdjustingVelocity = false;
         let startY = null;
         let startVelocity = note.velocity || 0.8;
+        let hasMoved = false;
         
         const startLongPress = (clientY) => {
             startY = clientY;
             startVelocity = note.velocity || 0.8;
+            hasMoved = false;
             longPressTimer = setTimeout(() => {
                 isAdjustingVelocity = true;
+                noteEl.velocityAdjusting = true;
                 noteEl.classList.add('adjusting-velocity');
-            }, 500); // 500ms long-press threshold
+                // Make velocity bar large and visible immediately
+                const velocityBar = noteEl.querySelector('.velocity-indicator');
+                if (velocityBar) {
+                    velocityBar.classList.add('active');
+                }
+            }, 400); // 400ms long-press threshold
         };
         
         const cancelLongPress = () => {
@@ -301,9 +324,11 @@ class Timeline {
         const adjustVelocity = (clientY) => {
             if (!isAdjustingVelocity || startY === null) return;
             
+            hasMoved = true;
+            
             // Vertical drag: up increases velocity, down decreases
             const dy = startY - clientY; // Inverted: drag up = positive
-            const velocityChange = dy / 100; // 100px = full velocity range
+            const velocityChange = dy / 150; // 150px = full velocity range (more sensitive)
             let newVelocity = Math.max(0.1, Math.min(1.0, startVelocity + velocityChange));
             
             // Update visual indicator
@@ -324,7 +349,12 @@ class Timeline {
                     this.onNoteChange();
                 }
                 noteEl.classList.remove('adjusting-velocity');
+                const velocityBar = noteEl.querySelector('.velocity-indicator');
+                if (velocityBar) {
+                    velocityBar.classList.remove('active');
+                }
                 isAdjustingVelocity = false;
+                noteEl.velocityAdjusting = false;
             }
             startY = null;
         };
@@ -332,29 +362,62 @@ class Timeline {
         // Touch events for velocity control
         noteEl.addEventListener('touchstart', (e) => {
             startLongPress(e.touches[0].clientY);
-        });
+        }, { capture: true });
         
         noteEl.addEventListener('touchmove', (e) => {
             if (isAdjustingVelocity) {
                 e.preventDefault();
+                e.stopPropagation();
                 adjustVelocity(e.touches[0].clientY);
             } else if (longPressTimer) {
-                // Cancel long-press if user moves before threshold
+                // Cancel long-press if user moves horizontally (resize drag)
                 const dy = Math.abs(e.touches[0].clientY - startY);
-                if (dy > 10) {
+                if (dy > 15) {
                     cancelLongPress();
                 }
             }
-        }, { passive: false });
+        }, { passive: false, capture: true });
         
         noteEl.addEventListener('touchend', () => {
             endVelocityAdjust();
-        });
+        }, { capture: true });
         
         noteEl.addEventListener('touchcancel', () => {
             cancelLongPress();
+            if (isAdjustingVelocity) {
+                noteEl.classList.remove('adjusting-velocity');
+                const velocityBar = noteEl.querySelector('.velocity-indicator');
+                if (velocityBar) {
+                    velocityBar.classList.remove('active');
+                }
+            }
             isAdjustingVelocity = false;
-        });
+            noteEl.velocityAdjusting = false;
+        }, { capture: true });
+        
+        // Mouse events for velocity control
+        noteEl.addEventListener('mousedown', (e) => {
+            startLongPress(e.clientY);
+        }, { capture: true });
+        
+        const handleMouseMove = (e) => {
+            if (isAdjustingVelocity) {
+                e.preventDefault();
+                e.stopPropagation();
+                adjustVelocity(e.clientY);
+            }
+        };
+        
+        const handleMouseUp = () => {
+            endVelocityAdjust();
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+        
+        noteEl.addEventListener('mousedown', () => {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }, { capture: true });
     }
 
     /**

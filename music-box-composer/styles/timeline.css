@@ -334,11 +334,21 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 4px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 2px 0 0 2px;
-    transition: height 0.1s ease-out;
+    width: 6px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 3px 0 0 3px;
+    transition: all 0.1s ease-out;
     pointer-events: none;
+}
+
+/* Active state: expand and move left during adjustment */
+.velocity-indicator.active {
+    width: 20px;
+    left: -24px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 /* Hide velocity indicator in Kid Mode */
@@ -348,19 +358,27 @@
 
 /* Enhanced velocity indicator in Tween Mode */
 [data-mode="tween"] .velocity-indicator {
-    background: rgba(0, 245, 212, 0.9);
+    background: rgba(0, 245, 212, 0.7);
     box-shadow: 0 0 4px rgba(0, 245, 212, 0.6);
+}
+
+[data-mode="tween"] .velocity-indicator.active {
+    background: var(--color-accent);
+    box-shadow: 0 0 12px var(--color-accent),
+                0 2px 8px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-accent);
 }
 
 /* Adjusting velocity state */
 .cell-note.adjusting-velocity {
-    border: 2px solid rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.9);
     cursor: ns-resize;
+    z-index: 100;
 }
 
 [data-mode="tween"] .cell-note.adjusting-velocity {
     border-color: var(--color-accent);
-    box-shadow: 0 0 15px var(--color-accent);
+    box-shadow: 0 0 20px var(--color-accent);
 }
 
 
