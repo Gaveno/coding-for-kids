@@ -620,7 +620,8 @@ class Game {
     // v1: 10 bits per beat (no duration)
     // v2: 16 bits per beat (with duration for melody/bass)
     // v3: 17 bits per beat (piano notes with octave, key signature)
-    static ENCODING_VERSION = 3;
+    // v4: 19 bits header (adds 2 bits for mode), same beat structure as v3
+    static ENCODING_VERSION = 4;
 
     /**
      * Serialize current state to a compact binary URL-safe string
@@ -628,11 +629,75 @@ class Game {
      * @returns {string}
      */
     serializeState() {
-        return this.serializeV3();
+        return this.serializeV4();
     }
 
     /**
-     * Serialize v3 format with piano keyboard and key signatures
+     * Serialize v4 format with mode selection
+     * 
+     * v4 Binary format:
+     * Header: 11 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4)
+     * Per beat: 17 bits (piano1:4, dur1:3, piano2:4, dur2:3, percussion:3)
+     * @returns {string}
+     */
+    serializeV4() {
+        const beatCount = this.timeline.getBeatCount();
+        const lengthIndex = this.beatLengths.indexOf(beatCount);
+        const keyIndex = Game.KEY_NAMES.indexOf(this.currentKey);
+        
+        // Mode index (0=kid, 1=tween, 2=studio)
+        const modeIndex = Object.values(Game.MODES).indexOf(this.currentMode);
+        
+        // Build bit array
+        const bits = [];
+        
+        // Header: mode (2 bits), speed (2 bits), loop (1 bit), length index (2 bits), key (4 bits)
+        this.pushBits(bits, modeIndex, 2);
+        this.pushBits(bits, this.currentSpeedIndex, 2);
+        this.pushBits(bits, this.isLooping ? 1 : 0, 1);
+        this.pushBits(bits, lengthIndex, 2);
+        this.pushBits(bits, keyIndex, 4);
+        
+        // Track data for each beat (same as v3)
+        for (let beat = 0; beat < beatCount; beat++) {
+            const notes = this.timeline.getNotesAtBeat(beat);
+            
+            // Piano track 1 (high): note index (4 bits) + duration (3 bits)
+            const note1 = notes[1];
+            const note1Index = note1 && !note1.sustained ? this.getNoteIndex(note1.note) : 0;
+            const duration1 = note1 && !note1.sustained ? note1.duration : 1;
+            this.pushBits(bits, note1Index, 4);
+            this.pushBits(bits, Math.min(7, Math.max(0, duration1 - 1)), 3);
+            
+            // Piano track 2 (low): note index (4 bits) + duration (3 bits)
+            const note2 = notes[2];
+            const note2Index = note2 && !note2.sustained ? this.getNoteIndex(note2.note) : 0;
+            const duration2 = note2 && !note2.sustained ? note2.duration : 1;
+            this.pushBits(bits, note2Index, 4);
+            this.pushBits(bits, Math.min(7, Math.max(0, duration2 - 1)), 3);
+            
+            // Percussion track: note index (3 bits)
+            const note3 = notes[3];
+            const note3Index = note3 && !note3.sustained ? Game.PERC_NOTES.indexOf(note3.note) : 0;
+            this.pushBits(bits, Math.max(0, note3Index), 3);
+        }
+        
+        // Convert bits to bytes
+        const bytes = this.bitsToBytes(bits);
+        
+        // Convert to URL-safe base64
+        let base64 = '';
+        for (let i = 0; i < bytes.length; i++) {
+            base64 += String.fromCharCode(bytes[i]);
+        }
+        const data = btoa(base64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        
+        // Prefix with version
+        return `v${Game.ENCODING_VERSION}_${data}`;
+    }
+
+    /**
+     * Serialize v3 format with piano keyboard and key signatures (legacy)
      * 
      * v3 Binary format:
      * Header: 9 bits (speed:2, loop:1, lengthIndex:2, keyIndex:4)
@@ -804,6 +869,8 @@ class Game {
                 return this.deserializeV2(bits);
             } else if (version === 3) {
                 return this.deserializeV3(bits);
+            } else if (version === 4) {
+                return this.deserializeV4(bits);
             } else {
                 console.warn(`Unknown encoding version: ${version}`);
                 return null;
@@ -1003,6 +1070,72 @@ class Game {
         }
         
         return {
+            s: speedIndex,
+            l: loop,
+            b: beatCount,
+            k: keyName,
+            t: { track1, track2, track3 }
+        };
+    }
+
+    /**
+     * Deserialize v4 format (with mode selection)
+     * Header: 11 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4)
+     * Per beat: 17 bits (piano1:4, dur1:3, piano2:4, dur2:3, percussion:3)
+     */
+    deserializeV4(bits) {
+        const PIANO_NOTES = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const PIANO_ICONS = {
+            'C': 'C', 'C#': 'C♯', 'D': 'D', 'D#': 'D♯', 'E': 'E', 'F': 'F',
+            'F#': 'F♯', 'G': 'G', 'G#': 'G♯', 'A': 'A', 'A#': 'A♯', 'B': 'B'
+        };
+        
+        let offset = 0;
+        
+        // Read header (11 bits)
+        const modeIndex = this.readBits(bits, offset, 2); offset += 2;
+        const speedIndex = this.readBits(bits, offset, 2); offset += 2;
+        const loop = this.readBits(bits, offset, 1); offset += 1;
+        const lengthIndex = this.readBits(bits, offset, 2); offset += 2;
+        const keyIndex = this.readBits(bits, offset, 4); offset += 4;
+        
+        const beatCount = this.beatLengths[lengthIndex] || 16;
+        const keyName = Game.KEY_NAMES[keyIndex] || 'C Major';
+        const mode = Object.values(Game.MODES)[modeIndex] || Game.MODES.KID;
+        
+        // Read track data (same as v3)
+        const track1 = []; // High piano (octave 5)
+        const track2 = []; // Low piano (octave 3)
+        const track3 = []; // Percussion
+        
+        for (let beat = 0; beat < beatCount; beat++) {
+            // Piano track 1: 4 bits note + 3 bits duration
+            const note1Index = this.readBits(bits, offset, 4); offset += 4;
+            const duration1 = this.readBits(bits, offset, 3) + 1; offset += 3;
+            
+            // Piano track 2: 4 bits note + 3 bits duration
+            const note2Index = this.readBits(bits, offset, 4); offset += 4;
+            const duration2 = this.readBits(bits, offset, 3) + 1; offset += 3;
+            
+            // Percussion: 3 bits note
+            const percIndex = this.readBits(bits, offset, 3); offset += 3;
+            
+            // Add notes if valid
+            if (note1Index > 0 && note1Index < PIANO_NOTES.length) {
+                const note = PIANO_NOTES[note1Index];
+                track1.push([beat, note, PIANO_ICONS[note], duration1, 5]); // octave 5
+            }
+            if (note2Index > 0 && note2Index < PIANO_NOTES.length) {
+                const note = PIANO_NOTES[note2Index];
+                track2.push([beat, note, PIANO_ICONS[note], duration2, 3]); // octave 3
+            }
+            if (percIndex > 0 && percIndex < Game.PERC_NOTES.length) {
+                track3.push([beat, Game.PERC_NOTES[percIndex], Game.PERC_ICONS[percIndex], 1, null]); // no octave
+            }
+        }
+        
+        return {
+            mode: mode,
             s: speedIndex,
             l: loop,
             b: beatCount,
