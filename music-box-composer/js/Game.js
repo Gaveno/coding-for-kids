@@ -843,8 +843,8 @@ class Game {
      * 
      * v5 Binary format:
      * Header: 11 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4)
-     * Per beat: 33 bits (piano1:4+3+4+2, piano2:4+3+4+2, percussion:3+4)
-     * Piano tracks: note(4) + duration(3) + velocity(4) + octave(2)
+     * Per beat: 35 bits (piano1:4+3+4+3, piano2:4+3+4+3, percussion:3+4)
+     * Piano tracks: note(4) + duration(3) + velocity(4) + octave(3)
      * @returns {string}
      */
     serializeV5() {
@@ -865,32 +865,32 @@ class Game {
         this.pushBits(bits, lengthIndex, 2);
         this.pushBits(bits, keyIndex, 4);
         
-        // Track data with velocity and octave: 33 bits per beat
-        // piano1 (4 note + 3 dur + 4 vel + 2 oct) + piano2 (4 note + 3 dur + 4 vel + 2 oct) + perc (3 note + 4 vel)
+        // Track data with velocity and octave: 35 bits per beat
+        // piano1 (4 note + 3 dur + 4 vel + 3 oct) + piano2 (4 note + 3 dur + 4 vel + 3 oct) + perc (3 note + 4 vel)
         for (let beat = 0; beat < beatCount; beat++) {
             const notes = this.timeline.getNotesAtBeat(beat);
             
-            // Piano track 1: note (4 bits) + duration (3 bits) + velocity (4 bits) + octave (2 bits)
+            // Piano track 1: note (4 bits) + duration (3 bits) + velocity (4 bits) + octave (3 bits)
             const note1 = notes[1];
             const note1Index = note1 && !note1.sustained ? this.getNoteIndex(note1.note) : 0;
             const duration1 = note1 && !note1.sustained ? note1.duration : 1;
             const velocity1 = note1 && !note1.sustained ? Math.round((note1.velocity || 0.8) * 15) : 12;
-            const octave1 = note1 && !note1.sustained && note1.octave !== null ? note1.octave - 2 : 2; // Map octaves 2-5 to 0-3
+            const octave1 = note1 && !note1.sustained && note1.octave !== null ? note1.octave - 2 : 2; // Map octaves 2-6 to 0-4
             this.pushBits(bits, note1Index, 4);
             this.pushBits(bits, Math.min(7, Math.max(0, duration1 - 1)), 3);
             this.pushBits(bits, velocity1, 4);
-            this.pushBits(bits, octave1, 2);
+            this.pushBits(bits, octave1, 3);
             
-            // Piano track 2: note (4 bits) + duration (3 bits) + velocity (4 bits) + octave (2 bits)
+            // Piano track 2: note (4 bits) + duration (3 bits) + velocity (4 bits) + octave (3 bits)
             const note2 = notes[2];
             const note2Index = note2 && !note2.sustained ? this.getNoteIndex(note2.note) : 0;
             const duration2 = note2 && !note2.sustained ? note2.duration : 1;
             const velocity2 = note2 && !note2.sustained ? Math.round((note2.velocity || 0.8) * 15) : 12;
-            const octave2 = note2 && !note2.sustained && note2.octave !== null ? note2.octave - 2 : 1; // Map octaves 2-5 to 0-3
+            const octave2 = note2 && !note2.sustained && note2.octave !== null ? note2.octave - 2 : 1; // Map octaves 2-6 to 0-4
             this.pushBits(bits, note2Index, 4);
             this.pushBits(bits, Math.min(7, Math.max(0, duration2 - 1)), 3);
             this.pushBits(bits, velocity2, 4);
-            this.pushBits(bits, octave2, 2);
+            this.pushBits(bits, octave2, 3);
             
             // Percussion track: note index (3 bits) + velocity (4 bits)
             const note3 = notes[3];
@@ -1370,8 +1370,8 @@ class Game {
     /**
      * Deserialize v5 format with octave support
      * Header: 11 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4)
-     * Per beat: 33 bits - piano1(13) + piano2(13) + percussion(7)
-     * Piano: note(4) + duration(3) + velocity(4) + octave(2)
+     * Per beat: 35 bits - piano1(14) + piano2(14) + percussion(7)
+     * Piano: note(4) + duration(3) + velocity(4) + octave(3)
      * Percussion: note(3) + velocity(4)
      */
     deserializeV5(bits) {
@@ -1394,23 +1394,23 @@ class Game {
         const keyName = Game.KEY_NAMES[keyIndex] || 'C Major';
         const mode = Object.values(Game.MODES)[modeIndex] || Game.MODES.KID;
         
-        // Read track data with velocity
-        const track1 = []; // High piano (octave 5)
-        const track2 = []; // Low piano (octave 3)
-        const track3 = []; // Percussion
+        // Read track data with velocity and octave
+        const track1 = [];
+        const track2 = [];
+        const track3 = [];
         
         for (let beat = 0; beat < beatCount; beat++) {
-            // Piano track 1: 4 bits note + 3 bits duration + 4 bits velocity + 2 bits octave
+            // Piano track 1: 4 bits note + 3 bits duration + 4 bits velocity + 3 bits octave
             const note1Index = this.readBits(bits, offset, 4); offset += 4;
             const duration1 = this.readBits(bits, offset, 3) + 1; offset += 3;
             const velocity1 = this.readBits(bits, offset, 4) / 15; offset += 4;
-            const octave1 = this.readBits(bits, offset, 2) + 2; offset += 2; // Map 0-3 to octaves 2-5
+            const octave1 = this.readBits(bits, offset, 3) + 2; offset += 3; // Map 0-4 to octaves 2-6
             
-            // Piano track 2: 4 bits note + 3 bits duration + 4 bits velocity + 2 bits octave
+            // Piano track 2: 4 bits note + 3 bits duration + 4 bits velocity + 3 bits octave
             const note2Index = this.readBits(bits, offset, 4); offset += 4;
             const duration2 = this.readBits(bits, offset, 3) + 1; offset += 3;
             const velocity2 = this.readBits(bits, offset, 4) / 15; offset += 4;
-            const octave2 = this.readBits(bits, offset, 2) + 2; offset += 2; // Map 0-3 to octaves 2-5
+            const octave2 = this.readBits(bits, offset, 3) + 2; offset += 3; // Map 0-4 to octaves 2-6
             
             // Percussion: 3 bits note + 4 bits velocity
             const percIndex = this.readBits(bits, offset, 3); offset += 3;
