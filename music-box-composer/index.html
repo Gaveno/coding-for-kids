@@ -28,13 +28,6 @@
                     <button class="mode-btn" data-mode="tween" aria-label="Tween Mode" title="Tween Mode (Ages 7-12)">🎸</button>
                     <button class="mode-btn" data-mode="studio" aria-label="Studio Mode" title="Studio Mode (Ages 13+)">🎛️</button>
                 </div>
-                <button class="header-btn" id="shareBtn" aria-label="Share Song" title="Share Song">💾</button>
-                <button class="header-btn" id="qrBtn" aria-label="QR Code" title="Share via QR Code">📱</button>
-                <button class="header-btn" id="loadQrBtn" aria-label="Load from QR Code" title="Load Song from QR Code">📷</button>
-                <input type="file" id="qrFileInput" accept="image/*" style="display: none;" aria-hidden="true">
-                <!-- Export buttons (Studio Mode only) -->
-                <button class="header-btn export-btn" id="exportWavBtn" aria-label="Export WAV" title="Export as WAV audio file" style="display: none;">🎵</button>
-                <button class="header-btn export-btn" id="exportMidiBtn" aria-label="Export MIDI" title="Export as MIDI file" style="display: none;">🎹</button>
             </div>
         </header>
 
@@ -102,33 +95,47 @@
                 </div>
             </div>
             
-            <!-- Percussion -->
-            <div class="palette-row" data-type="percussion">
-                <button class="note-btn" data-note="kick" data-type="percussion" aria-label="Kick">
-                    <span class="note-icon">🥁</span>
-                </button>
-                <button class="note-btn" data-note="snare" data-type="percussion" aria-label="Snare">
-                    <span class="note-icon">🪘</span>
-                </button>
-                <button class="note-btn" data-note="hihat" data-type="percussion" aria-label="Hi-hat">
-                    <span class="note-icon">🔔</span>
-                </button>
-                <button class="note-btn" data-note="clap" data-type="percussion" aria-label="Clap">
-                    <span class="note-icon">👏</span>
-                </button>
-                <!-- Extended percussion (Tween/Studio only) -->
-                <button class="note-btn extended-perc" data-note="tom" data-type="percussion" aria-label="Tom">
-                    <span class="note-icon">🎵</span>
-                </button>
-                <button class="note-btn extended-perc" data-note="cymbal" data-type="percussion" aria-label="Cymbal">
-                    <span class="note-icon">💥</span>
-                </button>
-                <button class="note-btn extended-perc" data-note="shaker" data-type="percussion" aria-label="Shaker">
-                    <span class="note-icon">🎶</span>
-                </button>
-                <button class="note-btn extended-perc" data-note="cowbell" data-type="percussion" aria-label="Cowbell">
-                    <span class="note-icon">🔊</span>
-                </button>
+            <!-- Percussion and Options Container -->
+            <div class="palette-bottom-row">
+                <!-- Save/Load/Export Options -->
+                <div class="palette-options">
+                    <button class="option-btn" id="shareBtn" aria-label="Share Song" title="Share Song">💾</button>
+                    <button class="option-btn" id="qrBtn" aria-label="QR Code" title="Share via QR Code">📱</button>
+                    <button class="option-btn" id="loadQrBtn" aria-label="Load from QR Code" title="Load Song from QR Code">📷</button>
+                    <input type="file" id="qrFileInput" accept="image/*" style="display: none;" aria-hidden="true">
+                    <!-- Export buttons (Studio Mode only) -->
+                    <button class="option-btn export-btn" id="exportWavBtn" aria-label="Export WAV" title="Export as WAV audio file" style="display: none;">🎵</button>
+                    <button class="option-btn export-btn" id="exportMidiBtn" aria-label="Export MIDI" title="Export as MIDI file" style="display: none;">🎹</button>
+                </div>
+                
+                <!-- Percussion -->
+                <div class="palette-row" data-type="percussion">
+                    <button class="note-btn" data-note="kick" data-type="percussion" aria-label="Kick">
+                        <span class="note-icon">🥁</span>
+                    </button>
+                    <button class="note-btn" data-note="snare" data-type="percussion" aria-label="Snare">
+                        <span class="note-icon">🪘</span>
+                    </button>
+                    <button class="note-btn" data-note="hihat" data-type="percussion" aria-label="Hi-hat">
+                        <span class="note-icon">🔔</span>
+                    </button>
+                    <button class="note-btn" data-note="clap" data-type="percussion" aria-label="Clap">
+                        <span class="note-icon">👏</span>
+                    </button>
+                    <!-- Extended percussion (Tween/Studio only) -->
+                    <button class="note-btn extended-perc" data-note="tom" data-type="percussion" aria-label="Tom">
+                        <span class="note-icon">🎵</span>
+                    </button>
+                    <button class="note-btn extended-perc" data-note="cymbal" data-type="percussion" aria-label="Cymbal">
+                        <span class="note-icon">💥</span>
+                    </button>
+                    <button class="note-btn extended-perc" data-note="shaker" data-type="percussion" aria-label="Shaker">
+                        <span class="note-icon">🎶</span>
+                    </button>
+                    <button class="note-btn extended-perc" data-note="cowbell" data-type="percussion" aria-label="Cowbell">
+                        <span class="note-icon">🔊</span>
+                    </button>
+                </div>
             </div>
         </section>
 

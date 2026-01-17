@@ -13,6 +13,11 @@
     box-shadow: var(--shadow-lg);
 }
 
+/* Studio Mode: Reduced height for visualizer */
+[data-mode="studio"] .stage {
+    min-height: 70px;
+}
+
 /* Tween Mode: Animated gradient background */
 [data-mode="tween"] .stage {
     background: linear-gradient(270deg, #1a1a2e, #16213e, #0f3460, #16213e, #1a1a2e);

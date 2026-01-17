@@ -9,6 +9,13 @@
     box-shadow: var(--shadow);
 }
 
+/* ===== Palette Bottom Row (Percussion + Options) ===== */
+.palette-bottom-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+}
+
 /* ===== Palette Row ===== */
 .palette-row {
     display: flex;
@@ -17,6 +24,8 @@
     gap: var(--spacing-xs);
     padding: var(--spacing-xs);
     border-radius: var(--radius-md);
+    flex: 1;
+    min-width: 0;
 }
 
 /* Row backgrounds to match tracks */
@@ -107,4 +116,43 @@
 @keyframes ghostAppear {
     0% { transform: translate(-50%, -80%) scale(0.5); opacity: 0; }
     100% { transform: translate(-50%, -80%) scale(1); opacity: 0.9; }
+}
+
+/* ===== Palette Options (Save/Load/Export) ===== */
+.palette-options {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    background: var(--color-surface-light);
+    border-radius: var(--radius-md);
+    flex: 1;
+    min-width: 0;
+}
+
+.option-btn {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    font-size: 1.3rem;
+    cursor: pointer;
+    background: var(--color-surface);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.option-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.option-btn:active {
+    transform: translateY(0);
 }
