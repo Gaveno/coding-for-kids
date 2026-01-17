@@ -130,6 +130,8 @@ class Game {
             qrBtn: document.getElementById('qrBtn'),
             loadQrBtn: document.getElementById('loadQrBtn'),
             qrFileInput: document.getElementById('qrFileInput'),
+            exportWavBtn: document.getElementById('exportWavBtn'),
+            exportMidiBtn: document.getElementById('exportMidiBtn'),
             lengthUpBtn: document.getElementById('lengthUpBtn'),
             lengthDownBtn: document.getElementById('lengthDownBtn'),
             beatCount: document.getElementById('beatCount'),
@@ -244,6 +246,8 @@ class Game {
         this.elements.qrBtn.addEventListener('click', () => this.showQRCode());
         this.elements.loadQrBtn.addEventListener('click', () => this.loadFromQRCode());
         this.elements.qrFileInput.addEventListener('change', (e) => this.handleQRFileSelected(e));
+        this.elements.exportWavBtn.addEventListener('click', () => this.exportWAV());
+        this.elements.exportMidiBtn.addEventListener('click', () => this.exportMIDI());
         this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
         this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
@@ -1598,6 +1602,452 @@ class Game {
     }
 
     /**
+     * Export song as WAV file using OfflineAudioContext
+     * Renders the entire composition to an audio buffer and downloads as WAV
+     */
+    async exportWAV() {
+        try {
+            this.showShareMessage('🎵 Rendering audio...', 'info');
+            
+            // Calculate total duration
+            const beatCount = this.timeline.getBeatCount();
+            const beatDurationMs = this.getBeatDuration();
+            const totalDurationSec = (beatCount * beatDurationMs) / 1000;
+            
+            // Create offline audio context (44.1kHz, stereo)
+            const offlineCtx = new OfflineAudioContext(2, totalDurationSec * 44100, 44100);
+            
+            // Render each beat
+            for (let beat = 0; beat < beatCount; beat++) {
+                const notes = this.timeline.getNotesAtBeat(beat);
+                const startTime = (beat * beatDurationMs) / 1000;
+                const beatDurationSec = beatDurationMs / 1000;
+                
+                // Track 1 (piano)
+                if (notes[1] && !notes[1].sustained) {
+                    const duration = (notes[1].duration || 1) * beatDurationSec;
+                    const velocity = notes[1].velocity || 0.8;
+                    const octave = notes[1].octave || 5;
+                    this.renderNoteToContext(offlineCtx, notes[1].note, 1, startTime, duration, velocity, octave);
+                }
+                
+                // Track 2 (piano)
+                if (notes[2] && !notes[2].sustained) {
+                    const duration = (notes[2].duration || 1) * beatDurationSec;
+                    const velocity = notes[2].velocity || 0.8;
+                    const octave = notes[2].octave || 3;
+                    this.renderNoteToContext(offlineCtx, notes[2].note, 2, startTime, duration, velocity, octave);
+                }
+                
+                // Track 3 (percussion)
+                if (notes[3] && !notes[3].sustained) {
+                    const velocity = notes[3].velocity || 0.8;
+                    this.renderPercussionToContext(offlineCtx, notes[3].note, startTime, velocity);
+                }
+            }
+            
+            // Render audio buffer
+            const audioBuffer = await offlineCtx.startRendering();
+            
+            // Convert to WAV
+            const wavBlob = this.audioBufferToWav(audioBuffer);
+            
+            // Download
+            const url = URL.createObjectURL(wavBlob);
+            const link = document.createElement('a');
+            link.download = 'music-box-song.wav';
+            link.href = url;
+            link.click();
+            
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            this.showShareMessage('✅ WAV exported!', 'success');
+        } catch (err) {
+            console.error('WAV export failed:', err);
+            this.showShareMessage('❌ Export failed', 'error');
+        }
+    }
+
+    /**
+     * Render a piano note to offline audio context
+     */
+    renderNoteToContext(ctx, note, trackNum, startTime, duration, velocity, octave) {
+        const frequency = this.audio.noteToFrequency(note, octave);
+        if (!frequency) return;
+        
+        const waveform = this.audio.trackWaveforms[trackNum] || (trackNum === 1 ? 'sine' : 'triangle');
+        const baseVolume = trackNum === 1 ? 0.4 : 0.5;
+        
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        osc.type = waveform;
+        osc.frequency.value = frequency;
+        
+        // ADSR envelope
+        const now = startTime;
+        const attackTime = 0.01;
+        const releaseTime = 0.1;
+        const sustainLevel = baseVolume * velocity;
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(sustainLevel, now + attackTime);
+        gainNode.gain.setValueAtTime(sustainLevel, now + duration - releaseTime);
+        gainNode.gain.linearRampToValueAtTime(0, now + duration);
+        
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        osc.start(now);
+        osc.stop(now + duration);
+    }
+
+    /**
+     * Render a percussion sound to offline audio context
+     */
+    renderPercussionToContext(ctx, type, startTime, velocity) {
+        // Simple percussion synthesis (basic kick/snare/hihat)
+        const duration = 0.15;
+        
+        if (type === 'kick') {
+            // Kick drum: low frequency sweep
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            osc.frequency.setValueAtTime(150, startTime);
+            osc.frequency.exponentialRampToValueAtTime(40, startTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.8 * velocity, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        } else if (type === 'snare') {
+            // Snare: noise burst
+            const bufferSize = ctx.sampleRate * duration;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const output = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.2));
+            }
+            
+            const noise = ctx.createBufferSource();
+            const gainNode = ctx.createGain();
+            
+            noise.buffer = buffer;
+            gainNode.gain.setValueAtTime(0.5 * velocity, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            
+            noise.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            noise.start(startTime);
+        } else if (type === 'hihat') {
+            // Hi-hat: filtered noise
+            const bufferSize = ctx.sampleRate * 0.05;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const output = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = ctx.createBufferSource();
+            const filter = ctx.createBiquadFilter();
+            const gainNode = ctx.createGain();
+            
+            noise.buffer = buffer;
+            filter.type = 'highpass';
+            filter.frequency.value = 7000;
+            
+            gainNode.gain.setValueAtTime(0.3 * velocity, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.05);
+            
+            noise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            noise.start(startTime);
+        }
+        // Other percussion types can be added similarly
+    }
+
+    /**
+     * Convert AudioBuffer to WAV blob
+     */
+    audioBufferToWav(buffer) {
+        const numChannels = buffer.numberOfChannels;
+        const sampleRate = buffer.sampleRate;
+        const format = 1; // PCM
+        const bitDepth = 16;
+        
+        const bytesPerSample = bitDepth / 8;
+        const blockAlign = numChannels * bytesPerSample;
+        
+        const data = [];
+        for (let i = 0; i < buffer.length; i++) {
+            for (let channel = 0; channel < numChannels; channel++) {
+                let sample = buffer.getChannelData(channel)[i];
+                // Clamp to [-1, 1]
+                sample = Math.max(-1, Math.min(1, sample));
+                // Convert to 16-bit PCM
+                sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                data.push(sample);
+            }
+        }
+        
+        const dataSize = data.length * bytesPerSample;
+        const buffer32 = new ArrayBuffer(44 + dataSize);
+        const view = new DataView(buffer32);
+        
+        // WAV header
+        this.writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + dataSize, true);
+        this.writeString(view, 8, 'WAVE');
+        this.writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true); // fmt chunk size
+        view.setUint16(20, format, true);
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * blockAlign, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bitDepth, true);
+        this.writeString(view, 36, 'data');
+        view.setUint32(40, dataSize, true);
+        
+        // Write PCM samples
+        let offset = 44;
+        for (let i = 0; i < data.length; i++) {
+            view.setInt16(offset, data[i], true);
+            offset += 2;
+        }
+        
+        return new Blob([buffer32], { type: 'audio/wav' });
+    }
+
+    /**
+     * Write string to DataView
+     */
+    writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    /**
+     * Export song as MIDI file
+     * Creates a Type 1 MIDI file with separate tracks
+     */
+    exportMIDI() {
+        try {
+            this.showShareMessage('🎹 Creating MIDI...', 'info');
+            
+            const beatCount = this.timeline.getBeatCount();
+            const bpm = this.useBPM ? this.currentBPM : [60, 90, 120, 160][this.currentSpeedIndex];
+            
+            // MIDI ticks per quarter note
+            const ticksPerBeat = 480;
+            
+            // Create MIDI file data
+            const headerChunk = this.createMIDIHeader(3); // 3 tracks
+            const track1 = this.createMIDITrack(1, beatCount, ticksPerBeat);
+            const track2 = this.createMIDITrack(2, beatCount, ticksPerBeat);
+            const track3 = this.createMIDITrack(3, beatCount, ticksPerBeat);
+            
+            // Combine chunks
+            const midiData = this.concatArrays([
+                headerChunk,
+                this.createTempoTrack(bpm, ticksPerBeat),
+                track1,
+                track2,
+                track3
+            ]);
+            
+            // Download
+            const blob = new Blob([midiData], { type: 'audio/midi' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'music-box-song.mid';
+            link.href = url;
+            link.click();
+            
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            this.showShareMessage('✅ MIDI exported!', 'success');
+        } catch (err) {
+            console.error('MIDI export failed:', err);
+            this.showShareMessage('❌ Export failed', 'error');
+        }
+    }
+
+    /**
+     * Create MIDI header chunk
+     */
+    createMIDIHeader(numTracks) {
+        const data = new Uint8Array(14);
+        const view = new DataView(data.buffer);
+        
+        // MThd
+        this.writeString(view, 0, 'MThd');
+        view.setUint32(4, 6); // Header length
+        view.setUint16(8, 1); // Format 1 (multiple tracks, synchronous)
+        view.setUint16(10, numTracks + 1); // Number of tracks (+ tempo track)
+        view.setUint16(12, 480); // Ticks per quarter note
+        
+        return data;
+    }
+
+    /**
+     * Create tempo track with BPM setting
+     */
+    createTempoTrack(bpm, ticksPerBeat) {
+        const events = [];
+        
+        // Tempo meta event (FF 51 03 tttttt)
+        const microsecondsPerBeat = Math.round(60000000 / bpm);
+        events.push([0, 0xFF, 0x51, 0x03, 
+            (microsecondsPerBeat >> 16) & 0xFF,
+            (microsecondsPerBeat >> 8) & 0xFF,
+            microsecondsPerBeat & 0xFF
+        ]);
+        
+        // End of track
+        events.push([0, 0xFF, 0x2F, 0x00]);
+        
+        return this.createMIDITrackChunk(events);
+    }
+
+    /**
+     * Create MIDI track from timeline data
+     */
+    createMIDITrack(trackNum, beatCount, ticksPerBeat) {
+        const events = [];
+        const notes = [];
+        
+        // Collect all notes from timeline
+        for (let beat = 0; beat < beatCount; beat++) {
+            const notesAtBeat = this.timeline.getNotesAtBeat(beat);
+            const note = notesAtBeat[trackNum];
+            
+            if (note && !note.sustained) {
+                const midiNote = this.noteToMIDI(note.note, note.octave, trackNum);
+                const velocity = Math.round((note.velocity || 0.8) * 127);
+                const startTick = beat * ticksPerBeat;
+                const duration = (note.duration || 1) * ticksPerBeat;
+                
+                notes.push({ midiNote, velocity, startTick, duration });
+            }
+        }
+        
+        // Sort by start time
+        notes.sort((a, b) => a.startTick - b.startTick);
+        
+        // Create note on/off events
+        let currentTick = 0;
+        const allEvents = [];
+        
+        for (const note of notes) {
+            const delta = note.startTick - currentTick;
+            allEvents.push({ tick: note.startTick, data: [delta, 0x90, note.midiNote, note.velocity] }); // Note on
+            allEvents.push({ tick: note.startTick + note.duration, data: [note.duration, 0x80, note.midiNote, 0] }); // Note off
+            currentTick = note.startTick;
+        }
+        
+        // Sort all events by tick
+        allEvents.sort((a, b) => a.tick - b.tick);
+        
+        // Calculate delta times
+        currentTick = 0;
+        for (const event of allEvents) {
+            event.data[0] = event.tick - currentTick;
+            currentTick = event.tick;
+            events.push(event.data);
+        }
+        
+        // End of track
+        events.push([0, 0xFF, 0x2F, 0x00]);
+        
+        return this.createMIDITrackChunk(events);
+    }
+
+    /**
+     * Convert note name to MIDI note number
+     */
+    noteToMIDI(noteName, octave, trackNum) {
+        const noteMap = { 'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11 };
+        
+        // Percussion uses channel 10 (MIDI notes 35-81)
+        if (trackNum === 3) {
+            const percMap = { 'kick': 36, 'snare': 38, 'hihat': 42, 'clap': 39, 'tom': 45, 'cymbal': 49, 'shaker': 70, 'cowbell': 56 };
+            return percMap[noteName] || 36;
+        }
+        
+        // Piano notes
+        const finalOctave = octave !== null && octave !== undefined ? octave : (trackNum === 1 ? 5 : 3);
+        const noteValue = noteMap[noteName];
+        if (noteValue === undefined) return 60; // Default to middle C
+        
+        return (finalOctave + 1) * 12 + noteValue;
+    }
+
+    /**
+     * Create MIDI track chunk from events
+     */
+    createMIDITrackChunk(events) {
+        // Flatten events and encode variable-length delta times
+        const trackData = [];
+        
+        for (const event of events) {
+            const delta = event[0];
+            const varLen = this.encodeVariableLength(delta);
+            trackData.push(...varLen);
+            trackData.push(...event.slice(1));
+        }
+        
+        // Create track chunk
+        const data = new Uint8Array(8 + trackData.length);
+        const view = new DataView(data.buffer);
+        
+        this.writeString(view, 0, 'MTrk');
+        view.setUint32(4, trackData.length);
+        
+        for (let i = 0; i < trackData.length; i++) {
+            data[8 + i] = trackData[i];
+        }
+        
+        return data;
+    }
+
+    /**
+     * Encode integer as MIDI variable-length quantity
+     */
+    encodeVariableLength(value) {
+        const buffer = [];
+        buffer.push(value & 0x7F);
+        
+        while ((value >>= 7) > 0) {
+            buffer.unshift((value & 0x7F) | 0x80);
+        }
+        
+        return buffer;
+    }
+
+    /**
+     * Concatenate multiple Uint8Arrays
+     */
+    concatArrays(arrays) {
+        const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
+        const result = new Uint8Array(totalLength);
+        let offset = 0;
+        
+        for (const arr of arrays) {
+            result.set(arr, offset);
+            offset += arr.length;
+        }
+        
+        return result;
+    }
+
+    /**
      * Update share button visibility based on song length
      * Shows QR button for songs >32 beats or long URLs
      */
@@ -1853,6 +2303,14 @@ class Game {
         
         // Update speed button visibility
         this.updateSpeedControls();
+        
+        // Update export button visibility (Studio Mode only)
+        if (this.elements.exportWavBtn) {
+            this.elements.exportWavBtn.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-flex' : 'none';
+        }
+        if (this.elements.exportMidiBtn) {
+            this.elements.exportMidiBtn.style.display = this.currentMode === Game.MODES.STUDIO ? 'inline-flex' : 'none';
+        }
         
         console.log('Applied mode config:', config);
     }
