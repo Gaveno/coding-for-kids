@@ -1,0 +1,18 @@
+/* ===== Studio Mode Visualizer ===== */
+
+/* Canvas for waveform and spectrum */
+.viz-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Studio mode stage styling adjustments */
+[data-mode="studio"] .stage {
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+    box-shadow: 0 0 30px rgba(0, 245, 212, 0.2);
+}

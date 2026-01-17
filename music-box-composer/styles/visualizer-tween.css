@@ -1,0 +1,63 @@
+/* ===== Tween Mode Visualizer ===== */
+
+/* SVG rings background */
+.viz-rings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.viz-ring {
+    fill: none;
+    stroke-width: 3;
+    stroke: rgba(255, 255, 255, 0.1);
+    transition: stroke var(--transition-fast) ease;
+}
+
+.viz-ring.pulse {
+    animation: ringPulse 0.3s ease-out;
+}
+
+@keyframes ringPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        opacity: 0.3; 
+    }
+    50% { 
+        transform: scale(1.1); 
+        opacity: 1; 
+    }
+}
+
+/* Particles */
+.viz-particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    animation: particleBurst 0.8s ease-out forwards;
+    box-shadow: 0 0 10px currentColor;
+    will-change: transform, opacity;
+}
+
+@keyframes particleBurst {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .viz-ring {
+        stroke-width: 2;
+    }
+}

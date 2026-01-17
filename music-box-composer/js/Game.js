@@ -66,7 +66,7 @@ class Game {
         
         this.audio = new Audio();
         this.timeline = null;
-        this.character = null;
+        this.visualizer = null;
         this.dragDrop = null;
         this.pianoKeyboard = null;
         
@@ -147,9 +147,7 @@ class Game {
             octaveUpBtn: document.getElementById('octaveUpBtn'),
             octaveDownBtn: document.getElementById('octaveDownBtn'),
             keySelect: document.getElementById('key-select'),
-            characterMain: document.getElementById('characterMain'),
-            characterLeft: document.getElementById('characterLeft'),
-            characterRight: document.getElementById('characterRight'),
+            stage: document.querySelector('.stage'),
             qrModal: document.getElementById('qr-modal'),
             qrModalOverlay: document.getElementById('qr-modal-overlay'),
             qrCanvas: document.getElementById('qr-canvas'),
@@ -176,12 +174,8 @@ class Game {
      * Initialize sub-components
      */
     initComponents() {
-        // Character manager
-        this.character = new Character(
-            this.elements.characterMain,
-            this.elements.characterLeft,
-            this.elements.characterRight
-        );
+        // Visualizer manager
+        this.visualizer = new VisualizerManager(this.elements.stage);
         
         // Piano keyboard
         this.pianoKeyboard = new PianoKeyboard(this.elements.pianoKeyboardContainer);
@@ -400,7 +394,8 @@ class Game {
         this.isPlaying = true;
         this.elements.playBtn.classList.add('playing');
         this.elements.playBtn.textContent = '⏸️';
-        this.character.setIdle(false);
+        
+        this.visualizer.reset();
         
         this.timeline.setPlayheadVisible(true);
         this.startPlayback();
@@ -434,7 +429,7 @@ class Game {
         this.timeline.highlightBeat(-1);
         this.timeline.setPlayheadVisible(false);
         this.timeline.updatePlayheadPosition(0);
-        this.character.reset();
+        this.visualizer.reset();
     }
 
     /**
@@ -521,31 +516,24 @@ class Game {
         if (notes[1] && !notes[1].sustained) {
             const noteDuration = (notes[1].duration || 1) * beatDurationSec;
             const velocity = notes[1].velocity || 0.8;
-            const octave = notes[1].octave || null;
+            const octave = notes[1].octave || 4;
             this.audio.playNote(notes[1].note, 1, noteDuration, velocity, octave);
-            playing[1] = true;
-            durations[1] = notes[1].duration || 1;
+            this.visualizer.onNotePlay(notes[1].note, 1, octave, velocity, notes[1].duration || 1);
         }
         
         if (notes[2] && !notes[2].sustained) {
             const noteDuration = (notes[2].duration || 1) * beatDurationSec;
             const velocity = notes[2].velocity || 0.8;
-            const octave = notes[2].octave || null;
+            const octave = notes[2].octave || 4;
             this.audio.playNote(notes[2].note, 2, noteDuration, velocity, octave);
-            playing[2] = true;
-            durations[2] = notes[2].duration || 1;
+            this.visualizer.onNotePlay(notes[2].note, 2, octave, velocity, notes[2].duration || 1);
         }
         
         if (notes[3] && !notes[3].sustained) {
             // Percussion doesn't use duration or octave
             const velocity = notes[3].velocity || 0.8;
             this.audio.playNote(notes[3].note, 3, undefined, velocity);
-            playing[3] = true;
-        }
-        
-        // Animate characters if any notes played
-        if (playing[1] || playing[2] || playing[3]) {
-            this.character.dance(playing, durations);
+            this.visualizer.onNotePlay(notes[3].note, 3, 4, velocity, 1);
         }
     }
 
@@ -554,7 +542,7 @@ class Game {
      */
     onPlaybackComplete() {
         this.stop();
-        this.character.celebrate();
+        this.visualizer.celebrate();
         this.audio.playSuccess();
     }
 
@@ -2528,6 +2516,11 @@ class Game {
         
         // Update body data attribute for CSS theming
         document.body.setAttribute('data-mode', mode);
+        
+        // Update visualizer mode
+        if (this.visualizer) {
+            this.visualizer.setMode(mode);
+        }
         
         // Persist to localStorage
         if (persist) {
