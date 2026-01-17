@@ -15,6 +15,9 @@ class PianoKeyboard {
         this.dragStartHandler = null;
         this.whiteKeyIndices = [1, 3, 5, 6, 8, 10, 12]; // C, D, E, F, G, A, B
         this.blackKeyIndices = [2, 4, 7, 9, 11]; // C#, D#, F#, G#, A#
+        this.currentOctave = 4; // Default octave for multi-octave mode
+        this.multiOctaveMode = false; // Enable multi-octave in Studio Mode
+        this.octaveRange = [3, 4, 5]; // Available octaves (3 octaves total)
     }
 
     /**
@@ -90,11 +93,72 @@ class PianoKeyboard {
     }
 
     getNoteData(noteIndex) {
+        const note = PIANO_NOTES[noteIndex];
         return {
-            note: PIANO_NOTES[noteIndex],
-            icon: PIANO_ICONS[PIANO_NOTES[noteIndex]],
-            octave: null
+            note: note,
+            icon: PIANO_ICONS[note],
+            octave: this.multiOctaveMode ? this.currentOctave : null
         };
+    }
+    
+    /**
+     * Set multi-octave mode and enable octave controls
+     * @param {boolean} enabled - Whether to enable multi-octave mode
+     */
+    setMultiOctaveMode(enabled) {
+        this.multiOctaveMode = enabled;
+        
+        // Show/hide octave controls
+        const controls = this.container.parentElement.querySelector('.octave-controls');
+        if (controls) {
+            controls.style.display = enabled ? 'flex' : 'none';
+        }
+        
+        // Update current octave display
+        if (enabled) {
+            this.updateOctaveDisplay();
+        }
+    }
+    
+    /**
+     * Change current octave
+     * @param {number} octave - New octave number
+     */
+    setOctave(octave) {
+        if (this.octaveRange.includes(octave)) {
+            this.currentOctave = octave;
+            this.updateOctaveDisplay();
+        }
+    }
+    
+    /**
+     * Shift octave up
+     */
+    octaveUp() {
+        const currentIndex = this.octaveRange.indexOf(this.currentOctave);
+        if (currentIndex < this.octaveRange.length - 1) {
+            this.setOctave(this.octaveRange[currentIndex + 1]);
+        }
+    }
+    
+    /**
+     * Shift octave down
+     */
+    octaveDown() {
+        const currentIndex = this.octaveRange.indexOf(this.currentOctave);
+        if (currentIndex > 0) {
+            this.setOctave(this.octaveRange[currentIndex - 1]);
+        }
+    }
+    
+    /**
+     * Update octave display in controls
+     */
+    updateOctaveDisplay() {
+        const display = this.container.parentElement.querySelector('.octave-display');
+        if (display) {
+            display.textContent = `Oct ${this.currentOctave}`;
+        }
     }
 
     updateDisabledKeys(allowedNoteIndices) {

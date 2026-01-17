@@ -82,7 +82,20 @@
         <!-- Note Palette -->
         <section class="palette" aria-label="Sound Palette">
             <!-- Piano Keyboard (replaces melody and bass rows) -->
-            <div id="piano-keyboard-container" class="piano-keyboard-wrapper"></div>
+            <div class="piano-keyboard-section">
+                <div id="piano-keyboard-container" class="piano-keyboard-wrapper"></div>
+                
+                <!-- Octave Controls (Studio Mode only) -->
+                <div class="octave-controls" style="display: none;">
+                    <button class="octave-btn" id="octaveDownBtn" aria-label="Octave Down">
+                        <span>▼</span>
+                    </button>
+                    <div class="octave-display">Oct 4</div>
+                    <button class="octave-btn" id="octaveUpBtn" aria-label="Octave Up">
+                        <span>▲</span>
+                    </button>
+                </div>
+            </div>
             
             <!-- Percussion -->
             <div class="palette-row" data-type="percussion">
@@ -116,6 +129,12 @@
 
         <!-- Controls -->
         <section class="controls" aria-label="Playback Controls">
+            <!-- BPM Input (Studio Mode only) -->
+            <div class="bpm-input-container" style="display: none;">
+                <label for="bpmInput">BPM:</label>
+                <input type="number" id="bpmInput" min="40" max="200" value="120" step="1" aria-label="BPM">
+            </div>
+            
             <button class="control-btn speed-btn" id="speedBtn" aria-label="Speed">
                 🚶
             </button>

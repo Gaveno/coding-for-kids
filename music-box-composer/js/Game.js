@@ -76,6 +76,10 @@ class Game {
         this.playbackInterval = null;
         this.animationFrame = null;
         
+        // BPM mode (Studio Mode)
+        this.currentBPM = 120; // Default BPM
+        this.useBPM = false; // Toggle between presets and BPM
+        
         // Speed settings (ms per beat)
         this.speeds = [
             { ms: 350, icon: '🐢' },
@@ -119,6 +123,7 @@ class Game {
             stopBtn: document.getElementById('stopBtn'),
             speedBtn: document.getElementById('speedBtn'),
             tapTempoBtn: document.getElementById('tapTempoBtn'),
+            bpmInput: document.getElementById('bpmInput'),
             loopBtn: document.getElementById('loopBtn'),
             clearBtn: document.getElementById('clearBtn'),
             shareBtn: document.getElementById('shareBtn'),
@@ -137,6 +142,8 @@ class Game {
             cells3: document.getElementById('cells3'),
             palette: document.querySelector('.palette'),
             pianoKeyboardContainer: document.getElementById('piano-keyboard-container'),
+            octaveUpBtn: document.getElementById('octaveUpBtn'),
+            octaveDownBtn: document.getElementById('octaveDownBtn'),
             keySelect: document.getElementById('key-select'),
             characterMain: document.getElementById('characterMain'),
             characterLeft: document.getElementById('characterLeft'),
@@ -240,6 +247,40 @@ class Game {
         this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
         this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
+        
+        // Octave controls (Studio Mode)
+        if (this.elements.octaveUpBtn) {
+            this.elements.octaveUpBtn.addEventListener('click', () => {
+                if (this.pianoKeyboard) {
+                    this.pianoKeyboard.octaveUp();
+                }
+            });
+        }
+        if (this.elements.octaveDownBtn) {
+            this.elements.octaveDownBtn.addEventListener('click', () => {
+                if (this.pianoKeyboard) {
+                    this.pianoKeyboard.octaveDown();
+           BPM Input (Studio Mode)
+        if (this.elements.bpmInput) {
+            this.elements.bpmInput.addEventListener('input', (e) => {
+                const bpm = parseInt(e.target.value);
+                if (bpm >= 40 && bpm <= 200) {
+                    this.setBPM(bpm);
+                }
+            });
+            this.elements.bpmInput.addEventListener('change', (e) => {
+                // Clamp value on blur
+                let bpm = parseInt(e.target.value);
+                if (isNaN(bpm) || bpm < 40) bpm = 40;
+                if (bpm > 200) bpm = 200;
+                e.target.value = bpm;
+                this.setBPM(bpm);
+            });
+        }
+        
+        //      }
+            });
+        }
         
         // QR modal events
         this.elements.closeQrBtn.addEventListener('click', () => this.closeQRModal());
@@ -359,7 +400,7 @@ class Game {
      * Start the playback loop
      */
     startPlayback() {
-        const beatDuration = this.speeds[this.currentSpeedIndex].ms;
+        const beatDuration = this.getBeatDuration();
         let lastBeatTime = performance.now();
         let displayBeat = this.currentBeat;
         
@@ -432,14 +473,15 @@ class Game {
         };
         
         // Calculate beat duration in seconds
-        const beatDurationMs = this.speeds[this.currentSpeedIndex].ms;
+        const beatDurationMs = this.getBeatDuration();
         const beatDurationSec = beatDurationMs / 1000;
         
         // Only play notes that are starting (not sustained from previous beat)
         if (notes[1] && !notes[1].sustained) {
             const noteDuration = (notes[1].duration || 1) * beatDurationSec;
             const velocity = notes[1].velocity || 0.8;
-            this.audio.playNote(notes[1].note, 1, noteDuration, velocity);
+            const octave = notes[1].octave || null;
+            this.audio.playNote(notes[1].note, 1, noteDuration, velocity, octave);
             playing[1] = true;
             durations[1] = notes[1].duration || 1;
         }
@@ -447,13 +489,14 @@ class Game {
         if (notes[2] && !notes[2].sustained) {
             const noteDuration = (notes[2].duration || 1) * beatDurationSec;
             const velocity = notes[2].velocity || 0.8;
-            this.audio.playNote(notes[2].note, 2, noteDuration, velocity);
+            const octave = notes[2].octave || null;
+            this.audio.playNote(notes[2].note, 2, noteDuration, velocity, octave);
             playing[2] = true;
             durations[2] = notes[2].duration || 1;
         }
         
         if (notes[3] && !notes[3].sustained) {
-            // Percussion doesn't use duration
+            // Percussion doesn't use duration or octave
             const velocity = notes[3].velocity || 0.8;
             this.audio.playNote(notes[3].note, 3, undefined, velocity);
             playing[3] = true;
@@ -478,6 +521,13 @@ class Game {
      * Cycle through speed options
      */
     cycleSpeed() {
+        // Studio Mode uses BPM input, not speed presets
+        if (this.currentMode === Game.MODES.STUDIO) {
+            // Clicking speed button in Studio Mode does nothing
+            // (use BPM input or tap tempo instead)
+            return;
+        }
+        
         const config = this.getModeConfig();
         
         // Kid Mode: Only 2 speeds (slow and fast)
@@ -487,12 +537,43 @@ class Game {
             const nextIndex = (currentIndex + 1) % kidSpeeds.length;
             this.currentSpeedIndex = kidSpeeds[nextIndex];
         } else {
-            // Tween/Studio: Cycle through all speeds
+            // Tween: Cycle through all speeds
             this.currentSpeedIndex = (this.currentSpeedIndex + 1) % this.speeds.length;
         }
         
         this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
         this.updateURL();
+    }
+    
+    /**
+     * Set BPM (Studio Mode)
+     * @param {number} bpm - BPM value (40-200)
+     */
+    setBPM(bpm) {
+        if (bpm < 40 || bpm > 200) return;
+        
+        this.currentBPM = bpm;
+        this.useBPM = true;
+        
+        // Update UI
+        if (this.elements.bpmInput) {
+            this.elements.bpmInput.value = bpm;
+        }
+        
+        this.updateURL();
+    }
+    
+    /**
+     * Get current beat duration in ms
+     * @returns {number} - Beat duration in milliseconds
+     */
+    getBeatDuration() {
+        if (this.currentMode === Game.MODES.STUDIO && this.useBPM) {
+            // BPM mode: convert BPM to ms per beat
+            return 60000 / this.currentBPM;
+        }
+        // Preset mode: use speed index
+        return this.speeds[this.currentSpeedIndex].ms;
     }
 
     /**
@@ -538,7 +619,27 @@ class Game {
         // Convert BPM to ms per beat (quarter note)
         const msPerBeat = 60000 / bpm;
         
-        // Find closest speed preset
+        // In Studio Mode, set BPM directly instead of finding nearest preset
+        if (this.currentMode === Game.MODES.STUDIO) {
+            const roundedBPM = Math.round(bpm);
+            this.setBPM(roundedBPM);
+            
+            // Visual feedback
+            this.elements.tapTempoBtn.classList.add('tap-active');
+            setTimeout(() => {
+                this.elements.tapTempoBtn.classList.remove('tap-active');
+            }, 100);
+            
+            // Reset tap history after 2 seconds of inactivity
+            clearTimeout(this.tapResetTimer);
+            this.tapResetTimer = setTimeout(() => {
+                this.tapHistory = [];
+            }, 2000);
+            
+            return;
+        }
+        
+        // For Kid/Tween modes: find closest speed preset
         let closestIndex = 0;
         let closestDiff = Math.abs(this.speeds[0].ms - msPerBeat);
         
@@ -762,28 +863,35 @@ class Game {
         this.pushBits(bits, lengthIndex, 2);
         this.pushBits(bits, keyIndex, 4);
         
-        // Track data for each beat (same as v3)
+        // Track data with velocity: 29 bits per beat
+        // piano1 (4 note + 3 dur + 4 vel) + piano2 (4 note + 3 dur + 4 vel) + perc (3 note + 4 vel)
         for (let beat = 0; beat < beatCount; beat++) {
             const notes = this.timeline.getNotesAtBeat(beat);
             
-            // Piano track 1 (high): note index (4 bits) + duration (3 bits)
+            // Piano track 1 (high): note index (4 bits) + duration (3 bits) + velocity (4 bits)
             const note1 = notes[1];
             const note1Index = note1 && !note1.sustained ? this.getNoteIndex(note1.note) : 0;
             const duration1 = note1 && !note1.sustained ? note1.duration : 1;
+            const velocity1 = note1 && !note1.sustained ? Math.round((note1.velocity || 0.8) * 15) : 12;
             this.pushBits(bits, note1Index, 4);
             this.pushBits(bits, Math.min(7, Math.max(0, duration1 - 1)), 3);
+            this.pushBits(bits, velocity1, 4);
             
-            // Piano track 2 (low): note index (4 bits) + duration (3 bits)
+            // Piano track 2 (low): note index (4 bits) + duration (3 bits) + velocity (4 bits)
             const note2 = notes[2];
             const note2Index = note2 && !note2.sustained ? this.getNoteIndex(note2.note) : 0;
             const duration2 = note2 && !note2.sustained ? note2.duration : 1;
+            const velocity2 = note2 && !note2.sustained ? Math.round((note2.velocity || 0.8) * 15) : 12;
             this.pushBits(bits, note2Index, 4);
             this.pushBits(bits, Math.min(7, Math.max(0, duration2 - 1)), 3);
+            this.pushBits(bits, velocity2, 4);
             
-            // Percussion track: note index (3 bits)
+            // Percussion track: note index (3 bits) + velocity (4 bits)
             const note3 = notes[3];
             const note3Index = note3 && !note3.sustained ? Game.PERC_NOTES.indexOf(note3.note) : 0;
+            const velocity3 = note3 && !note3.sustained ? Math.round((note3.velocity || 0.8) * 15) : 12;
             this.pushBits(bits, Math.max(0, note3Index), 3);
+            this.pushBits(bits, velocity3, 4);
         }
         
         // Convert bits to bytes
@@ -1183,9 +1291,9 @@ class Game {
     }
 
     /**
-     * Deserialize v4 format (with mode selection)
+     * Deserialize v4 format (with mode selection and velocity)
      * Header: 11 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4)
-     * Per beat: 17 bits (piano1:4, dur1:3, piano2:4, dur2:3, percussion:3)
+     * Per beat: 29 bits (piano1:4+dur1:3+vel1:4, piano2:4+dur2:3+vel2:4, percussion:3+vel3:4)
      */
     deserializeV4(bits) {
         const PIANO_NOTES = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -1207,34 +1315,37 @@ class Game {
         const keyName = Game.KEY_NAMES[keyIndex] || 'C Major';
         const mode = Object.values(Game.MODES)[modeIndex] || Game.MODES.KID;
         
-        // Read track data (same as v3)
+        // Read track data with velocity
         const track1 = []; // High piano (octave 5)
         const track2 = []; // Low piano (octave 3)
         const track3 = []; // Percussion
         
         for (let beat = 0; beat < beatCount; beat++) {
-            // Piano track 1: 4 bits note + 3 bits duration
+            // Piano track 1: 4 bits note + 3 bits duration + 4 bits velocity
             const note1Index = this.readBits(bits, offset, 4); offset += 4;
             const duration1 = this.readBits(bits, offset, 3) + 1; offset += 3;
+            const velocity1 = this.readBits(bits, offset, 4) / 15; offset += 4;
             
-            // Piano track 2: 4 bits note + 3 bits duration
+            // Piano track 2: 4 bits note + 3 bits duration + 4 bits velocity
             const note2Index = this.readBits(bits, offset, 4); offset += 4;
             const duration2 = this.readBits(bits, offset, 3) + 1; offset += 3;
+            const velocity2 = this.readBits(bits, offset, 4) / 15; offset += 4;
             
-            // Percussion: 3 bits note
+            // Percussion: 3 bits note + 4 bits velocity
             const percIndex = this.readBits(bits, offset, 3); offset += 3;
+            const velocity3 = this.readBits(bits, offset, 4) / 15; offset += 4;
             
-            // Add notes if valid
+            // Add notes if valid (with velocity as 6th element)
             if (note1Index > 0 && note1Index < PIANO_NOTES.length) {
                 const note = PIANO_NOTES[note1Index];
-                track1.push([beat, note, PIANO_ICONS[note], duration1, 5]); // octave 5
+                track1.push([beat, note, PIANO_ICONS[note], duration1, 5, velocity1]); // octave 5, velocity
             }
             if (note2Index > 0 && note2Index < PIANO_NOTES.length) {
                 const note = PIANO_NOTES[note2Index];
-                track2.push([beat, note, PIANO_ICONS[note], duration2, 3]); // octave 3
+                track2.push([beat, note, PIANO_ICONS[note], duration2, 3, velocity2]); // octave 3, velocity
             }
             if (percIndex > 0 && percIndex < Game.PERC_NOTES.length) {
-                track3.push([beat, Game.PERC_NOTES[percIndex], Game.PERC_ICONS[percIndex], 1, null]); // no octave
+                track3.push([beat, Game.PERC_NOTES[percIndex], Game.PERC_ICONS[percIndex], 1, null, velocity3]); // no octave, velocity
             }
         }
         
@@ -1640,6 +1751,9 @@ class Game {
         // Update piano keyboard (sharps/flats visibility)
         if (this.pianoKeyboard) {
             this.pianoKeyboard.setShowSharps(config.showSharps);
+            
+            // Enable multi-octave mode for Studio Mode
+            this.pianoKeyboard.setMultiOctaveMode(this.currentMode === Game.MODES.STUDIO);
         }
         
         // Update timeline max beats
@@ -1667,6 +1781,22 @@ class Game {
      */
     updateSpeedControls() {
         const config = this.getModeConfig();
+        const isStudioMode = this.currentMode === Game.MODES.STUDIO;
+        
+        // Studio Mode: Show BPM input, hide/disable speed button
+        if (this.elements.bpmInput) {
+            const bpmContainer = this.elements.bpmInput.closest('.bpm-input-container');
+            if (bpmContainer) {
+                bpmContainer.style.display = isStudioMode ? 'flex' : 'none';
+            }
+            if (isStudioMode) {
+                this.elements.bpmInput.value = this.currentBPM;
+            }
+        }
+        
+        if (this.elements.speedBtn) {
+            this.elements.speedBtn.style.display = isStudioMode ? 'none' : 'flex';
+        }
         
         // Kid Mode: Ensure speed is one of the allowed values
         if (this.currentMode === Game.MODES.KID) {

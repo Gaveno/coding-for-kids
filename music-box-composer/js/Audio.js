@@ -7,6 +7,19 @@ class Audio {
         this.audioContext = null;
         this.isInitialized = false;
         
+        // Waveform settings per track (for Studio Mode)
+        this.trackWaveforms = {
+            1: 'sine',      // High piano
+            2: 'triangle',  // Low piano
+            3: null         // Percussion (N/A)
+        };
+        
+        // Effects state (for Studio Mode)
+        this.effectsEnabled = {
+            reverb: [false, false, false], // Per track
+            delay: [false, false, false]   // Per track
+        };
+        
         // Note to frequency mapping (A4 = 440 Hz)
         this.noteFrequencies = {
             'C': 261.63,
@@ -67,18 +80,20 @@ class Audio {
      * @param {number} trackNumber - Track number (1 or 2)
      * @param {number} duration - Duration in seconds
      * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
+     * @param {number|null} octave - Optional octave override (null = use track default)
      */
-    playPianoNote(note, trackNumber, duration = 0.25, velocity = 0.8) {
+    playPianoNote(note, trackNumber, duration = 0.25, velocity = 0.8, octave = null) {
         if (!this.isInitialized) this.init();
         
-        const octave = this.getOctaveForTrack(trackNumber);
-        if (octave === null) return;
+        // Use provided octave or fall back to track default
+        const finalOctave = octave !== null ? octave : this.getOctaveForTrack(trackNumber);
+        if (finalOctave === null) return;
         
-        const frequency = this.noteToFrequency(note, octave);
+        const frequency = this.noteToFrequency(note, finalOctave);
         if (!frequency) return;
         
-        // Use different waveforms for different tracks
-        const waveform = trackNumber === 1 ? 'sine' : 'triangle';
+        // Use different waveforms for different tracks (can be overridden in Studio Mode)
+        const waveform = this.trackWaveforms[trackNumber] || (trackNumber === 1 ? 'sine' : 'triangle');
         const baseVolume = trackNumber === 1 ? 0.4 : 0.5;
         
         this.playTone(frequency, waveform, duration, baseVolume * velocity);
@@ -395,15 +410,36 @@ class Audio {
         
         gainNode.gain.setValueAtTime(0.3 * velocity, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-
-        oscillator1.start(now);
-        oscillator2.start(now);
-        oscillator1.stop(now + 0.15);
-        oscillator2.stop(now + 0.15);
+ @param {number|null} octave - Optional octave for piano notes (null = use track default)
+     */
+    playNote(note, trackNumber, duration, velocity = 0.8, octave = null) {
+        if (trackNumber === 3) {
+            // Percussion track
+            this.playPercussion(note, velocity);
+        } else {
+            // Piano tracks (1 or 2) - pass octave through
+            this.playPianoNote(note, trackNumber, duration, velocity, octave);
+        }
     }
-
+    
     /**
-     * Play a note based on track number and note data
+     * Set waveform for a track (Studio Mode feature)
+     * @param {number} trackNumber - Track number (1 or 2)
+     * @param {string} waveform - Waveform type: 'sine', 'triangle', 'square', 'sawtooth'
+     */
+    setTrackWaveform(trackNumber, waveform) {
+        if (trackNumber >= 1 && trackNumber <= 2) {
+            this.trackWaveforms[trackNumber] = waveform;
+        }
+    }
+    
+    /**
+     * Get current waveform for a track
+     * @param {number} trackNumber - Track number
+     * @returns {string} - Waveform type
+     */
+    getTrackWaveform(trackNumber) {
+        return this.trackWaveforms[trackNumber] || 'sine';ay a note based on track number and note data
      * @param {string} note - Note name or percussion type
      * @param {number} trackNumber - Track number (1 = high piano, 2 = low piano, 3 = percussion)
      * @param {number} duration - Duration in seconds (optional)

@@ -2,8 +2,50 @@
 .controls {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: var(--spacing-md);
     padding: var(--spacing-sm);
+}
+
+/* BPM Input (Studio Mode only) */
+.bpm-input-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-surface);
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.bpm-input-container label {
+    font-weight: bold;
+    color: var(--color-text);
+    font-size: 14px;
+}
+
+#bpmInput {
+    width: 70px;
+    padding: 6px 8px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    background: var(--color-background);
+    color: var(--color-text);
+}
+
+#bpmInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 8px rgba(74, 158, 255, 0.3);
+}
+
+/* Remove number input spinners */
+#bpmInput::-webkit-inner-spin-button,
+#bpmInput::-webkit-outer-spin-button {
+    opacity: 1;
 }
 
 /* Mode Selector */
