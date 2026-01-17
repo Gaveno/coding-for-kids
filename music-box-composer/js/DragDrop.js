@@ -156,6 +156,7 @@ class DragDrop {
             note: noteData.note,
             type: 'piano',
             icon: noteData.icon,
+            octave: noteData.octave,  // Include octave from piano keyboard
             trackNum: null, // Will be determined on drop (1 or 2)
             sourceBtn: key,
             fromPiano: true
@@ -468,12 +469,12 @@ class DragDrop {
             const trackNum = parseInt(targetCell.dataset.track);
             const beat = parseInt(targetCell.dataset.beat);
             
-            // Create note data with octave based on track
+            // Create note data using octave from drag state (set by piano keyboard)
             const noteData = {
                 note: this.dragState.note,
                 icon: this.dragState.icon,
                 duration: 1,
-                octave: trackNum === 3 ? null : (trackNum === 1 ? 5 : 3)
+                octave: this.dragState.octave // Use octave from piano keyboard
             };
             
             this.onDrop(trackNum, beat, noteData);

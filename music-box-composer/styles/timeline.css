@@ -345,6 +345,32 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* Octave Indicator (Studio Mode only) */
+.octave-indicator {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+[data-mode="studio"] .octave-indicator {
+    background: rgba(74, 158, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide octave indicator in Kid/Tween modes */
+[data-mode="kid"] .octave-indicator,
+[data-mode="tween"] .octave-indicator {
+    display: none;
+}
+
 /* Velocity Indicator */
 .velocity-indicator {
     position: absolute;

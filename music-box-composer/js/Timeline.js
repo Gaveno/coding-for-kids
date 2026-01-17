@@ -127,6 +127,7 @@ class Timeline {
                 cell.classList.add('has-note');
                 const duration = note.duration || 1;
                 const velocity = note.velocity || 0.8;
+                const octave = note.octave;
                 
                 // Create note element that can span multiple cells
                 const noteEl = document.createElement('div');
@@ -135,12 +136,23 @@ class Timeline {
                 noteEl.dataset.duration = duration;
                 noteEl.dataset.note = note.note; // For color styling
                 noteEl.dataset.velocity = velocity;
+                if (octave !== null && octave !== undefined) {
+                    noteEl.dataset.octave = octave;
+                }
                 
                 // Set width based on duration (always use calc for consistency)
                 if (duration > 1) {
                     noteEl.classList.add('extended');
                 }
                 noteEl.style.width = `calc(${duration} * var(--cell-size) - 4px)`;
+                
+                // Add octave indicator (only for piano tracks with octave set)
+                if (octave !== null && octave !== undefined && trackNum !== 3) {
+                    const octaveIndicator = document.createElement('div');
+                    octaveIndicator.className = 'octave-indicator';
+                    octaveIndicator.textContent = octave;
+                    noteEl.appendChild(octaveIndicator);
+                }
                 
                 // Add velocity indicator (only in Tween/Studio modes)
                 const velocityBar = document.createElement('div');
