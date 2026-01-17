@@ -137,8 +137,8 @@ class DragDrop {
         key.classList.add('playing');
         setTimeout(() => key.classList.remove('playing'), 300);
         
-        // Preview with track 1 (high octave)
-        this.onPreview(noteData.note, 1);
+        // Preview with the keyboard's current octave (or track 1 default if no octave set)
+        this.onPreview(noteData.note, 1, noteData.octave);
     }
     
     /**

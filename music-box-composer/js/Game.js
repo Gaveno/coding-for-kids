@@ -305,8 +305,8 @@ class Game {
     /**
      * Preview a note (tap on palette)
      */
-    previewNote(note, trackNum) {
-        this.audio.playNote(note, trackNum);
+    previewNote(note, trackNum, octave = null) {
+        this.audio.playNote(note, trackNum, 0.25, 0.8, octave);
     }
 
     /**

@@ -17,7 +17,7 @@ class PianoKeyboard {
         this.blackKeyIndices = [2, 4, 7, 9, 11]; // C#, D#, F#, G#, A#
         this.currentOctave = 4; // Default octave for multi-octave mode
         this.multiOctaveMode = false; // Enable multi-octave in Studio Mode
-        this.octaveRange = [3, 4, 5]; // Available octaves (3 octaves total)
+        this.octaveRange = [2, 3, 4, 5, 6]; // Available octaves (5 octaves for Studio Mode)
     }
 
     /**
