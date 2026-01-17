@@ -6,6 +6,49 @@
     padding: var(--spacing-sm);
 }
 
+/* Mode Selector */
+.mode-selector {
+    display: flex;
+    gap: var(--spacing-xs);
+    background: var(--color-surface);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.mode-btn {
+    width: 44px;
+    height: 44px;
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: var(--color-surface-light);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    opacity: 0.6;
+}
+
+.mode-btn:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.mode-btn.active {
+    opacity: 1;
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    box-shadow: 0 0 12px var(--color-primary);
+    transform: scale(1.1);
+}
+
+.mode-btn:active {
+    transform: scale(0.95);
+}
+
 .control-btn {
     width: 60px;
     height: 60px;

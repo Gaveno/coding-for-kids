@@ -1,15 +1,23 @@
 /* ===== CSS Variables ===== */
 :root {
-    /* Colors */
-    --color-primary: #6C63FF;
-    --color-secondary: #FF6B6B;
+    /* Mode System */
+    --mode: 'kid';
+    
+    /* Colors - Kid Mode defaults */
+    --color-primary: #FF6B6B;
+    --color-secondary: #FFE66D;
     --color-success: #4ECDC4;
-    --color-warning: #FFE66D;
+    --color-warning: #FF9F43;
     --color-danger: #FF6B6B;
-    --color-bg: #1a1a2e;
-    --color-surface: #16213e;
-    --color-surface-light: #0f3460;
-    --color-text: #ffffff;
+    --color-bg: #fff5e6;
+    --color-surface: #ffffff;
+    --color-surface-light: #fffaf0;
+    --color-text: #2C3E50;
+    
+    /* Mode-specific dimensions */
+    --touch-target-size: 60px;
+    --animation-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --animation-duration: 0.3s;
 
     /* Note Colors - Melody */
     --note-red: #FF6B6B;
@@ -59,4 +67,50 @@
     --speed-medium: 120ms;
     --speed-fast: 80ms;
     --speed-veryfast: 50ms;
+}
+
+/* ===== Tween Mode Theme (Ages 7-12) ===== */
+[data-mode="tween"] {
+    /* Neon/gaming aesthetic */
+    --color-primary: #00f5d4;
+    --color-secondary: #ff006e;
+    --color-success: #00ff88;
+    --color-warning: #ffbe0b;
+    --color-danger: #ff006e;
+    --color-bg: #1a1a2e;
+    --color-surface: #16213e;
+    --color-surface-light: #0f3460;
+    --color-text: #ffffff;
+    
+    --touch-target-size: 48px;
+    --animation-bounce: ease-out;
+    --animation-duration: 0.2s;
+    
+    /* Enhanced shadows for neon effect */
+    --shadow-sm: 0 2px 8px rgba(0, 245, 212, 0.2);
+    --shadow: 0 4px 20px rgba(0, 245, 212, 0.3);
+    --shadow-lg: 0 8px 40px rgba(0, 245, 212, 0.4);
+}
+
+/* ===== Studio Mode Theme (Ages 13+) ===== */
+[data-mode="studio"] {
+    /* Pro DAW-inspired dark theme */
+    --color-primary: #4a9eff;
+    --color-secondary: #f72585;
+    --color-success: #06d6a0;
+    --color-warning: #ffd60a;
+    --color-danger: #ef476f;
+    --color-bg: #0d0d0d;
+    --color-surface: #1a1a1a;
+    --color-surface-light: #2a2a2a;
+    --color-text: #e0e0e0;
+    
+    --touch-target-size: 44px;
+    --animation-bounce: ease-out;
+    --animation-duration: 0.1s;
+    
+    /* Subtle shadows for professional look */
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.6);
 }

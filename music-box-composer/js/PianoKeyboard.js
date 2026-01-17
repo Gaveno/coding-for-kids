@@ -114,4 +114,15 @@ class PianoKeyboard {
             }
         });
     }
+    
+    /**
+     * Set whether sharps/flats (black keys) should be visible
+     * @param {boolean} show - Whether to show black keys
+     */
+    setShowSharps(show) {
+        const blackKeysContainer = this.container.querySelector('.black-keys');
+        if (blackKeysContainer) {
+            blackKeysContainer.style.display = show ? 'block' : 'none';
+        }
+    }
 }

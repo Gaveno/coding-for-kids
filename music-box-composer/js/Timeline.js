@@ -505,6 +505,18 @@ class Timeline {
         }
         this.render();
     }
+    
+    /**
+     * Set the maximum number of beats in the timeline
+     * @param {number} maxBeats - Maximum number of beats
+     */
+    setMaxBeats(maxBeats) {
+        // Ensure beatCount doesn't exceed the max for this mode
+        if (this.beatCount > maxBeats) {
+            this.beatCount = maxBeats;
+            this.render();
+        }
+    }
 }
 
 window.Timeline = Timeline;

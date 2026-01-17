@@ -2,6 +2,41 @@
  * Game.js - Main game controller for Music Box Composer
  */
 class Game {
+    // Mode definitions
+    static MODES = {
+        KID: 'kid',
+        TWEEN: 'tween',
+        STUDIO: 'studio'
+    };
+    
+    // Mode configurations
+    static MODE_CONFIGS = {
+        kid: {
+            maxBeats: 16,
+            showSharps: false,
+            showKeySelector: false,
+            showDuration: false,
+            speeds: [0, 2],  // Only slow and fast
+            percussionCount: 4
+        },
+        tween: {
+            maxBeats: 64,
+            showSharps: true,
+            showKeySelector: true,
+            showDuration: true,
+            speeds: [0, 1, 2, 3],  // All speeds
+            percussionCount: 8
+        },
+        studio: {
+            maxBeats: 128,
+            showSharps: true,
+            showKeySelector: true,
+            showDuration: true,
+            speeds: 'bpm',  // Uses BPM input instead
+            percussionCount: 12
+        }
+    };
+    
     // Key signatures: indices map to PIANO_NOTES array (1-12, 0=empty)
     static KEY_SIGNATURES = {
         'C Major':  [1, 3, 5, 6, 8, 10, 12],     // C D E F G A B
@@ -26,6 +61,9 @@ class Game {
     static KEY_NAMES = Object.keys(Game.KEY_SIGNATURES);
     
     constructor() {
+        // Mode state
+        this.currentMode = this.loadMode();
+        
         this.audio = new Audio();
         this.timeline = null;
         this.character = null;
@@ -64,6 +102,10 @@ class Game {
         this.cacheElements();
         this.initComponents();
         this.bindEvents();
+        
+        // Apply mode after components are initialized
+        this.setMode(this.currentMode, false); // Don't re-save to localStorage
+        
         this.loadFromURL();
         this.updateShareButtons();
     }
@@ -173,6 +215,16 @@ class Game {
      * Bind event listeners
      */
     bindEvents() {
+        // Mode selector buttons
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = btn.getAttribute('data-mode');
+                this.setMode(mode);
+                this.updateModeButtonStates();
+            });
+        });
+        
         this.elements.playBtn.addEventListener('click', () => this.togglePlay());
         this.elements.stopBtn.addEventListener('click', () => this.stop());
         this.elements.speedBtn.addEventListener('click', () => this.cycleSpeed());
@@ -1197,6 +1249,11 @@ class Game {
      * @param {Object} state - Deserialized state object
      */
     applyState(state) {
+        // Apply mode (new in v4)
+        if (state.mode) {
+            this.setMode(state.mode, false); // Don't save to localStorage during load
+        }
+        
         // Apply speed
         if (typeof state.s === 'number' && state.s >= 0 && state.s < this.speeds.length) {
             this.currentSpeedIndex = state.s;
@@ -1231,6 +1288,116 @@ class Game {
         
         // Update URL
         this.updateURL();
+    }
+    
+    /**
+     * Load mode from localStorage
+     * @returns {string} Mode ('kid', 'tween', or 'studio')
+     */
+    loadMode() {
+        const savedMode = localStorage.getItem('musicBoxMode');
+        if (savedMode && Object.values(Game.MODES).includes(savedMode)) {
+            return savedMode;
+        }
+        return Game.MODES.KID; // Default to Kid Mode
+    }
+    
+    /**
+     * Set the current mode
+     * @param {string} mode - Mode to set ('kid', 'tween', or 'studio')
+     * @param {boolean} persist - Whether to save to localStorage (default: true)
+     */
+    setMode(mode, persist = true) {
+        if (!Object.values(Game.MODES).includes(mode)) {
+            console.error('Invalid mode:', mode);
+            return;
+        }
+        
+        this.currentMode = mode;
+        
+        // Update body data attribute for CSS theming
+        document.body.setAttribute('data-mode', mode);
+        
+        // Persist to localStorage
+        if (persist) {
+            localStorage.setItem('musicBoxMode', mode);
+        }
+        
+        // Apply mode-specific UI updates
+        this.applyModeConfig();
+        
+        console.log('Mode set to:', mode);
+    }
+    
+    /**
+     * Get the current mode configuration
+     * @returns {Object} Mode config object
+     */
+    getModeConfig() {
+        return Game.MODE_CONFIGS[this.currentMode];
+    }
+    
+    /**
+     * Check if a feature is enabled in the current mode
+     * @param {string} feature - Feature name to check
+     * @returns {boolean} Whether the feature is enabled
+     */
+    isFeatureEnabled(feature) {
+        const config = this.getModeConfig();
+        switch (feature) {
+            case 'sharps':
+                return config.showSharps;
+            case 'keySelector':
+                return config.showKeySelector;
+            case 'duration':
+                return config.showDuration;
+            default:
+                return true; // Unknown features default to enabled
+        }
+    }
+    
+    /**
+     * Apply mode-specific configuration to UI
+     */
+    applyModeConfig() {
+        const config = this.getModeConfig();
+        
+        // Update mode button states
+        this.updateModeButtonStates();
+        
+        // Update key selector visibility
+        if (this.elements.keySelect) {
+            this.elements.keySelect.style.display = config.showKeySelector ? 'block' : 'none';
+        }
+        
+        // Update piano keyboard (sharps/flats visibility)
+        if (this.pianoKeyboard) {
+            this.pianoKeyboard.setShowSharps(config.showSharps);
+        }
+        
+        // Update timeline max beats
+        if (this.timeline) {
+            this.timeline.setMaxBeats(config.maxBeats);
+        }
+        
+        // Update speed controls (handled by UI component in Phase 1.2)
+        // Update percussion count (handled in Phase 2/3)
+        
+        console.log('Applied mode config:', config);
+    }
+    
+    /**
+     * Update mode button visual states
+     */
+    updateModeButtonStates() {
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        modeBtns.forEach(btn => {
+            if (btn.getAttribute('data-mode') === this.currentMode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
     }
 }
 
