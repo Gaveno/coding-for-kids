@@ -482,6 +482,12 @@ class Game {
     static BASS_ICONS = ['', '🟦', '🟪', '🟫', '⬛', '💙', '💜'];
     static PERC_ICONS = ['', '🥁', '🪘', '🔔', '👏'];
     
+    // Piano keyboard icon mapping (matches PianoKeyboard.js)
+    static PIANO_ICONS = {
+        'C': 'C', 'C#': 'C♯', 'D': 'D', 'D#': 'D♯', 'E': 'E', 'F': 'F',
+        'F#': 'F♯', 'G': 'G', 'G#': 'G♯', 'A': 'A', 'A#': 'A♯', 'B': 'B'
+    };
+    
     // Encoding version: increment when format changes
     // v1: 10 bits per beat (no duration)
     // v2: 16 bits per beat (with duration for melody/bass)
@@ -681,6 +687,25 @@ class Game {
     }
 
     /**
+     * Get proper piano icon for a note (with sharp symbols)
+     * @param {string} note - Note name (C, C#, D, etc.)
+     * @returns {string} Display icon
+     */
+    getPianoIcon(note) {
+        return Game.PIANO_ICONS[note] || note;
+    }
+
+    /**
+     * Deserialize v1 format (no duration support)
+                return null;
+            }
+        } catch (e) {
+            console.warn('Failed to decode state from URL:', e);
+            return null;
+        }
+    }
+
+    /**
      * Deserialize v1 format (no duration support)
      * Per beat: 10 bits (melody:4, bass:3, percussion:3)
      */
@@ -711,14 +736,14 @@ class Game {
                 // Convert old format (C4) to new format (C with octave 5)
                 const oldNote = Game.MELODY_NOTES[melodyIdx];
                 const note = oldNote.replace(/\d+$/, ''); // Remove octave from note name
-                const icon = note; // New format uses note name as icon
+                const icon = this.getPianoIcon(note); // Use proper icon with sharp symbols
                 melody.push([i, note, icon, 1, 5]); // Add octave 5 for melody track
             }
             if (bassIdx > 0 && bassIdx < Game.BASS_NOTES.length) {
                 // Convert old format (C3) to new format (C with octave 3)
                 const oldNote = Game.BASS_NOTES[bassIdx];
                 const note = oldNote.replace(/\d+$/, ''); // Remove octave from note name
-                const icon = note; // New format uses note name as icon
+                const icon = this.getPianoIcon(note); // Use proper icon with sharp symbols
                 bass.push([i, note, icon, 1, 3]); // Add octave 3 for bass track
             }
             if (percIdx > 0 && percIdx < Game.PERC_NOTES.length) {
@@ -772,14 +797,14 @@ class Game {
                 // Convert old format (C4) to new format (C with octave 5)
                 const oldNote = Game.MELODY_NOTES[melodyIdx];
                 const note = oldNote.replace(/\d+$/, ''); // Remove octave from note name
-                const icon = note; // New format uses note name as icon
+                const icon = this.getPianoIcon(note); // Use proper icon with sharp symbols
                 melody.push([i, note, icon, melodyDur, 5]); // Add octave 5 for melody track
             }
             if (bassIdx > 0 && bassIdx < Game.BASS_NOTES.length) {
                 // Convert old format (C3) to new format (C with octave 3)
                 const oldNote = Game.BASS_NOTES[bassIdx];
                 const note = oldNote.replace(/\d+$/, ''); // Remove octave from note name
-                const icon = note; // New format uses note name as icon
+                const icon = this.getPianoIcon(note); // Use proper icon with sharp symbols
                 bass.push([i, note, icon, bassDur, 3]); // Add octave 3 for bass track
             }
             if (percIdx > 0 && percIdx < Game.PERC_NOTES.length) {
