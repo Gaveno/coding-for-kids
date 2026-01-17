@@ -11,6 +11,31 @@ A **key selector** lets users choose musical keys (C Major, G Major, etc.), whic
 
 ---
 
+## Design Philosophy: Focus on Novices
+
+**This tool serves learners aged 3-13+ and must remain accessible to novices.**
+
+When considering new features, ask:
+1. **Does this teach programming concepts?** (sequences, loops, functions, debugging)
+2. **Can it be learned through play?** (no manual required)
+3. **Does it work for pre-literate users?** (visual, emoji-based)
+4. **Is it touch-friendly?** (mobile-first design)
+5. **Does it maintain focus?** (avoid feature creep toward professional DAW)
+
+**Features that pass these tests:**
+- ✅ Mode system (progressive complexity appropriate to age)
+- ✅ Pattern library (teaches functions/abstraction)
+- ✅ Jam mode (immediate feedback, experimentation)
+
+**Features that should be reconsidered:**
+- ❌ Audio effects chain (too technical, not programming-focused)
+- ❌ Music notation display (requires music literacy)
+- ❌ MIDI export (professional workflow, not learning-focused)
+
+**When in doubt:** Prioritize simplicity and learnability over power features.
+
+---
+
 ## Architecture
 
 ### Core Classes
