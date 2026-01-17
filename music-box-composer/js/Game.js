@@ -949,10 +949,11 @@ class Game {
     }
 
     /**
-     * Serialize v6 format with waveform support
+     * Serialize v6 format with waveform and effects support
      * 
      * v6 Binary format:
-     * Header: 15 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4, waveform1:2, waveform2:2)
+     * Header: 21 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4, waveform1:2, waveform2:2, effects:6)
+     * Effects: 6 bits (t1_reverb, t1_delay, t2_reverb, t2_delay, t3_reverb, t3_delay)
      * Per beat: 35 bits (piano1:4+3+4+3, piano2:4+3+4+3, percussion:3+4)
      * Piano tracks: note(4) + duration(3) + velocity(4) + octave(3)
      * @returns {string}
@@ -972,7 +973,7 @@ class Game {
         // Build bit array
         const bits = [];
         
-        // Header: mode (2 bits), speed (2 bits), loop (1 bit), length index (2 bits), key (4 bits), waveforms (2+2 bits)
+        // Header: mode (2), speed (2), loop (1), length (2), key (4), waveforms (2+2), effects (6) = 21 bits
         this.pushBits(bits, modeIndex, 2);
         this.pushBits(bits, this.currentSpeedIndex, 2);
         this.pushBits(bits, this.isLooping ? 1 : 0, 1);
@@ -980,6 +981,14 @@ class Game {
         this.pushBits(bits, keyIndex, 4);
         this.pushBits(bits, waveform1Index, 2);
         this.pushBits(bits, waveform2Index, 2);
+        
+        // Effects: 6 bits (track1 reverb, track1 delay, track2 reverb, track2 delay, track3 reverb, track3 delay)
+        this.pushBits(bits, this.audio.isReverbEnabled(1) ? 1 : 0, 1);
+        this.pushBits(bits, this.audio.isDelayEnabled(1) ? 1 : 0, 1);
+        this.pushBits(bits, this.audio.isReverbEnabled(2) ? 1 : 0, 1);
+        this.pushBits(bits, this.audio.isDelayEnabled(2) ? 1 : 0, 1);
+        this.pushBits(bits, this.audio.isReverbEnabled(3) ? 1 : 0, 1);
+        this.pushBits(bits, this.audio.isDelayEnabled(3) ? 1 : 0, 1);
         
         // Track data with velocity and octave: 35 bits per beat
         // piano1 (4 note + 3 dur + 4 vel + 3 oct) + piano2 (4 note + 3 dur + 4 vel + 3 oct) + perc (3 note + 4 vel)
@@ -1562,8 +1571,9 @@ class Game {
     }
 
     /**
-     * Deserialize v6 format with waveform support
-     * Header: 15 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4, waveform1:2, waveform2:2)
+     * Deserialize v6 format with waveform and effects support
+     * Header: 21 bits (mode:2, speed:2, loop:1, lengthIndex:2, keyIndex:4, waveform1:2, waveform2:2, effects:6)
+     * Effects: 6 bits (t1_reverb, t1_delay, t2_reverb, t2_delay, t3_reverb, t3_delay)
      * Per beat: 35 bits - piano1(14) + piano2(14) + percussion(7)
      * Piano: note(4) + duration(3) + velocity(4) + octave(3)
      * Percussion: note(3) + velocity(4)
@@ -1577,7 +1587,7 @@ class Game {
         
         let offset = 0;
         
-        // Read header (15 bits)
+        // Read header (21 bits: 15 original + 6 effects)
         const modeIndex = this.readBits(bits, offset, 2); offset += 2;
         const speedIndex = this.readBits(bits, offset, 2); offset += 2;
         const loop = this.readBits(bits, offset, 1); offset += 1;
@@ -1585,6 +1595,14 @@ class Game {
         const keyIndex = this.readBits(bits, offset, 4); offset += 4;
         const waveform1Index = this.readBits(bits, offset, 2); offset += 2;
         const waveform2Index = this.readBits(bits, offset, 2); offset += 2;
+        
+        // Read effects (6 bits)
+        const track1Reverb = this.readBits(bits, offset, 1); offset += 1;
+        const track1Delay = this.readBits(bits, offset, 1); offset += 1;
+        const track2Reverb = this.readBits(bits, offset, 1); offset += 1;
+        const track2Delay = this.readBits(bits, offset, 1); offset += 1;
+        const track3Reverb = this.readBits(bits, offset, 1); offset += 1;
+        const track3Delay = this.readBits(bits, offset, 1); offset += 1;
         
         const beatCount = this.beatLengths[lengthIndex] || 16;
         const keyName = Game.KEY_NAMES[keyIndex] || 'C Major';
@@ -1636,6 +1654,10 @@ class Game {
             k: keyName,
             w1: waveform1,
             w2: waveform2,
+            effects: {
+                reverb: [track1Reverb === 1, track2Reverb === 1, track3Reverb === 1],
+                delay: [track1Delay === 1, track2Delay === 1, track3Delay === 1]
+            },
             t: { track1, track2, track3 }
         };
     }
@@ -2451,6 +2473,20 @@ class Game {
         }
         if (state.w2 && Game.WAVEFORMS.includes(state.w2)) {
             this.audio.trackWaveforms[2] = state.w2;
+        }
+        
+        // Apply effects (v6 with effects) - directly to audio system
+        if (state.effects) {
+            if (state.effects.reverb) {
+                this.audio.setReverbEnabled(1, state.effects.reverb[0]);
+                this.audio.setReverbEnabled(2, state.effects.reverb[1]);
+                this.audio.setReverbEnabled(3, state.effects.reverb[2]);
+            }
+            if (state.effects.delay) {
+                this.audio.setDelayEnabled(1, state.effects.delay[0]);
+                this.audio.setDelayEnabled(2, state.effects.delay[1]);
+                this.audio.setDelayEnabled(3, state.effects.delay[2]);
+            }
         }
         
         // Apply tracks
