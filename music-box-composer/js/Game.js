@@ -260,7 +260,11 @@ class Game {
             this.elements.octaveDownBtn.addEventListener('click', () => {
                 if (this.pianoKeyboard) {
                     this.pianoKeyboard.octaveDown();
-           BPM Input (Studio Mode)
+                }
+            });
+        }
+        
+        // BPM Input (Studio Mode)
         if (this.elements.bpmInput) {
             this.elements.bpmInput.addEventListener('input', (e) => {
                 const bpm = parseInt(e.target.value);
