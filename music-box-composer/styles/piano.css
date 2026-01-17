@@ -19,19 +19,17 @@
 
 .piano-keyboard-wrapper {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
     padding: 20px 10px;
     background: var(--bg-secondary, #f5f5f5);
     border-radius: 8px;
     margin-bottom: 10px;
 }
 
-.piano-keyboard-section {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+#piano-keyboard-container {
+    /* Container for the piano keyboard */
 }
 
 /* Octave Controls (Studio Mode only) */
