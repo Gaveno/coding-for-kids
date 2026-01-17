@@ -10,6 +10,13 @@
     --black-key-height: 80px;
 }
 
+/* Kid Mode - Larger keys for easier touch */
+[data-mode="kid"] {
+    --white-key-width: 60px;
+    --white-key-height: 140px;
+    --white-key-gap: 4px;
+}
+
 .piano-keyboard-wrapper {
     display: flex;
     justify-content: center;

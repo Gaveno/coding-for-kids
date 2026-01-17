@@ -52,6 +52,15 @@
     transform: translateY(-10px);
 }
 
+/* Kid Mode: Even larger characters */
+[data-mode="kid"] .character.main {
+    font-size: 5rem;
+}
+
+[data-mode="kid"] .character.backup {
+    font-size: 3rem;
+}
+
 .character.backup.left {
     order: -1;
 }

@@ -460,7 +460,19 @@ class Game {
      * Cycle through speed options
      */
     cycleSpeed() {
-        this.currentSpeedIndex = (this.currentSpeedIndex + 1) % this.speeds.length;
+        const config = this.getModeConfig();
+        
+        // Kid Mode: Only 2 speeds (slow and fast)
+        if (this.currentMode === Game.MODES.KID) {
+            const kidSpeeds = config.speeds; // [0, 2]
+            const currentIndex = kidSpeeds.indexOf(this.currentSpeedIndex);
+            const nextIndex = (currentIndex + 1) % kidSpeeds.length;
+            this.currentSpeedIndex = kidSpeeds[nextIndex];
+        } else {
+            // Tween/Studio: Cycle through all speeds
+            this.currentSpeedIndex = (this.currentSpeedIndex + 1) % this.speeds.length;
+        }
+        
         this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
         this.updateURL();
     }
@@ -481,15 +493,19 @@ class Game {
     changeLength(direction) {
         if (this.isPlaying) return;
         
+        const config = this.getModeConfig();
         const currentLength = this.timeline.getBeatCount();
-        const currentIndex = this.beatLengths.indexOf(currentLength);
+        
+        // Filter beat lengths based on mode's maxBeats
+        const allowedLengths = this.beatLengths.filter(len => len <= config.maxBeats);
+        const currentIndex = allowedLengths.indexOf(currentLength);
         let newIndex = currentIndex + direction;
         
         // Clamp to valid range
-        newIndex = Math.max(0, Math.min(this.beatLengths.length - 1, newIndex));
+        newIndex = Math.max(0, Math.min(allowedLengths.length - 1, newIndex));
         
         if (newIndex !== currentIndex) {
-            const newLength = this.beatLengths[newIndex];
+            const newLength = allowedLengths[newIndex];
             this.timeline.setBeatCount(newLength);
             this.elements.beatCount.textContent = newLength;
             this.updateURL();
@@ -1365,9 +1381,23 @@ class Game {
         // Update mode button states
         this.updateModeButtonStates();
         
+        // Kid Mode: Lock to C Major
+        if (this.currentMode === Game.MODES.KID) {
+            this.currentKey = 'C Major';
+            if (this.elements.keySelect) {
+                this.elements.keySelect.value = 'C Major';
+            }
+            if (this.pianoKeyboard) {
+                this.pianoKeyboard.updateDisabledKeys(Game.KEY_SIGNATURES['C Major']);
+            }
+        }
+        
         // Update key selector visibility
         if (this.elements.keySelect) {
-            this.elements.keySelect.style.display = config.showKeySelector ? 'block' : 'none';
+            const keySelector = this.elements.keySelect.closest('.key-selector');
+            if (keySelector) {
+                keySelector.style.display = config.showKeySelector ? 'flex' : 'none';
+            }
         }
         
         // Update piano keyboard (sharps/flats visibility)
@@ -1378,12 +1408,37 @@ class Game {
         // Update timeline max beats
         if (this.timeline) {
             this.timeline.setMaxBeats(config.maxBeats);
+            
+            // Clamp current beat count if it exceeds max
+            const currentBeats = this.timeline.getBeatCount();
+            if (currentBeats > config.maxBeats) {
+                const allowedLengths = this.beatLengths.filter(len => len <= config.maxBeats);
+                const newBeats = allowedLengths[allowedLengths.length - 1] || config.maxBeats;
+                this.timeline.setBeatCount(newBeats);
+                this.elements.beatCount.textContent = newBeats;
+            }
         }
         
-        // Update speed controls (handled by UI component in Phase 1.2)
-        // Update percussion count (handled in Phase 2/3)
+        // Update speed button visibility
+        this.updateSpeedControls();
         
         console.log('Applied mode config:', config);
+    }
+    
+    /**
+     * Update speed controls based on mode
+     */
+    updateSpeedControls() {
+        const config = this.getModeConfig();
+        
+        // Kid Mode: Ensure speed is one of the allowed values
+        if (this.currentMode === Game.MODES.KID) {
+            const kidSpeeds = config.speeds; // [0, 2]
+            if (!kidSpeeds.includes(this.currentSpeedIndex)) {
+                this.currentSpeedIndex = kidSpeeds[0]; // Default to slow
+            }
+            this.elements.speedBtn.textContent = this.speeds[this.currentSpeedIndex].icon;
+        }
     }
     
     /**

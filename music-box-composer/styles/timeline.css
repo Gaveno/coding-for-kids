@@ -52,6 +52,18 @@
     font-weight: bold;
 }
 
+/* Kid Mode: Larger controls */
+[data-mode="kid"] .length-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+}
+
+[data-mode="kid"] .beat-count {
+    font-size: 1.8rem;
+    min-width: 48px;
+}
+
 /* Key Selector */
 .key-selector {
     display: flex;
