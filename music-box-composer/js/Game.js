@@ -931,7 +931,18 @@ class Game {
             this.pushBits(bits, velocity3, 4);
         }
         
-        return this.encodeToBase64(bits);
+        // Convert bits to bytes
+        const bytes = this.bitsToBytes(bits);
+        
+        // Convert to URL-safe base64
+        let base64 = '';
+        for (let i = 0; i < bytes.length; i++) {
+            base64 += String.fromCharCode(bytes[i]);
+        }
+        const data = btoa(base64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        
+        // Prefix with version
+        return `v${Game.ENCODING_VERSION}_${data}`;
     }
     
     /**
