@@ -190,24 +190,24 @@ v4_{mode}{base64data}
   - Celebratory effects on play
 
 ### Phase 3: Tween Mode Features
-**Status:** ⏸️ Deferred to v4.1
+**Status:** ✅ Complete (Jan 17, 2026)
 
-- [ ] **Task 3.1** - Extended Percussion
+- [x] **Task 3.1** - Extended Percussion
   - Add 4 new percussion sounds to Audio.js
   - Create palette buttons for new sounds
   - Gate behind Tween Mode check
   
-- [ ] **Task 3.2** - Velocity/Volume Control
+- [ ] **Task 3.2** - Velocity/Volume Control (Deferred to v4.1)
   - Add velocity property to note data model
   - Create volume slider on note long-press
   - Display volume indicator on timeline notes
   
-- [ ] **Task 3.3** - Tap Tempo
+- [ ] **Task 3.3** - Tap Tempo (Deferred to v4.1)
   - Add tap tempo button
   - Calculate BPM from tap intervals
   - Convert to nearest speed preset
 
-- [ ] **Task 3.4** - Visual Theme
+- [x] **Task 3.4** - Visual Theme
   - Implement neon glow effects
   - Add gradient backgrounds
   - Create smooth transition animations
