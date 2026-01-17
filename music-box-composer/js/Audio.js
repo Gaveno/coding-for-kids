@@ -452,23 +452,12 @@ class Audio {
      * @returns {string} - Waveform type
      */
     getTrackWaveform(trackNumber) {
-        return this.trackWaveforms[trackNumber] || 'sine';ay a note based on track number and note data
-     * @param {string} note - Note name or percussion type
-     * @param {number} trackNumber - Track number (1 = high piano, 2 = low piano, 3 = percussion)
-     * @param {number} duration - Duration in seconds (optional)
-     * @param {number} velocity - Note velocity 0.0-1.0 (default 0.8)
-     */
-    playNote(note, trackNumber, duration, velocity = 0.8) {
-        if (trackNumber === 3) {
-            // Percussion track
-            this.playPercussion(note, velocity);
-        } else {
-            // Piano tracks (1 or 2)
-            this.playPianoNote(note, trackNumber, duration, velocity);
-        }
+        return this.trackWaveforms[trackNumber] || 'sine';
     }
 
     /**
+     * Play success sound
+     */    /**
      * Play success sound
      */
     playSuccess() {

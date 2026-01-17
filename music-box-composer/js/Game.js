@@ -282,10 +282,6 @@ class Game {
             });
         }
         
-        //      }
-            });
-        }
-        
         // QR modal events
         this.elements.closeQrBtn.addEventListener('click', () => this.closeQRModal());
         this.elements.qrModalOverlay.addEventListener('click', () => this.closeQRModal());
