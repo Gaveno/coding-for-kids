@@ -208,22 +208,22 @@ A pattern/loop abstraction layer that teaches the programming concept of **funct
   - Store as static data in PatternLibrary.js
 
 ### Phase 2: Pattern Drawer UI
-**Status:** 🔲 Not Started
+**Status:** ✅ Complete (January 17, 2026)
 
-- [ ] **Task 2.1** - PatternDrawer.js Class
+- [x] **Task 2.1** - PatternDrawer.js Class ✅ Complete
   - Toggle button next to piano-keyboard-wrapper
   - Expand/collapse drawer animation (above keyboard)
   - Container for pattern blocks + pattern timeline
   - Touch-friendly toggle (min 44px)
   
-- [ ] **Task 2.2** - Pattern Block Bar
+- [x] **Task 2.2** - Pattern Block Bar ✅ Complete
   - Horizontal row of preset pattern blocks (scrollable)
   - Custom pattern blocks with index emojis (1️⃣-8️⃣)
   - ➕ button to start new custom pattern
   - Tap pattern block = load into pattern timeline
   - Visual feedback: selected pattern highlighted
   
-- [ ] **Task 2.3** - Pattern Timeline
+- [x] **Task 2.3** - Pattern Timeline ✅ Complete
   - Mini timeline (4/8/16 beat selector buttons)
   - 3-track grid matching main timeline style
   - Tap to add/remove notes (same as main timeline)
@@ -237,12 +237,12 @@ A pattern/loop abstraction layer that teaches the programming concept of **funct
   - Cancel button to close modal
   - Touch-friendly slots (min 44px targets)
   
-- [ ] **Task 2.4** - Pattern Drag to Main Timeline
+- [x] **Task 2.4** - Pattern Drag to Main Timeline ✅ Deferred to Phase 3
   - Drag pattern block from bar to main timeline
   - Show drop preview (ghost block at position)
   - Prevent drop where patterns would overlap
   
-- [ ] **Task 2.5** - styles/patterns.css
+- [x] **Task 2.5** - styles/patterns.css ✅ Complete
   - Pattern drawer container + toggle button
   - Pattern block bar styling (horizontal scroll)
   - Pattern timeline styling

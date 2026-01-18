@@ -3,8 +3,8 @@
  * Represents a reusable musical pattern (function/loop concept)
  */
 
-export class Pattern {
-    constructor({ id, name, icon, color, length, tracks, isPreset = false, created = Date.now() }) {
+class Pattern {
+    constructor({ id, name, icon, color, length, tracks, isPreset = false, created = Date.now(), index }) {
         this.id = id || this.generateId();
         this.name = name;
         this.icon = icon;
@@ -13,6 +13,7 @@ export class Pattern {
         this.tracks = tracks || { 1: [], 2: [], 3: [] };
         this.isPreset = isPreset;
         this.created = created;
+        this.index = index; // Optional: used for custom patterns (0-7)
 
         this.validate();
     }
@@ -73,7 +74,7 @@ export class Pattern {
      * Serialize pattern to JSON-compatible object
      */
     serialize() {
-        return {
+        const data = {
             id: this.id,
             name: this.name,
             icon: this.icon,
@@ -83,6 +84,13 @@ export class Pattern {
             isPreset: this.isPreset,
             created: this.created
         };
+        
+        // Include index if present (for custom patterns)
+        if (this.index !== undefined) {
+            data.index = this.index;
+        }
+        
+        return data;
     }
 
     /**

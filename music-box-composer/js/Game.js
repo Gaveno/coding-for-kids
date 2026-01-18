@@ -69,6 +69,8 @@ class Game {
         this.visualizer = null;
         this.dragDrop = null;
         this.pianoKeyboard = null;
+        this.patternLibrary = null;
+        this.patternDrawer = null;
         
         this.isPlaying = false;
         this.isLooping = false;
@@ -209,6 +211,10 @@ class Game {
             onPreview: (note, trackNum, octave) => this.previewNote(note, trackNum, octave),
             onDrop: (trackNum, beat, noteData) => this.handleNoteDrop(trackNum, beat, noteData)
         });
+        
+        // Pattern library and drawer
+        this.patternLibrary = new PatternLibrary();
+        this.patternDrawer = new PatternDrawer(this, this.patternLibrary);
     }
 
     /**
@@ -2769,6 +2775,11 @@ class Game {
         // Update visualizer mode
         if (this.visualizer) {
             this.visualizer.setMode(mode);
+        }
+        
+        // Update pattern drawer mode
+        if (this.patternDrawer) {
+            this.patternDrawer.updateForMode(mode);
         }
         
         // Persist to localStorage

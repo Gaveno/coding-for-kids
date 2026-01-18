@@ -1,0 +1,340 @@
+/**
+ * patterns.css - Pattern library drawer styling
+ */
+
+/* Pattern Drawer Toggle Button */
+.pattern-drawer-toggle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pattern-drawer-toggle:hover {
+    transform: scale(1.05);
+    background: var(--primary-color);
+}
+
+.pattern-drawer-toggle.active {
+    background: var(--primary-color);
+    border-color: var(--primary-dark);
+}
+
+/* Pattern Drawer Container */
+.pattern-drawer {
+    max-height: 0;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0;
+}
+
+.pattern-drawer.open {
+    max-height: 500px;
+    padding: 16px;
+}
+
+/* Pattern Blocks Bar */
+.pattern-blocks-bar {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.pattern-blocks-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 8px 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--bg-primary);
+}
+
+.pattern-blocks-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.pattern-blocks-scroll::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: 4px;
+}
+
+.pattern-blocks-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+/* Pattern Block */
+.pattern-block {
+    min-width: 64px;
+    height: 64px;
+    border: 3px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+    font-family: inherit;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.pattern-block:hover {
+    transform: translateY(-2px);
+    border-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pattern-block.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 16px var(--accent-color);
+}
+
+.pattern-block .pattern-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.pattern-block .pattern-length {
+    font-size: 12px;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.pattern-block.empty {
+    opacity: 0.5;
+    border: 2px dashed rgba(255, 255, 255, 0.4);
+}
+
+.pattern-block.new-pattern {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    border: 2px dashed white;
+}
+
+/* Pattern Editor */
+.pattern-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pattern-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Pattern Length Selector */
+.pattern-length-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.length-selector-btn {
+    min-width: 44px;
+    height: 44px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    color: var(--text-primary);
+}
+
+.length-selector-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-dark);
+    color: white;
+}
+
+.length-selector-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-dark);
+    color: white;
+    box-shadow: 0 0 8px var(--primary-color);
+}
+
+/* Pattern Editor Actions */
+.pattern-editor-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.pattern-action-btn {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 16px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.pattern-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pattern-action-btn.primary {
+    background: var(--success-color);
+    border-color: var(--success-dark);
+    color: white;
+}
+
+.pattern-action-btn.primary:hover {
+    background: var(--success-dark);
+}
+
+/* Pattern Timeline Container */
+.pattern-timeline-container {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    overflow-x: auto;
+}
+
+/* Pattern Timeline */
+.pattern-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: max-content;
+}
+
+/* Pattern Track */
+.pattern-track {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pattern-track-label {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.pattern-track-cells {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+}
+
+/* Pattern Cell */
+.pattern-cell {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.pattern-cell:hover {
+    background: var(--primary-light);
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.pattern-cell.has-note {
+    background: var(--primary-color);
+    border-color: var(--primary-dark);
+}
+
+.pattern-cell.has-note::after {
+    content: '♪';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pattern-drawer.open {
+        max-height: 400px;
+    }
+    
+    .pattern-block {
+        min-width: 56px;
+        height: 56px;
+    }
+    
+    .pattern-block .pattern-icon {
+        font-size: 24px;
+    }
+    
+    .pattern-cell {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .pattern-track-label {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* Touch device improvements */
+@media (hover: none) and (pointer: coarse) {
+    .pattern-block:active {
+        transform: scale(0.95);
+    }
+    
+    .pattern-cell:active {
+        transform: scale(0.95);
+    }
+    
+    .length-selector-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .pattern-action-btn:active {
+        transform: translateY(0);
+    }
+}

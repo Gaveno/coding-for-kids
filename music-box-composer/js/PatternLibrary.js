@@ -3,9 +3,7 @@
  * Handles preset patterns, user patterns, CRUD operations
  */
 
-import { Pattern } from './Pattern.js';
-
-export class PatternLibrary {
+class PatternLibrary {
     constructor() {
         this.patterns = new Map(); // id -> Pattern
         this.presets = new Map();  // id -> Pattern (presets only)
@@ -210,7 +208,17 @@ export class PatternLibrary {
      * Add a new user pattern
      */
     addPattern(patternData) {
+        // Ensure index is set and within range
+        if (patternData.index === undefined || patternData.index < 0 || patternData.index > 7) {
+            throw new Error('Pattern index must be between 0 and 7');
+        }
+        
         const pattern = new Pattern({ ...patternData, isPreset: false });
+        
+        // Store with custom ID based on index
+        const customId = `custom_${patternData.index}`;
+        pattern.id = customId;
+        
         this.patterns.set(pattern.id, pattern);
         this.userPatterns.set(pattern.id, pattern);
         this.saveUserPatterns();
@@ -246,11 +254,15 @@ export class PatternLibrary {
             throw new Error('Cannot update preset patterns');
         }
 
+        // Preserve index
+        const preservedIndex = pattern.index !== undefined ? pattern.index : updates.index;
+
         // Create updated pattern
         const updatedPattern = new Pattern({
             ...pattern.serialize(),
             ...updates,
             id, // Preserve ID
+            index: preservedIndex, // Preserve index
             isPreset: false // Ensure it stays as user pattern
         });
 
