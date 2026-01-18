@@ -20,26 +20,61 @@ A pattern/loop abstraction layer that teaches the programming concept of **funct
 
 ## Feature Definition by Mode
 
+### All Modes (Unified Design)
+- **Pattern Drawer** - Toggle button next to piano keyboard expands/collapses drawer above keyboard
+- **Preset patterns** - Always available (10 built-in patterns)
+- **Custom patterns** - Up to 8 user-created patterns (across all modes)
+- **Pattern Timeline** - Selectable length: 4, 8, or 16 beats
+- **Stamp behavior** - Patterns "stamp" notes into main timeline with pattern mapping
+- **Editable notes** - Pattern notes appear at 75% opacity, fully editable
+- **Auto-cleanup** - Pattern block auto-removes when all its notes are deleted
+
 ### 🧸 Kid Mode
-- **Pre-made patterns only** - Cannot create custom patterns
-- **4-6 simple patterns**: "Happy", "March", "Lullaby", "Dance"
-- **Drag patterns** directly to main timeline (expands in place)
-- **Visual**: Large colorful blocks with animal icons
+- **Pattern creation**: Compose in pattern timeline only
+- **Save as pattern**: Creates custom block with index emoji (1️⃣, 2️⃣, etc.)
 
 ### 🎸 Tween Mode
-- **Create custom 4-beat patterns**
-- **Save up to 8 patterns** with emoji names
-- **Pattern palette** alongside note palette
-- **Macro timeline** view toggle (see patterns vs. notes)
-- **Visual**: Gradient blocks with custom colors
+- **Pattern creation**: Compose in pattern timeline OR save from main timeline selection
+- **Same save behavior**: Index emoji + preset color
 
 ### 🎛️ Studio Mode
-- **Variable-length patterns** (1-16 beats)
-- **Unlimited pattern slots**
-- **Pattern bank** with folders/categories
-- **Import/export** pattern packs
-- **Pattern transposition** (shift to different key)
-- **Visual**: Compact waveform preview in blocks
+- **Same as Tween** - Additional features deferred to future versions
+
+---
+
+## UI Design
+
+### Pattern Drawer Layout
+```
+┌─────────────────────────────────────────────────────────┐
+│ Pattern Blocks:  [🌈][🥁][🌙][💃] ... [1️⃣][2️⃣][➕]     │
+├─────────────────────────────────────────────────────────┤
+│ Pattern Timeline:  [4][8][16] beats   [🗑️ Clear][💾 Save]│
+│ ┌─────┬─────┬─────┬─────┐                               │
+│ │  ♪  │     │  ♪  │     │  Track 1 (High Piano)         │
+│ ├─────┼─────┼─────┼─────┤                               │
+│ │     │  ♪  │     │  ♪  │  Track 2 (Low Piano)          │
+│ ├─────┼─────┼─────┼─────┤                               │
+│ │  ●  │     │  ●  │     │  Track 3 (Percussion)         │
+│ └─────┴─────┴─────┴─────┘                               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Pattern Block in Main Timeline
+```
+┌─────────────────────────────┐
+│🗑️🌈│ ♪  ♪  ♪  ♪  │  (normal notes beyond pattern)
+├────┤ ♪     ♪     │   75% opacity notes inside
+│    │    ♪     ♪  │
+└────┴─────────────┴────────────
+ ↑ delete tap     ↑ pattern boundary
+ target + icon    (semi-transparent overlay)
+```
+
+### Pattern Overlap Rules
+- **Patterns cannot overlap** with other patterns
+- **Notes can coexist** with pattern notes (user notes at 100%, pattern at 75%)
+- **Conflict resolution**: User-placed notes take priority over pattern notes
 
 ---
 
@@ -48,44 +83,63 @@ A pattern/loop abstraction layer that teaches the programming concept of **funct
 ### Pattern Data Model
 
 ```javascript
-// Pattern structure
+// Preset pattern (full structure)
 {
-    id: string,           // Unique identifier (uuid or index)
-    name: string,         // Display name (emoji for kids, text for studio)
-    icon: string,         // Emoji icon for the pattern
-    color: string,        // CSS color for the block
-    length: number,       // Length in beats (4, 8, 16)
+    id: string,           // 'preset_happy_bounce' etc.
+    name: string,         // Display name
+    icon: string,         // Emoji icon (🌈, 🥁, etc.)
+    color: string,        // CSS color
+    length: number,       // 4, 8, or 16 beats
     tracks: {
-        1: [[beat, noteIndex, duration], ...],  // High piano
-        2: [[beat, noteIndex, duration], ...],  // Low piano  
-        3: [[beat, noteIndex, duration], ...]   // Percussion
+        1: [[beat, noteIndex, duration], ...],
+        2: [[beat, noteIndex, duration], ...],
+        3: [[beat, noteIndex, duration], ...]
     },
-    isPreset: boolean,    // True for built-in patterns
-    created: timestamp    // For user patterns
+    isPreset: true
 }
+
+// Custom pattern (simplified for URL storage)
+{
+    index: number,        // 0-7 (determines icon 1️⃣-8️⃣ and color)
+    length: number,       // 4, 8, or 16 beats
+    tracks: { ... }       // Same as preset
+}
+
+// Icon/color derived from index:
+// Icons: ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣']
+// Colors: ['#4ECDC4', '#FFD93D', '#E63946', '#A8DADC', '#6A4C93', '#FF6B6B', '#95E1D3', '#F38181']
 ```
 
-### Macro Timeline Model
+### Pattern Placement Model
 
 ```javascript
-// Macro timeline = array of pattern placements
-[
-    { patternId: 'p1', startBeat: 0 },
-    { patternId: 'p2', startBeat: 4 },
-    { patternId: 'p1', startBeat: 8 },  // Reused pattern
-    { patternId: 'p3', startBeat: 12 }
-]
+// Pattern placement in main timeline
+{
+    placementId: string,  // Unique ID for this placement instance
+    patternId: string,    // Reference to pattern (preset or custom)
+    startBeat: number,    // Where pattern starts in main timeline
+    noteIds: Set<string>  // IDs of notes "stamped" by this placement
+}
+
+// Note with pattern mapping
+{
+    id: string,
+    beat: number,
+    noteIndex: number,
+    duration: number,
+    patternPlacementId: string | null  // null = user-placed, string = from pattern
+}
 ```
 
 ### New Files Required
 
 | File | Responsibility | Est. Lines |
 |------|----------------|------------|
-| `Pattern.js` | Pattern data model, validation | ~80 |
-| `PatternLibrary.js` | Pattern storage, presets, CRUD | ~150 |
-| `PatternPalette.js` | UI for pattern selection/creation | ~120 |
-| `MacroTimeline.js` | Pattern arrangement timeline | ~150 |
-| `styles/patterns.css` | Pattern block styling | ~100 |
+| `Pattern.js` ✅ | Pattern data model, validation | ~120 |
+| `PatternLibrary.js` ✅ | Pattern storage, presets, CRUD | ~240 |
+| `PatternDrawer.js` | Drawer toggle, pattern timeline, save/clear | ~180 |
+| `PatternBlock.js` | Pattern block overlay in main timeline | ~100 |
+| `styles/patterns.css` | Pattern drawer + block styling | ~150 |
 
 ---
 
@@ -153,89 +207,103 @@ A pattern/loop abstraction layer that teaches the programming concept of **funct
   - Create Studio Mode patterns (same as Tween for now)
   - Store as static data in PatternLibrary.js
 
-### Phase 2: Pattern Palette UI
+### Phase 2: Pattern Drawer UI
 **Status:** 🔲 Not Started
 
-- [ ] **Task 2.1** - PatternPalette.js Class
-  - Render pattern blocks in palette area
-  - Mode-aware: show appropriate patterns
-  - Drag initiation for patterns
-  - Touch-friendly (min 44px targets)
+- [ ] **Task 2.1** - PatternDrawer.js Class
+  - Toggle button next to piano-keyboard-wrapper
+  - Expand/collapse drawer animation (above keyboard)
+  - Container for pattern blocks + pattern timeline
+  - Touch-friendly toggle (min 44px)
   
-- [ ] **Task 2.2** - Pattern Block Visual Design
-  - Colorful blocks with icons
-  - Size indicates pattern length
-  - Hover/touch preview (play pattern)
-  - Drag ghost matches block appearance
+- [ ] **Task 2.2** - Pattern Block Bar
+  - Horizontal row of preset pattern blocks (scrollable)
+  - Custom pattern blocks with index emojis (1️⃣-8️⃣)
+  - ➕ button to start new custom pattern
+  - Tap pattern block = load into pattern timeline
+  - Visual feedback: selected pattern highlighted
   
-- [ ] **Task 2.3** - Pattern Creation UI (Tween/Studio)
-  - "New Pattern" button
-  - Pattern name input (emoji picker for Tween)
-  - Color selector
-  - Save current selection as pattern
+- [ ] **Task 2.3** - Pattern Timeline
+  - Mini timeline (4/8/16 beat selector buttons)
+  - 3-track grid matching main timeline style
+  - Tap to add/remove notes (same as main timeline)
+  - 🗑️ Clear button to reset pattern timeline
+  - 💾 Save button to save as custom pattern
+  
+- [ ] **Task 2.4** - Pattern Drag to Main Timeline
+  - Drag pattern block from bar to main timeline
+  - Show drop preview (ghost block at position)
+  - Prevent drop where patterns would overlap
+  
+- [ ] **Task 2.5** - styles/patterns.css
+  - Pattern drawer container + toggle button
+  - Pattern block bar styling (horizontal scroll)
+  - Pattern timeline styling
+  - Length selector buttons
+  - Save/clear button styling
 
-- [ ] **Task 2.4** - styles/patterns.css
-  - Pattern block styling
-  - Palette layout (horizontal scroll)
-  - Creation modal styling
-  - Mode-specific theming
-
-### Phase 3: Pattern Timeline Integration
+### Phase 3: Pattern Stamp & Block Overlay
 **Status:** 🔲 Not Started
 
-- [ ] **Task 3.1** - Expand Pattern on Drop
-  - When pattern dropped on timeline, expand notes
-  - Handle pattern overlap (replace or merge?)
-  - Respect timeline length limits
+- [ ] **Task 3.1** - PatternBlock.js Class
+  - Render semi-transparent overlay (N beats × 3 tracks)
+  - Show pattern icon in top-left corner
+  - Delete tap target (🗑️ icon, min 44px)
+  - Color based on pattern (preset color or index color)
   
-- [ ] **Task 3.2** - Pattern Highlighting
-  - After drop, briefly highlight the expanded region
-  - Visual feedback that pattern was applied
+- [ ] **Task 3.2** - Pattern Stamp Behavior
+  - When pattern dropped: create notes in main timeline
+  - Each note gets `patternPlacementId` linking to placement
+  - Notes render at 75% opacity when linked to pattern
+  - Merge with existing notes (pattern notes lower priority)
   
-- [ ] **Task 3.3** - DragDrop.js Updates
+- [ ] **Task 3.3** - Pattern Note Tracking
+  - Pattern placement tracks its note IDs
+  - When note deleted: update placement's noteIds set
+  - When all notes removed: auto-remove pattern block
+  - When pattern block deleted: remove all linked notes
+  
+- [ ] **Task 3.4** - DragDrop.js Updates
   - Handle pattern drag (different from note drag)
   - Calculate drop position for multi-beat patterns
-  - Preview placement before drop
+  - Validate no pattern overlap before drop
+  - Create pattern placement + stamp notes on drop
 
-### Phase 4: Macro Timeline (Tween/Studio)
+### Phase 4: Save from Selection (Tween/Studio Only)
 **Status:** 🔲 Not Started
 
-- [ ] **Task 4.1** - MacroTimeline.js Class
-  - Separate view showing pattern blocks
-  - Click to expand/collapse to note view
-  - Drag to reorder pattern blocks
-  - Delete pattern placements
+- [ ] **Task 4.1** - Selection to Pattern
+  - Select notes in main timeline (existing selection mechanism)
+  - "Save as Pattern" button appears when notes selected
+  - Calculates pattern length from selection span
+  - Validates selection fits 4/8/16 beat pattern
   
-- [ ] **Task 4.2** - View Toggle UI
-  - Button to switch between macro/detail view
-  - Smooth transition animation
-  - Preserve scroll position
-  
-- [ ] **Task 4.3** - Macro Timeline Rendering
-  - Render pattern blocks proportional to length
-  - Show pattern icon and color
-  - Playhead works in macro view
-  
-- [ ] **Task 4.4** - Sync Macro and Detail Views
-  - Changes in detail view update macro
-  - Changes in macro view update detail
-  - Handle partial pattern modifications
+- [ ] **Task 4.2** - Mode-Gated UI
+  - "Save as Pattern" only visible in Tween/Studio modes
+  - Kid Mode only has compose-in-drawer workflow
 
 ### Phase 5: URL Serialization
 **Status:** 🔲 Not Started
 
-- [ ] **Task 5.1** - Pattern Serialization
-  - Serialize user patterns in URL (space permitting)
-  - Or: generate pattern IDs, serialize placements only
-  - Consider URL length limits
+- [ ] **Task 5.1** - Custom Pattern Serialization
+  - Encode custom patterns: index + length + tracks
+  - Compact format (no name/icon/color - derived from index)
+  - Max 8 custom patterns
   
-- [ ] **Task 5.2** - Macro Timeline Serialization
-  - Serialize pattern placement array
-  - Handle case where pattern was modified after placement
+- [ ] **Task 5.2** - Pattern Placement Serialization
+  - Encode placements: patternId + startBeat
+  - For presets: use preset ID directly
+  - For custom: use index reference
   
-- [ ] **Task 5.3** - Backward Compatibility
+- [ ] **Task 5.3** - Note Pattern Mapping
+  - Notes modified from pattern lose patternPlacementId
+  - Only unmodified pattern notes need placement reference
+  - Consider: store placements separately from notes?
+  
+- [ ] **Task 5.4** - Backward Compatibility
   - v3 URLs should work (no patterns)
   - v4+ URLs include pattern data
+  - Version flag in URL to distinguish
 
 ### Phase 6: Testing & Polish
 **Status:** 🔲 Not Started
