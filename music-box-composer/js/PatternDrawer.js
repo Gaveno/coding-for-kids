@@ -172,7 +172,7 @@ class PatternDrawer {
     }
 
     /**
-     * Render pattern timeline grid
+     * Render pattern timeline grid (matching main Timeline rendering)
      */
     renderPatternTimeline() {
         if (!this.timelineContainer) return;
@@ -201,19 +201,42 @@ class PatternDrawer {
             html += `
                 <div class="pattern-track" data-track="${track.name}">
                     <div class="pattern-track-label">${track.icon}</div>
-                    <div class="pattern-track-cells">
+                    <div class="pattern-track-cells" data-track-id="${track.id}">
             `;
 
-            // Render cells for this track with downbeat emphasis
+            // Render cells for this track
             for (let beat = 0; beat < numBeats; beat++) {
-                const hasNote = this.patternTimeline[track.id].some(n => n[0] === beat);
                 const isDownbeat = beat % 4 === 0;
+                const noteData = this.patternTimeline[track.id].find(n => n[0] === beat);
+                
+                // Check if cell is covered by extended note
+                const coveringNote = this.getCoveringNote(track.id, beat);
+                const isCovered = coveringNote && coveringNote[0] !== beat;
+                
                 html += `
-                    <div class="pattern-cell ${hasNote ? 'has-note' : ''} ${isDownbeat ? 'downbeat' : ''}" 
+                    <div class="pattern-cell ${noteData ? 'has-note' : ''} ${isDownbeat ? 'downbeat' : ''} ${isCovered ? 'covered-by-note' : ''}" 
                          data-track="${track.id}" 
                          data-beat="${beat}">
-                    </div>
                 `;
+                
+                // Render actual note element if present
+                if (noteData && !isCovered) {
+                    const [beatPos, noteIndex, duration, velocity = 0.8] = noteData;
+                    const noteIcon = this.game.getNoteIcon(track.id, noteIndex);
+                    
+                    html += `
+                        <div class="cell-note" 
+                             data-duration="${duration}"
+                             data-velocity="${velocity}"
+                             data-note-index="${noteIndex}"
+                             style="width: calc(${duration} * var(--cell-size) - 4px)">
+                            ${noteIcon}
+                            <div class="velocity-indicator" style="height: ${velocity * 100}%"></div>
+                        </div>
+                    `;
+                }
+                
+                html += `</div>`;
             }
 
             html += `
@@ -224,6 +247,187 @@ class PatternDrawer {
 
         html += '</div>';
         this.timelineContainer.innerHTML = html;
+        
+        // Setup note interaction after rendering
+        this.setupNoteInteraction();
+    }
+    
+    /**
+     * Get note that covers a specific beat (for extended notes)
+     */
+    getCoveringNote(trackId, beat) {
+        const notes = this.patternTimeline[trackId];
+        for (const note of notes) {
+            const [startBeat, noteIndex, duration] = note;
+            if (beat >= startBeat && beat < startBeat + duration) {
+                return note;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Setup interaction for rendered notes (resize, velocity)
+     */
+    setupNoteInteraction() {
+        const noteElements = this.timelineContainer.querySelectorAll('.cell-note');
+        
+        noteElements.forEach(noteEl => {
+            const cell = noteEl.closest('.pattern-cell');
+            const trackId = parseInt(cell.dataset.track);
+            const beat = parseInt(cell.dataset.beat);
+            
+            // Setup drag-to-resize
+            this.setupNoteDragResize(noteEl, trackId, beat);
+            
+            // Setup long-press for velocity control
+            this.setupNoteVelocityControl(noteEl, trackId, beat);
+        });
+    }
+    
+    /**
+     * Setup drag-to-resize for a note element
+     */
+    setupNoteDragResize(noteEl, trackId, beat) {
+        let startX = 0;
+        let startDuration = 1;
+        let isResizing = false;
+        
+        const onPointerDown = (e) => {
+            // Only resize from right edge
+            const rect = noteEl.getBoundingClientRect();
+            const edgeThreshold = 20;
+            
+            if (e.clientX > rect.right - edgeThreshold) {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                isResizing = true;
+                startX = e.clientX;
+                startDuration = parseFloat(noteEl.dataset.duration);
+                
+                noteEl.classList.add('resizing');
+                document.body.style.cursor = 'ew-resize';
+            }
+        };
+        
+        const onPointerMove = (e) => {
+            if (!isResizing) return;
+            
+            const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size'));
+            const deltaX = e.clientX - startX;
+            const deltaDuration = Math.round(deltaX / cellSize * 2) / 2; // Snap to 0.5 beat
+            
+            let newDuration = startDuration + deltaDuration;
+            newDuration = Math.max(0.5, Math.min(newDuration, this.currentPatternLength - beat));
+            
+            noteEl.style.width = `calc(${newDuration} * var(--cell-size) - 4px)`;
+            noteEl.dataset.duration = newDuration;
+        };
+        
+        const onPointerUp = () => {
+            if (!isResizing) return;
+            
+            isResizing = false;
+            noteEl.classList.remove('resizing');
+            document.body.style.cursor = '';
+            
+            // Update pattern data
+            const newDuration = parseFloat(noteEl.dataset.duration);
+            this.updateNoteDuration(trackId, beat, newDuration);
+        };
+        
+        noteEl.addEventListener('pointerdown', onPointerDown);
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', onPointerUp);
+    }
+    
+    /**
+     * Setup velocity control for a note element (long press)
+     */
+    setupNoteVelocityControl(noteEl, trackId, beat) {
+        let longPressTimer = null;
+        let isAdjustingVelocity = false;
+        let startY = 0;
+        let startVelocity = 0.8;
+        
+        const onPointerDown = (e) => {
+            // Check if resizing
+            const rect = noteEl.getBoundingClientRect();
+            if (e.clientX > rect.right - 20) return; // Don't interfere with resize
+            
+            startY = e.clientY;
+            startVelocity = parseFloat(noteEl.dataset.velocity);
+            
+            longPressTimer = setTimeout(() => {
+                isAdjustingVelocity = true;
+                noteEl.classList.add('adjusting-velocity');
+            }, 500);
+        };
+        
+        const onPointerMove = (e) => {
+            if (!isAdjustingVelocity) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const deltaY = startY - e.clientY;
+            const velocityChange = deltaY / 100;
+            
+            let newVelocity = startVelocity + velocityChange;
+            newVelocity = Math.max(0.1, Math.min(1, newVelocity));
+            
+            noteEl.dataset.velocity = newVelocity;
+            const velocityBar = noteEl.querySelector('.velocity-indicator');
+            if (velocityBar) {
+                velocityBar.style.height = `${newVelocity * 100}%`;
+            }
+        };
+        
+        const onPointerUp = () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+            }
+            
+            if (isAdjustingVelocity) {
+                isAdjustingVelocity = false;
+                noteEl.classList.remove('adjusting-velocity');
+                
+                // Update pattern data
+                const newVelocity = parseFloat(noteEl.dataset.velocity);
+                this.updateNoteVelocity(trackId, beat, newVelocity);
+            }
+        };
+        
+        noteEl.addEventListener('pointerdown', onPointerDown);
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', onPointerUp);
+    }
+    
+    /**
+     * Update note duration in pattern data
+     */
+    updateNoteDuration(trackId, beat, duration) {
+        const track = this.patternTimeline[trackId];
+        const note = track.find(n => n[0] === beat);
+        
+        if (note) {
+            note[2] = duration; // Update duration
+            this.renderPatternTimeline();
+        }
+    }
+    
+    /**
+     * Update note velocity in pattern data
+     */
+    updateNoteVelocity(trackId, beat, velocity) {
+        const track = this.patternTimeline[trackId];
+        const note = track.find(n => n[0] === beat);
+        
+        if (note) {
+            note[3] = velocity; // Update velocity
+            // No re-render needed, just visual update
+        }
     }
 
     /**
@@ -285,14 +489,27 @@ class PatternDrawer {
             this.handleSlotSelection(index);
         });
 
-        // Pattern timeline cells - click to toggle
+        // Pattern timeline cells - click to toggle/remove notes
         this.timelineContainer?.addEventListener('click', (e) => {
+            // Don't handle clicks on note elements (they have their own interaction)
+            if (e.target.closest('.cell-note')) return;
+            
             const cell = e.target.closest('.pattern-cell');
             if (!cell) return;
 
             const trackId = parseInt(cell.dataset.track);
             const beat = parseInt(cell.dataset.beat);
-            this.toggleNote(trackId, beat);
+            
+            // If cell is covered by extended note, remove the parent note
+            if (cell.classList.contains('covered-by-note')) {
+                const coveringNote = this.getCoveringNote(trackId, beat);
+                if (coveringNote) {
+                    this.removeNote(trackId, coveringNote[0]);
+                }
+            } else {
+                // Toggle note at this position
+                this.toggleNote(trackId, beat);
+            }
         });
         
         // Pattern timeline cells - drag and drop support
@@ -418,6 +635,19 @@ class PatternDrawer {
         }
 
         this.renderPatternTimeline();
+    }
+    
+    /**
+     * Remove note at specific beat
+     */
+    removeNote(trackId, beat) {
+        const track = this.patternTimeline[trackId];
+        const index = track.findIndex(n => n[0] === beat);
+        
+        if (index >= 0) {
+            track.splice(index, 1);
+            this.renderPatternTimeline();
+        }
     }
     
     /**
