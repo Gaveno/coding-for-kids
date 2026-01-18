@@ -161,6 +161,13 @@ class PatternDrawer {
         const trackLabels = ['🎹', '🎹', '🥁'];
 
         let html = '<div class="pattern-timeline">';
+        
+        // Beat markers (like main timeline)
+        html += '<div class="pattern-beat-markers">';
+        for (let beat = 0; beat < numBeats; beat++) {
+            html += `<div class="pattern-beat-marker">${beat + 1}</div>`;
+        }
+        html += '</div>';
 
         // Render 3 tracks
         for (let trackId = 1; trackId <= 3; trackId++) {
