@@ -389,7 +389,7 @@ class DragDrop {
      */
     updateDropTargets(pointer) {
         // Clear previous targets
-        document.querySelectorAll('.track-cell.drop-target').forEach(cell => {
+        document.querySelectorAll('.track-cell.drop-target, .pattern-cell.drop-target').forEach(cell => {
             cell.classList.remove('drop-target');
         });
         
@@ -419,12 +419,15 @@ class DragDrop {
         }
         
         // Find the cell (might be the note inside)
-        if (element?.classList.contains('track-cell')) {
+        // Check for both track-cell (main timeline) and pattern-cell (pattern timeline)
+        if (element?.classList.contains('track-cell') || element?.classList.contains('pattern-cell')) {
             return element;
         }
-        if (element?.closest('.track-cell')) {
-            return element.closest('.track-cell');
-        }
+        const trackCell = element?.closest('.track-cell');
+        if (trackCell) return trackCell;
+        
+        const patternCell = element?.closest('.pattern-cell');
+        if (patternCell) return patternCell;
         
         return null;
     }

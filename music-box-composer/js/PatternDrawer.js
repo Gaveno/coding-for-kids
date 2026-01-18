@@ -222,7 +222,8 @@ class PatternDrawer {
                 // Render actual note element if present
                 if (noteData && !isCovered) {
                     const [beatPos, noteIndex, duration, velocity = 0.8] = noteData;
-                    const noteIcon = this.game.getNoteIcon(track.id, noteIndex);
+                    const icon = noteData.icon || this.getDefaultIcon(track.id, noteIndex);
+                    const octave = noteData.octave;
                     
                     html += `
                         <div class="cell-note" 
@@ -230,7 +231,8 @@ class PatternDrawer {
                              data-velocity="${velocity}"
                              data-note-index="${noteIndex}"
                              style="width: calc(${duration} * var(--cell-size) - 4px)">
-                            ${noteIcon}
+                            ${icon}
+                            ${octave !== null && octave !== undefined && track.id !== 3 ? `<div class="octave-indicator">${octave}</div>` : ''}
                             <div class="velocity-indicator" style="height: ${velocity * 100}%"></div>
                         </div>
                     `;
@@ -514,6 +516,18 @@ class PatternDrawer {
         
         // Pattern timeline cells - drag and drop support
         this.setupPatternTimelineDragDrop();
+        
+        // Listen for drops from main DragDrop system
+        this.timelineContainer?.addEventListener('patternTimelineDrop', (e) => {
+            const { trackId, beat, note, icon, octave, duration, velocity } = e.detail;
+            
+            // Find note index from note name
+            const noteIndex = this.getNoteIndexFromName(note, trackId);
+            
+            if (noteIndex !== null) {
+                this.addNoteToPattern(trackId, beat, noteIndex, duration, velocity, icon, octave);
+            }
+        });
     }
     
     /**
@@ -653,19 +667,56 @@ class PatternDrawer {
     /**
      * Add note to pattern timeline (for drag-drop interaction)
      */
-    addNoteToPattern(trackId, beat, noteIndex, duration) {
+    addNoteToPattern(trackId, beat, noteIndex, duration, velocity = 0.8, icon = null, octave = null) {
         const track = this.patternTimeline[trackId];
         const existingIndex = track.findIndex(n => n[0] === beat);
         
+        // Store full note data including icon and octave
+        const noteData = [beat, noteIndex, duration, velocity];
+        if (icon) noteData.icon = icon;
+        if (octave !== null) noteData.octave = octave;
+        
         if (existingIndex >= 0) {
             // Replace existing note
-            track[existingIndex] = [beat, noteIndex, duration];
+            track[existingIndex] = noteData;
         } else {
             // Add new note
-            track.push([beat, noteIndex, duration]);
+            track.push(noteData);
         }
         
         this.renderPatternTimeline();
+    }
+    
+    /**
+     * Convert note name (e.g., 'C', 'D#') to noteIndex for piano keyboard
+     */
+    getNoteIndexFromName(noteName, trackId) {
+        if (trackId === 3) {
+            // Percussion - just return 0 as default
+            return 0;
+        }
+        
+        // Piano notes mapping (from PianoKeyboard)
+        const noteMap = {
+            'C': 1, 'C#': 2, 'D': 3, 'D#': 4, 'E': 5, 'F': 6,
+            'F#': 7, 'G': 8, 'G#': 9, 'A': 10, 'A#': 11, 'B': 12
+        };
+        
+        return noteMap[noteName] !== undefined ? noteMap[noteName] - 1 : 0;
+    }
+    
+    /**
+     * Get default icon for note (fallback if not stored)
+     */
+    getDefaultIcon(trackId, noteIndex) {
+        if (trackId === 3) {
+            const percIcons = ['🥁', '🪘', '🔔', '👏', '🎵', '💥', '🎶', '🔊'];
+            return percIcons[noteIndex] || '🥁';
+        } else {
+            // For piano, get note name from index
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            return noteNames[noteIndex] || 'C';
+        }
     }
 
     /**
