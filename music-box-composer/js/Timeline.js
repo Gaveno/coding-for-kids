@@ -132,6 +132,12 @@ class Timeline {
                 // Create note element that can span multiple cells
                 const noteEl = document.createElement('div');
                 noteEl.className = 'cell-note';
+                
+                // Mark if note is from a pattern (75% opacity)
+                if (note.patternPlacementId) {
+                    noteEl.classList.add('from-pattern');
+                }
+                
                 noteEl.textContent = note.icon;
                 noteEl.dataset.duration = duration;
                 noteEl.dataset.note = note.note; // For color styling
@@ -489,6 +495,16 @@ class Timeline {
     setNote(trackNum, beat, noteData) {
         this.tracks[trackNum].setNote(beat, noteData);
         this.renderTrack(trackNum);
+    }
+    
+    /**
+     * Get a note from a track
+     * @param {number} trackNum - Track number (1, 2, or 3)
+     * @param {number} beat - Beat index
+     * @returns {Object|null} - Note data or null
+     */
+    getNote(trackNum, beat) {
+        return this.tracks[trackNum].getNote(beat);
     }
 
     /**

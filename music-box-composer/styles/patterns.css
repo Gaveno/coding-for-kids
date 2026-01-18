@@ -361,3 +361,109 @@
         transform: translateY(0);
     }
 }
+
+/* ===== Pattern Block Overlay (Main Timeline) ===== */
+
+.pattern-block-overlay {
+    position: absolute;
+    top: 0;
+    opacity: 0.25;
+    pointer-events: auto;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    transition: opacity 0.2s ease;
+    z-index: 5;
+}
+
+.pattern-block-overlay:hover {
+    opacity: 0.4;
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.pattern-block-header {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: auto;
+}
+
+.pattern-block-icon {
+    font-size: 24px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+
+.pattern-block-delete {
+    min-width: 44px;
+    min-height: 44px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 6px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.pattern-block-delete:hover {
+    background: var(--danger-color, #e63946);
+    border-color: white;
+    transform: scale(1.1);
+}
+
+.pattern-block-delete:active {
+    transform: scale(0.95);
+}
+
+/* Pattern note styling (75% opacity) */
+.note.from-pattern {
+    opacity: 0.75;
+}
+
+.note.from-pattern::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+}
+
+/* Pattern Drag Ghost */
+.pattern-drag-ghost {
+    width: 64px;
+    height: 64px;
+    border: 3px solid white;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    opacity: 0.9;
+}
+
+.pattern-drag-ghost .pattern-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.pattern-drag-ghost .pattern-length-badge {
+    font-size: 12px;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+

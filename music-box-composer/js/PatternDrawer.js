@@ -216,6 +216,17 @@ class PatternDrawer {
                 this.loadPattern(block);
             }
         });
+        
+        // Pattern blocks drag (delegated event)
+        this.blocksScroll?.addEventListener('pointerdown', (e) => {
+            const block = e.target.closest('.pattern-block');
+            if (!block || block.classList.contains('new-pattern') || block.classList.contains('empty')) return;
+            
+            const patternId = block.dataset.patternId;
+            if (!patternId) return;
+            
+            this.startPatternDrag(block, patternId, e);
+        });
 
         // Length selector buttons
         this.lengthBtns?.forEach(btn => {
@@ -411,5 +422,81 @@ class PatternDrawer {
      */
     updateForMode(mode) {
         this.renderPatternBlocks();
+    }
+    
+    /**
+     * Start dragging a pattern block
+     */
+    startPatternDrag(block, patternId, startEvent) {
+        const pattern = this.patternLibrary.getPattern(patternId);
+        if (!pattern) return;
+        
+        let hasMoved = false;
+        const dragThreshold = 15;
+        const startX = startEvent.clientX;
+        const startY = startEvent.clientY;
+        
+        // Create drag ghost
+        const ghost = document.createElement('div');
+        ghost.className = 'pattern-drag-ghost';
+        ghost.style.backgroundColor = pattern.color;
+        ghost.innerHTML = `
+            <span class="pattern-icon">${pattern.icon}</span>
+            <span class="pattern-length-badge">${pattern.length}</span>
+        `;
+        ghost.style.position = 'fixed';
+        ghost.style.pointerEvents = 'none';
+        ghost.style.display = 'none';
+        ghost.style.zIndex = '10000';
+        document.body.appendChild(ghost);
+        
+        const onMove = (e) => {
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            
+            if (!hasMoved && (Math.abs(dx) > dragThreshold || Math.abs(dy) > dragThreshold)) {
+                hasMoved = true;
+                ghost.style.display = 'flex';
+            }
+            
+            if (hasMoved) {
+                ghost.style.left = `${e.clientX - 32}px`;
+                ghost.style.top = `${e.clientY - 32}px`;
+            }
+        };
+        
+        const onEnd = (e) => {
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onEnd);
+            
+            if (hasMoved) {
+                // Check if dropped on timeline
+                const timelineEl = document.querySelector('.timeline');
+                if (timelineEl) {
+                    const timelineRect = timelineEl.getBoundingClientRect();
+                    if (e.clientX >= timelineRect.left && e.clientX <= timelineRect.right &&
+                        e.clientY >= timelineRect.top && e.clientY <= timelineRect.bottom) {
+                        
+                        // Calculate beat position
+                        const cellWidth = 50; // Match timeline cell width
+                        const relativeX = e.clientX - timelineRect.left;
+                        const beat = Math.floor(relativeX / cellWidth);
+                        
+                        // Place pattern
+                        if (beat >= 0) {
+                            this.game.placePattern(patternId, beat);
+                        }
+                    }
+                }
+            }
+            
+            // Clean up ghost
+            document.body.removeChild(ghost);
+        };
+        
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onEnd);
+        
+        startEvent.preventDefault();
     }
 }

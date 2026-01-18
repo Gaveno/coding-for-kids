@@ -72,6 +72,10 @@ class Game {
         this.patternLibrary = null;
         this.patternDrawer = null;
         
+        // Pattern placements
+        this.patternPlacements = new Map(); // placementId -> { placementId, patternId, startBeat, noteIds }
+        this.patternBlocks = new Map(); // placementId -> PatternBlock instance
+        
         this.isPlaying = false;
         this.isLooping = false;
         this.currentBeat = 0;
@@ -366,6 +370,135 @@ class Game {
         // Preview the dropped note with its octave
         this.audio.playNote(noteData.note, trackNum, 0.25, noteData.velocity || 0.8, noteData.octave);
         this.updateURL();
+    }
+    
+    /**
+     * Place a pattern in the timeline (stamp notes)
+     * @param {string} patternId - Pattern ID (preset or custom)
+     * @param {number} startBeat - Beat to place pattern
+     */
+    placePattern(patternId, startBeat) {
+        const pattern = this.patternLibrary.getPattern(patternId);
+        if (!pattern) {
+            console.error('Pattern not found:', patternId);
+            return false;
+        }
+        
+        // Check if pattern would overlap with existing patterns
+        const endBeat = startBeat + pattern.length;
+        for (const placement of this.patternPlacements.values()) {
+            const placementEnd = placement.startBeat + this.patternLibrary.getPattern(placement.patternId).length;
+            if (!(endBeat <= placement.startBeat || startBeat >= placementEnd)) {
+                console.log('Pattern would overlap with existing pattern');
+                return false;
+            }
+        }
+        
+        // Generate unique placement ID
+        const placementId = `placement_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Create placement record
+        const placement = {
+            placementId,
+            patternId,
+            startBeat,
+            noteIds: new Set()
+        };
+        
+        // Stamp notes from pattern into timeline
+        for (const trackId in pattern.tracks) {
+            const trackNotes = pattern.tracks[trackId];
+            for (const [beat, noteIndex, duration] of trackNotes) {
+                const absoluteBeat = startBeat + beat;
+                
+                // Don't place beyond timeline length
+                if (absoluteBeat >= this.timeline.beatCount) continue;
+                
+                // Create note data
+                const noteData = {
+                    note: noteIndex,
+                    duration: duration,
+                    velocity: 0.8,
+                    octave: null,
+                    icon: this.getNoteIcon(parseInt(trackId), noteIndex),
+                    patternPlacementId: placementId // Link to pattern
+                };
+                
+                // Generate note ID
+                const noteId = `note_${trackId}_${absoluteBeat}`;
+                placement.noteIds.add(noteId);
+                
+                // Add note to timeline
+                this.timeline.setNote(parseInt(trackId), absoluteBeat, noteData);
+            }
+        }
+        
+        // Store placement
+        this.patternPlacements.set(placementId, placement);
+        
+        // Create pattern block overlay
+        const patternBlock = new PatternBlock(placement, pattern, this.timeline);
+        patternBlock.onRemove = (id) => this.removePatternPlacement(id);
+        this.patternBlocks.set(placementId, patternBlock);
+        
+        // Add to timeline container
+        const timelineContainer = this.timeline.container;
+        timelineContainer.appendChild(patternBlock.getElement());
+        
+        this.updateURL();
+        return true;
+    }
+    
+    /**
+     * Remove a pattern placement and all its notes
+     * @param {string} placementId - Placement ID
+     */
+    removePatternPlacement(placementId) {
+        const placement = this.patternPlacements.get(placementId);
+        if (!placement) return;
+        
+        const pattern = this.patternLibrary.getPattern(placement.patternId);
+        if (!pattern) return;
+        
+        // Remove all notes from this pattern
+        for (const trackId in pattern.tracks) {
+            const trackNotes = pattern.tracks[trackId];
+            for (const [beat] of trackNotes) {
+                const absoluteBeat = placement.startBeat + beat;
+                const note = this.timeline.getNote(parseInt(trackId), absoluteBeat);
+                
+                // Only remove if it still belongs to this pattern
+                if (note && note.patternPlacementId === placementId) {
+                    this.timeline.clearNote(parseInt(trackId), absoluteBeat);
+                }
+            }
+        }
+        
+        // Remove pattern block
+        const patternBlock = this.patternBlocks.get(placementId);
+        if (patternBlock) {
+            patternBlock.remove();
+            this.patternBlocks.delete(placementId);
+        }
+        
+        // Remove placement
+        this.patternPlacements.delete(placementId);
+        
+        this.updateURL();
+    }
+    
+    /**
+     * Get icon for note (helper method)
+     */
+    getNoteIcon(trackId, noteIndex) {
+        if (trackId === 3) {
+            // Percussion
+            const percIcons = ['🥁', '🪘', '🔔', '👏', '🎵', '💥', '🎶', '🔊'];
+            return percIcons[noteIndex] || '🥁';
+        } else {
+            // Piano - use musical note
+            return '♪';
+        }
     }
 
     /**
