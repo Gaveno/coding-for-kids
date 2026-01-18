@@ -158,31 +158,39 @@ class PatternDrawer {
         if (!this.timelineContainer) return;
 
         const numBeats = this.currentPatternLength;
-        const trackLabels = ['🎹', '🎹', '🥁'];
+        
+        // Track configuration matching main timeline
+        const tracks = [
+            { id: 1, name: 'melody', icon: '🎹' },
+            { id: 2, name: 'bass', icon: '🎹' },
+            { id: 3, name: 'percussion', icon: '🥁' }
+        ];
 
         let html = '<div class="pattern-timeline">';
         
-        // Beat markers (like main timeline)
+        // Beat markers (like main timeline) with downbeat emphasis
         html += '<div class="pattern-beat-markers">';
         for (let beat = 0; beat < numBeats; beat++) {
-            html += `<div class="pattern-beat-marker">${beat + 1}</div>`;
+            const isDownbeat = beat % 4 === 0;
+            html += `<div class="pattern-beat-marker ${isDownbeat ? 'downbeat' : ''}">${beat + 1}</div>`;
         }
         html += '</div>';
 
-        // Render 3 tracks
-        for (let trackId = 1; trackId <= 3; trackId++) {
+        // Render tracks with track names matching main timeline
+        for (const track of tracks) {
             html += `
-                <div class="pattern-track" data-track="${trackId}">
-                    <div class="pattern-track-label">${trackLabels[trackId - 1]}</div>
+                <div class="pattern-track" data-track="${track.name}">
+                    <div class="pattern-track-label">${track.icon}</div>
                     <div class="pattern-track-cells">
             `;
 
-            // Render cells for this track
+            // Render cells for this track with downbeat emphasis
             for (let beat = 0; beat < numBeats; beat++) {
-                const hasNote = this.patternTimeline[trackId].some(n => n[0] === beat);
+                const hasNote = this.patternTimeline[track.id].some(n => n[0] === beat);
+                const isDownbeat = beat % 4 === 0;
                 html += `
-                    <div class="pattern-cell ${hasNote ? 'has-note' : ''}" 
-                         data-track="${trackId}" 
+                    <div class="pattern-cell ${hasNote ? 'has-note' : ''} ${isDownbeat ? 'downbeat' : ''}" 
+                         data-track="${track.id}" 
                          data-beat="${beat}">
                     </div>
                 `;
