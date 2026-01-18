@@ -285,7 +285,7 @@ class PatternDrawer {
             this.handleSlotSelection(index);
         });
 
-        // Pattern timeline cells (delegated event)
+        // Pattern timeline cells - click to toggle
         this.timelineContainer?.addEventListener('click', (e) => {
             const cell = e.target.closest('.pattern-cell');
             if (!cell) return;
@@ -293,6 +293,81 @@ class PatternDrawer {
             const trackId = parseInt(cell.dataset.track);
             const beat = parseInt(cell.dataset.beat);
             this.toggleNote(trackId, beat);
+        });
+        
+        // Pattern timeline cells - drag and drop support
+        this.setupPatternTimelineDragDrop();
+    }
+    
+    /**
+     * Setup drag-and-drop for pattern timeline cells
+     */
+    setupPatternTimelineDragDrop() {
+        if (!this.timelineContainer) return;
+        
+        // Use event delegation for drag events
+        this.timelineContainer.addEventListener('dragover', (e) => {
+            const cell = e.target.closest('.pattern-cell');
+            if (!cell) return;
+            
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            
+            // Visual feedback
+            cell.classList.add('drag-over');
+        });
+        
+        this.timelineContainer.addEventListener('dragleave', (e) => {
+            const cell = e.target.closest('.pattern-cell');
+            if (!cell) return;
+            
+            cell.classList.remove('drag-over');
+        });
+        
+        this.timelineContainer.addEventListener('drop', (e) => {
+            const cell = e.target.closest('.pattern-cell');
+            if (!cell) return;
+            
+            e.preventDefault();
+            cell.classList.remove('drag-over');
+            
+            // Get drop data
+            const trackId = parseInt(cell.dataset.track);
+            const beat = parseInt(cell.dataset.beat);
+            
+            // Try to get note data from drag event
+            let noteIndex = null;
+            let duration = 0.5;
+            
+            try {
+                const dragData = e.dataTransfer.getData('application/json');
+                if (dragData) {
+                    const data = JSON.parse(dragData);
+                    noteIndex = data.noteIndex !== undefined ? data.noteIndex : null;
+                    duration = data.duration || 0.5;
+                }
+            } catch (err) {
+                // Fallback: try text format
+                try {
+                    const text = e.dataTransfer.getData('text/plain');
+                    if (text) {
+                        const match = text.match(/note:(\d+)/);
+                        if (match) {
+                            noteIndex = parseInt(match[1]);
+                        }
+                    }
+                } catch (err2) {
+                    console.warn('Could not parse drag data');
+                }
+            }
+            
+            // If no note index from drag data, use default
+            if (noteIndex === null) {
+                noteIndex = trackId === 3 ? 0 : 6; // Percussion: kick, Piano: middle note
+            }
+            
+            // Add note to pattern timeline
+            this.addNoteToPattern(trackId, beat, noteIndex, duration);
         });
     }
 
@@ -327,7 +402,7 @@ class PatternDrawer {
     }
 
     /**
-     * Toggle note in pattern timeline
+     * Toggle note in pattern timeline (for click interaction)
      */
     toggleNote(trackId, beat) {
         const track = this.patternTimeline[trackId];
@@ -338,12 +413,28 @@ class PatternDrawer {
             track.splice(existingIndex, 1);
         } else {
             // Add note with default values
-            // For now, use middle note (index 6) and duration 0.5
-            // TODO: Allow user to select note/duration
             const noteIndex = trackId === 3 ? 0 : 6; // Percussion: kick, Piano: middle note
             track.push([beat, noteIndex, 0.5]);
         }
 
+        this.renderPatternTimeline();
+    }
+    
+    /**
+     * Add note to pattern timeline (for drag-drop interaction)
+     */
+    addNoteToPattern(trackId, beat, noteIndex, duration) {
+        const track = this.patternTimeline[trackId];
+        const existingIndex = track.findIndex(n => n[0] === beat);
+        
+        if (existingIndex >= 0) {
+            // Replace existing note
+            track[existingIndex] = [beat, noteIndex, duration];
+        } else {
+            // Add new note
+            track.push([beat, noteIndex, duration]);
+        }
+        
         this.renderPatternTimeline();
     }
 
