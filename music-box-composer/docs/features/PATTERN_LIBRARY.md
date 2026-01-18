@@ -228,7 +228,14 @@ A pattern/loop abstraction layer that teaches the programming concept of **funct
   - 3-track grid matching main timeline style
   - Tap to add/remove notes (same as main timeline)
   - 🗑️ Clear button to reset pattern timeline
-  - 💾 Save button to save as custom pattern
+  - 💾 Save button opens modal to select slot (1️⃣-8️⃣)
+  
+- [ ] **Task 2.3b** - Save Pattern Modal
+  - Show 8 slots with current status (empty/occupied)
+  - Display icon and preview for occupied slots
+  - Tap slot to save (confirms overwrite if occupied)
+  - Cancel button to close modal
+  - Touch-friendly slots (min 44px targets)
   
 - [ ] **Task 2.4** - Pattern Drag to Main Timeline
   - Drag pattern block from bar to main timeline
@@ -241,6 +248,7 @@ A pattern/loop abstraction layer that teaches the programming concept of **funct
   - Pattern timeline styling
   - Length selector buttons
   - Save/clear button styling
+  - Save modal styling (8-slot grid)
 
 ### Phase 3: Pattern Stamp & Block Overlay
 **Status:** 🔲 Not Started
