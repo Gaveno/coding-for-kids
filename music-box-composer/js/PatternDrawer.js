@@ -79,6 +79,23 @@ class PatternDrawer {
                     <!-- Pattern timeline will be rendered here -->
                 </div>
             </div>
+            
+            <!-- Save Modal -->
+            <div class="pattern-save-modal" id="patternSaveModal">
+                <div class="modal-overlay"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>💾 Save Pattern</h3>
+                        <button class="modal-close" aria-label="Close">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="modal-instruction">Choose a slot to save your pattern:</p>
+                        <div class="pattern-slots" id="patternSlots">
+                            <!-- Slots will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
 
         // Get references to key elements
@@ -87,6 +104,9 @@ class PatternDrawer {
         this.clearBtn = this.drawerElement.querySelector('#clearPatternBtn');
         this.saveBtn = this.drawerElement.querySelector('#savePatternBtn');
         this.lengthBtns = this.drawerElement.querySelectorAll('.length-selector-btn');
+        this.saveModal = this.drawerElement.querySelector('#patternSaveModal');
+        this.modalSlots = this.drawerElement.querySelector('#patternSlots');
+        this.modalClose = this.drawerElement.querySelector('.modal-close');
 
         // Render pattern blocks
         this.renderPatternBlocks();
@@ -250,6 +270,21 @@ class PatternDrawer {
         // Save button
         this.saveBtn?.addEventListener('click', () => this.showSaveModal());
 
+        // Modal close button
+        this.modalClose?.addEventListener('click', () => this.closeSaveModal());
+        
+        // Modal overlay click to close
+        this.saveModal?.querySelector('.modal-overlay')?.addEventListener('click', () => this.closeSaveModal());
+        
+        // Modal slots (delegated event)
+        this.modalSlots?.addEventListener('click', (e) => {
+            const slot = e.target.closest('.pattern-slot');
+            if (!slot) return;
+            
+            const index = parseInt(slot.dataset.index);
+            this.handleSlotSelection(index);
+        });
+
         // Pattern timeline cells (delegated event)
         this.timelineContainer?.addEventListener('click', (e) => {
             const cell = e.target.closest('.pattern-cell');
@@ -366,20 +401,94 @@ class PatternDrawer {
      * Show save modal to select slot
      */
     showSaveModal() {
-        // TODO: Implement save modal (Task 2.3b)
-        console.log('Save modal - to be implemented');
+        if (!this.saveModal || !this.modalSlots) return;
         
-        // Placeholder: save to first available slot
+        // Render slots
+        this.renderModalSlots();
+        
+        // Show modal
+        this.saveModal.classList.add('active');
+    }
+    
+    /**
+     * Close save modal
+     */
+    closeSaveModal() {
+        if (!this.saveModal) return;
+        this.saveModal.classList.remove('active');
+    }
+    
+    /**
+     * Render slots in save modal
+     */
+    renderModalSlots() {
+        if (!this.modalSlots) return;
+        
         const customPatterns = this.patternLibrary.getUserPatterns();
-        let targetIndex = 0;
+        const customIcons = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'];
+        const customColors = ['#4ECDC4', '#FFD93D', '#E63946', '#A8DADC', '#6A4C93', '#FF6B6B', '#95E1D3', '#F38181'];
+        
+        let html = '';
+        
         for (let i = 0; i < 8; i++) {
-            if (!customPatterns.find(p => p.index === i)) {
-                targetIndex = i;
-                break;
+            const pattern = customPatterns.find(p => p.index === i);
+            const icon = customIcons[i];
+            const color = customColors[i];
+            
+            if (pattern) {
+                // Occupied slot - show preview
+                const noteCount = Object.values(pattern.tracks).reduce((sum, notes) => sum + notes.length, 0);
+                html += `
+                    <button class="pattern-slot occupied" 
+                            data-index="${i}"
+                            style="background-color: ${color}"
+                            aria-label="Slot ${i + 1} - ${noteCount} notes">
+                        <div class="slot-icon">${icon}</div>
+                        <div class="slot-info">
+                            <div class="slot-length">${pattern.length} beats</div>
+                            <div class="slot-notes">${noteCount} notes</div>
+                        </div>
+                        <div class="slot-status">Overwrite</div>
+                    </button>
+                `;
+            } else {
+                // Empty slot
+                html += `
+                    <button class="pattern-slot empty" 
+                            data-index="${i}"
+                            style="border-color: ${color}"
+                            aria-label="Slot ${i + 1} - Empty">
+                        <div class="slot-icon">${icon}</div>
+                        <div class="slot-info">
+                            <div class="slot-status">Empty</div>
+                        </div>
+                    </button>
+                `;
             }
         }
         
-        this.savePatternToSlot(targetIndex);
+        this.modalSlots.innerHTML = html;
+    }
+    
+    /**
+     * Handle slot selection
+     */
+    handleSlotSelection(index) {
+        const customPatterns = this.patternLibrary.getUserPatterns();
+        const existing = customPatterns.find(p => p.index === index);
+        
+        if (existing) {
+            // Confirm overwrite
+            if (!confirm(`Overwrite Pattern ${index + 1}?\n\nThis will replace the existing pattern with your current pattern.`)) {
+                return;
+            }
+        }
+        
+        // Save to slot
+        this.savePatternToSlot(index);
+        
+        // Close modal
+        this.closeSaveModal();
     }
 
     /**
