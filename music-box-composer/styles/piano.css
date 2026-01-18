@@ -18,6 +18,7 @@
 }
 
 .piano-keyboard-wrapper {
+    position: relative; /* For pattern drawer toggle button positioning */
     display: flex;
     flex-direction: column;
     align-items: center;
