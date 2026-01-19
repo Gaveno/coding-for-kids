@@ -543,8 +543,11 @@ class Timeline {
     getNotesAtBeat(beat) {
         const result = {};
         
-        [1, 2, 3].forEach(trackNum => {
+        // Iterate through all tracks dynamically
+        Object.keys(this.tracks).forEach(trackNum => {
             const track = this.tracks[trackNum];
+            if (!track) return;
+            
             // First check if there's a note starting at this beat
             let note = track.getNote(beat);
             
