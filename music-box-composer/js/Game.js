@@ -101,8 +101,8 @@ class Game {
         ];
         this.currentSpeedIndex = 1; // Default: medium
         
-        // Beat lengths (up to 64 beats)
-        this.beatLengths = [16, 32, 48, 64];
+        // Beat lengths (up to 256 beats for Studio Mode)
+        this.beatLengths = [16, 32, 48, 64, 128, 256];
         
         // Key selection (default: C Major - all white keys)
         this.currentKey = 'C Major';
@@ -147,6 +147,7 @@ class Game {
             lengthUpBtn: document.getElementById('lengthUpBtn'),
             lengthDownBtn: document.getElementById('lengthDownBtn'),
             beatCount: document.getElementById('beatCount'),
+            beatLengthSelect: document.getElementById('beatLengthSelect'),
             timeline: document.getElementById('timeline'),
             timelineScroll: document.getElementById('timelineScroll'),
             beatMarkers: document.getElementById('beatMarkers'),
@@ -217,6 +218,9 @@ class Game {
         // Populate key selector dropdown
         this.populateKeySelector();
         
+        // Populate beat length selector dropdown
+        this.populateBeatLengthSelector();
+        
         // Timeline
         this.timeline = new Timeline({
             container: this.elements.timeline,
@@ -278,6 +282,31 @@ class Game {
     }
 
     /**
+     * Populate beat length selector with allowed lengths for current mode
+     */
+    populateBeatLengthSelector() {
+        if (!this.elements.beatLengthSelect) return;
+        
+        const config = this.getModeConfig();
+        const allowedLengths = this.beatLengths.filter(len => len <= config.maxBeats);
+        
+        // Clear existing options
+        this.elements.beatLengthSelect.innerHTML = '';
+        
+        // Add options for allowed lengths
+        allowedLengths.forEach(length => {
+            const option = document.createElement('option');
+            option.value = length;
+            option.textContent = `${length} beats`;
+            this.elements.beatLengthSelect.appendChild(option);
+        });
+        
+        // Set current value
+        const currentLength = this.timeline ? this.timeline.getBeatCount() : 16;
+        this.elements.beatLengthSelect.value = currentLength;
+    }
+
+    /**
      * Bind event listeners
      */
     bindEvents() {
@@ -305,6 +334,7 @@ class Game {
         this.elements.exportMidiBtn.addEventListener('click', () => this.exportMIDI());
         this.elements.lengthUpBtn.addEventListener('click', () => this.changeLength(1));
         this.elements.lengthDownBtn.addEventListener('click', () => this.changeLength(-1));
+        this.elements.beatLengthSelect.addEventListener('change', (e) => this.setBeatLength(parseInt(e.target.value, 10)));
         this.elements.keySelect.addEventListener('change', (e) => this.setKey(e.target.value));
         
         // Octave controls (Studio Mode)
@@ -1300,10 +1330,41 @@ class Game {
         newIndex = Math.max(0, Math.min(allowedLengths.length - 1, newIndex));
         
         if (newIndex !== currentIndex) {
-            const newLength = allowedLengths[newIndex];
-            this.timeline.setBeatCount(newLength);
-            this.elements.beatCount.textContent = newLength;
-            this.updateURL();
+            this.setBeatLength(allowedLengths[newIndex]);
+        }
+    }
+
+    /**
+     * Set beat length directly
+     * @param {number} length - New beat length
+     */
+    setBeatLength(length) {
+        if (this.isPlaying) return;
+        
+        const config = this.getModeConfig();
+        const allowedLengths = this.beatLengths.filter(len => len <= config.maxBeats);
+        
+        // Validate length
+        if (!allowedLengths.includes(length)) return;
+        
+        this.timeline.setBeatCount(length);
+        this.updateBeatLengthUI(length);
+        this.updateURL();
+    }
+
+    /**
+     * Update beat length UI elements
+     * @param {number} length - Current beat length
+     */
+    updateBeatLengthUI(length) {
+        // Update dropdown
+        if (this.elements.beatLengthSelect) {
+            this.elements.beatLengthSelect.value = length;
+        }
+        
+        // Update display (for backwards compatibility if element still exists)
+        if (this.elements.beatCount) {
+            this.elements.beatCount.textContent = length;
         }
     }
 
@@ -3891,9 +3952,12 @@ class Game {
                 const allowedLengths = this.beatLengths.filter(len => len <= config.maxBeats);
                 const newBeats = allowedLengths[allowedLengths.length - 1] || config.maxBeats;
                 this.timeline.setBeatCount(newBeats);
-                this.elements.beatCount.textContent = newBeats;
+                this.updateBeatLengthUI(newBeats);
             }
         }
+        
+        // Update beat length selector options
+        this.populateBeatLengthSelector();
         
         // Update speed button visibility
         this.updateSpeedControls();
