@@ -176,7 +176,16 @@ class Game {
             closeTrackSettingsBtn: document.getElementById('close-track-settings-btn'),
             waveformButtons: document.getElementById('waveform-buttons'),
             modalReverbBtn: document.getElementById('modal-reverb-btn'),
-            modalDelayBtn: document.getElementById('modal-delay-btn')
+            modalDelayBtn: document.getElementById('modal-delay-btn'),
+            addTrackBtn: document.getElementById('addTrackBtn'),
+            addTrackModal: document.getElementById('add-track-modal'),
+            addTrackOverlay: document.getElementById('add-track-overlay'),
+            addTrackTitle: document.getElementById('add-track-title'),
+            currentTrackCount: document.getElementById('current-track-count'),
+            maxTrackCount: document.getElementById('max-track-count'),
+            addPianoBtn: document.getElementById('add-piano-btn'),
+            addPercussionBtn: document.getElementById('add-percussion-btn'),
+            cancelAddTrackBtn: document.getElementById('cancel-add-track-btn')
         };
         
         // Cache track label buttons
@@ -356,6 +365,23 @@ class Game {
         
         this.elements.closeTrackSettingsBtn.addEventListener('click', () => this.closeTrackSettings());
         this.elements.trackSettingsOverlay.addEventListener('click', () => this.closeTrackSettings());
+        
+        // Add Track modal events
+        if (this.elements.addTrackBtn) {
+            this.elements.addTrackBtn.addEventListener('click', () => this.showAddTrackModal());
+        }
+        if (this.elements.addPianoBtn) {
+            this.elements.addPianoBtn.addEventListener('click', () => this.handleAddTrack('piano'));
+        }
+        if (this.elements.addPercussionBtn) {
+            this.elements.addPercussionBtn.addEventListener('click', () => this.handleAddTrack('percussion'));
+        }
+        if (this.elements.cancelAddTrackBtn) {
+            this.elements.cancelAddTrackBtn.addEventListener('click', () => this.closeAddTrackModal());
+        }
+        if (this.elements.addTrackOverlay) {
+            this.elements.addTrackOverlay.addEventListener('click', () => this.closeAddTrackModal());
+        }
         
         // Waveform buttons in modal
         const waveformBtns = this.elements.waveformButtons.querySelectorAll('.waveform-btn');
@@ -1345,6 +1371,76 @@ class Game {
         
         // Update URL to persist effect changes
         this.updateURL();
+    }
+
+    /**
+     * Show add track modal (Tween/Studio Mode)
+     */
+    showAddTrackModal() {
+        if (!this.canAddTracks()) {
+            console.warn('Cannot add more tracks');
+            return;
+        }
+
+        // Update track count display
+        const currentCount = Object.keys(this.timeline.tracks).length;
+        const maxCount = this.getMaxTracks();
+        this.elements.currentTrackCount.textContent = currentCount;
+        this.elements.maxTrackCount.textContent = maxCount;
+
+        // Show modal
+        this.elements.addTrackModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * Close add track modal
+     */
+    closeAddTrackModal() {
+        this.elements.addTrackModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    /**
+     * Handle track type selection and add track
+     * @param {string} trackType - 'piano' or 'percussion'
+     */
+    handleAddTrack(trackType) {
+        const newTrackNum = this.addTrack(trackType);
+        
+        if (newTrackNum) {
+            // Close modal
+            this.closeAddTrackModal();
+            
+            // Update add track button state
+            this.updateAddTrackButton();
+            
+            // Select the new track
+            this.selectTrack(newTrackNum);
+        }
+    }
+
+    /**
+     * Update add track button visibility and state
+     */
+    updateAddTrackButton() {
+        if (!this.elements.addTrackBtn) return;
+
+        const config = Game.MODE_CONFIGS[this.currentMode];
+        const canAdd = config.canAddTracks;
+        const currentCount = Object.keys(this.timeline.tracks).length;
+        const maxCount = config.maxTracks;
+
+        // Show button only if mode allows track adding
+        if (canAdd) {
+            this.elements.addTrackBtn.style.display = 'inline-block';
+            this.elements.addTrackBtn.disabled = currentCount >= maxCount;
+            
+            // Update button text with count
+            this.elements.addTrackBtn.textContent = `➕ Add Track (${currentCount}/${maxCount})`;
+        } else {
+            this.elements.addTrackBtn.style.display = 'none';
+        }
     }
 
     /**
@@ -3425,6 +3521,9 @@ class Game {
         if (octaveControls) {
             octaveControls.style.display = this.currentMode === Game.MODES.STUDIO ? 'flex' : 'none';
         }
+        
+        // Update add track button visibility and state
+        this.updateAddTrackButton();
         
         // Disable effects in kid and tween modes (not modifiable)
         if (this.currentMode !== Game.MODES.STUDIO) {

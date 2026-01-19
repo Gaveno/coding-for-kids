@@ -56,6 +56,7 @@
                         <!-- Options populated by JS -->
                     </select>
                 </div>
+                <button class="add-track-btn" id="addTrackBtn" aria-label="Add Track" title="Add Track" style="display: none;">➕ Add Track</button>
                 <button class="clear-btn" id="clearBtn" aria-label="Clear All">🗑️</button>
             </div>
             <div class="timeline-scroll" id="timelineScroll">
@@ -229,6 +230,31 @@
             
             <div class="modal-buttons">
                 <button id="close-track-settings-btn" class="modal-btn primary">✓ Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Track Modal (Tween/Studio Mode) -->
+    <div id="add-track-modal" class="modal hidden">
+        <div class="modal-overlay" id="add-track-overlay"></div>
+        <div class="modal-content add-track-selector">
+            <h2 id="add-track-title">Add Track (<span id="current-track-count">3</span>/<span id="max-track-count">6</span>)</h2>
+            
+            <div class="track-type-buttons">
+                <button class="track-type-btn" id="add-piano-btn" data-type="piano">
+                    <div class="track-type-icon">🎹</div>
+                    <div class="track-type-name">Piano</div>
+                </button>
+                <button class="track-type-btn" id="add-percussion-btn" data-type="percussion">
+                    <div class="track-type-icon">🥁</div>
+                    <div class="track-type-name">Percussion</div>
+                </button>
+            </div>
+            
+            <p class="track-type-hint">Piano tracks alternate octaves<br>(C4-B4 ➜ C3-B3 ➜ C4-B4...)</p>
+            
+            <div class="modal-buttons">
+                <button id="cancel-add-track-btn" class="modal-btn secondary">Cancel</button>
             </div>
         </div>
     </div>

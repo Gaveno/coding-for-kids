@@ -286,3 +286,145 @@
         border-width: 3px;
     }
 }
+/* ===== Add Track Modal ===== */
+
+.add-track-selector {
+    min-width: 360px;
+}
+
+.add-track-selector h2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.track-type-buttons {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: center;
+    margin: var(--spacing-lg) 0;
+}
+
+.track-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 140px;
+    border: 3px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow);
+}
+
+.track-type-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    border-color: var(--color-primary);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.track-type-btn:active {
+    transform: translateY(-2px) scale(1.02);
+}
+
+.track-type-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.track-type-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.track-type-hint {
+    margin: var(--spacing-md) 0 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Add Track Button in Timeline Header */
+.add-track-btn {
+    padding: 8px 16px;
+    border: 2px solid var(--color-success);
+    border-radius: var(--radius-md);
+    background: var(--color-success);
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+}
+
+.add-track-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--color-success-rgb), 0.3);
+}
+
+.add-track-btn:active {
+    transform: translateY(0);
+}
+
+.add-track-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Mobile Responsive - Add Track Modal */
+@media (max-width: 768px) {
+    .add-track-selector {
+        min-width: auto;
+        width: 90%;
+    }
+    
+    .track-type-buttons {
+        gap: var(--spacing-md);
+    }
+    
+    .track-type-btn {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .track-type-icon {
+        font-size: 2.5rem;
+    }
+    
+    .track-type-name {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .track-type-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .track-type-btn {
+        width: 100%;
+        max-width: 200px;
+        height: 100px;
+        flex-direction: row;
+        gap: var(--spacing-md);
+    }
+    
+    .track-type-icon {
+        font-size: 2rem;
+        margin-bottom: 0;
+    }
+    
+    .add-track-btn {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+}
