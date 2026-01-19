@@ -3747,7 +3747,7 @@ class Game {
         // Apply beat count
         if (typeof state.b === 'number' && this.beatLengths.includes(state.b)) {
             this.timeline.setBeatCount(state.b);
-            this.elements.beatCount.textContent = state.b;
+            this.updateBeatLengthUI(state.b);
         }
         
         // Apply key (v3 only)
