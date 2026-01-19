@@ -528,11 +528,16 @@ class Audio {
      * @param {number|null} octave - Optional octave for piano notes (null = use track default)
      */
     playNote(note, trackNumber, duration, velocity = 0.8, octave = null) {
-        if (trackNumber === 3) {
+        // Check if this is a percussion track by getting track from game's timeline
+        // For backward compatibility, also check if trackNumber === 3
+        const isPercussion = trackNumber === 3 || 
+            (window.game && window.game.timeline.tracks[trackNumber]?.isPercussion());
+        
+        if (isPercussion) {
             // Percussion track
             this.playPercussion(note, velocity);
         } else {
-            // Piano tracks (1 or 2) - pass octave through
+            // Piano tracks - pass octave through
             this.playPianoNote(note, trackNumber, duration, velocity, octave);
         }
     }

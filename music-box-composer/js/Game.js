@@ -452,8 +452,18 @@ class Game {
         }
         
         this.timeline.setNote(trackNum, beat, noteData);
+        
         // Preview the dropped note with its octave
-        this.audio.playNote(noteData.note, trackNum, 0.25, noteData.velocity || 0.8, noteData.octave);
+        // Use track type to determine preview behavior
+        const track = this.timeline.tracks[trackNum];
+        if (track && track.isPercussion()) {
+            // Percussion preview (no octave, short duration)
+            this.audio.playNote(noteData.note, trackNum, undefined, noteData.velocity || 0.8);
+        } else {
+            // Piano preview with octave and duration
+            this.audio.playNote(noteData.note, trackNum, 0.25, noteData.velocity || 0.8, noteData.octave);
+        }
+        
         this.updateURL();
     }
     
@@ -1030,44 +1040,32 @@ class Game {
      */
     playBeat(beat) {
         const notes = this.timeline.getNotesAtBeat(beat);
-        const playing = {
-            1: false,
-            2: false,
-            3: false
-        };
-        const durations = {
-            1: 1,
-            2: 1,
-            3: 1
-        };
         
         // Calculate beat duration in seconds
         const beatDurationMs = this.getBeatDuration();
         const beatDurationSec = beatDurationMs / 1000;
         
-        // Only play notes that are starting (not sustained from previous beat)
-        if (notes[1] && !notes[1].sustained) {
-            const noteDuration = (notes[1].duration || 1) * beatDurationSec;
-            const velocity = notes[1].velocity || 0.8;
-            const octave = notes[1].octave || 4;
-            this.audio.playNote(notes[1].note, 1, noteDuration, velocity, octave);
-            this.visualizer.onNotePlay(notes[1].note, 1, octave, velocity, notes[1].duration || 1);
-        }
-        
-        if (notes[2] && !notes[2].sustained) {
-            const noteDuration = (notes[2].duration || 1) * beatDurationSec;
-            const velocity = notes[2].velocity || 0.8;
-            const octave = notes[2].octave || 4;
-            this.audio.playNote(notes[2].note, 2, noteDuration, velocity, octave);
-            this.visualizer.onNotePlay(notes[2].note, 2, octave, velocity, notes[2].duration || 1);
-        }
-        
-        if (notes[3] && !notes[3].sustained) {
-            // Percussion doesn't use duration or octave
-            const velocity = notes[3].velocity || 0.8;
-            this.audio.playNote(notes[3].note, 3, undefined, velocity);
-            this.visualizer.onNotePlay(notes[3].note, 3, 4, velocity, 1);
-        }
+        // Iterate through all tracks dynamically
+        Object.entries(notes).forEach(([trackNum, noteData]) => {
+            if (!noteData || noteData.sustained) return; // Skip sustained notes
+            
+            const track = this.timeline.tracks[trackNum];
+            if (!track) return;
+            
+            const velocity = noteData.velocity || 0.8;
+            
+            if (track.isPercussion()) {
+                // Percussion doesn't use duration or octave
+                this.audio.playNote(noteData.note, trackNum, undefined, velocity);
+                this.visualizer.onNotePlay(noteData.note, trackNum, 4, velocity, 1);
+            } else {
+                // Piano tracks
+                const noteDuration = (noteData.duration || 1) * beatDurationSec;
+                const octave = noteData.octave || 4;
+                this.audio.playNote(noteData.note, trackNum, noteDuration, velocity, octave);
+                this.visualizer.onNotePlay(noteData.note, trackNum, octave, velocity, noteData.duration || 1);
+            }
+        });
     }
 
     /**
