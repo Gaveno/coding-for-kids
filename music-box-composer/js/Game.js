@@ -236,8 +236,11 @@ class Game {
         this.timeline.setOnTrackRemove((trackNum) => this.removeTrack(trackNum));
         this.timeline.setOnTrackSelect((trackNum) => this.selectTrack(trackNum));
         this.timeline.setOnTrackLabelClick((trackNum) => {
+            // In Studio mode, show settings; in other modes let it select track
             if (this.currentMode === Game.MODES.STUDIO) {
                 this.showTrackSettings(trackNum);
+            } else {
+                this.selectTrack(trackNum);
             }
         });
         
@@ -350,21 +353,21 @@ class Game {
         
         // Track settings modal events (Studio Mode)
         this.trackLabelButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
                 if (this.currentMode === Game.MODES.STUDIO) {
+                    e.stopPropagation(); // Prevent track selection
                     const trackNum = parseInt(btn.getAttribute('data-track'));
                     this.showTrackSettings(trackNum);
                 }
+                // In other modes, let the click bubble to track row for selection
             });
         });
         
         // Track row selection (all modes)
         document.querySelectorAll('.track').forEach(trackEl => {
             trackEl.addEventListener('click', (e) => {
-                // Don't interfere with note clicks or track label clicks
-                if (e.target.closest('.cell-note') || 
-                    e.target.closest('.track-label') || 
-                    e.target.closest('.track-cell')) {
+                // Only block note clicks (allow track-label and track-cell clicks)
+                if (e.target.closest('.cell-note')) {
                     return;
                 }
                 
