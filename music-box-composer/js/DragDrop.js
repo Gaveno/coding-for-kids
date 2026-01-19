@@ -334,25 +334,24 @@ class DragDrop {
     updateTrackAvailability(noteType) {
         document.querySelectorAll('.track').forEach(track => {
             const trackNum = parseInt(track.dataset.track);
+            const trackObj = this.timeline.tracks[trackNum];
             
-            if (noteType === 'piano') {
-                // Piano notes can go on tracks 1 or 2
-                if (trackNum === 1 || trackNum === 2) {
-                    track.classList.add('drop-available');
-                    track.classList.remove('drop-unavailable');
-                } else {
-                    track.classList.add('drop-unavailable');
-                    track.classList.remove('drop-available');
-                }
-            } else if (noteType === 'percussion') {
-                // Percussion only on track 3
-                if (trackNum === 3) {
-                    track.classList.add('drop-available');
-                    track.classList.remove('drop-unavailable');
-                } else {
-                    track.classList.add('drop-unavailable');
-                    track.classList.remove('drop-available');
-                }
+            if (!trackObj) {
+                track.classList.add('drop-unavailable');
+                track.classList.remove('drop-available');
+                return;
+            }
+            
+            // Check if track type matches note type
+            const isMatch = (noteType === 'piano' && trackObj.isPiano()) ||
+                          (noteType === 'percussion' && trackObj.isPercussion());
+            
+            if (isMatch) {
+                track.classList.add('drop-available');
+                track.classList.remove('drop-unavailable');
+            } else {
+                track.classList.add('drop-unavailable');
+                track.classList.remove('drop-available');
             }
         });
     }
@@ -397,8 +396,6 @@ class DragDrop {
         // Find cell under pointer
         const cell = this.getCellUnderPointer(pointer);
         
-        console.log('Cell under pointer:', cell?.dataset, 'isValid:', cell ? this.isValidDrop(cell) : false);
-        
         if (cell && this.isValidDrop(cell)) {
             cell.classList.add('drop-target');
         }
@@ -442,10 +439,7 @@ class DragDrop {
         const trackNum = parseInt(cell.dataset.track);
         const track = this.timeline.tracks[trackNum];
         
-        if (!track) {
-            console.warn(`Track ${trackNum} not found in timeline.tracks`, this.timeline.tracks);
-            return false;
-        }
+        if (!track) return false;
         
         // Check if note type matches track type
         if (this.dragState.type === 'percussion') {
