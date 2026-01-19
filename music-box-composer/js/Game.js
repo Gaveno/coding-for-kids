@@ -229,6 +229,9 @@ class Game {
         // Pattern library and drawer
         this.patternLibrary = new PatternLibrary();
         this.patternDrawer = new PatternDrawer(this, this.patternLibrary);
+        
+        // Select first track by default
+        this.selectTrack(1);
     }
 
     /**
@@ -330,6 +333,21 @@ class Game {
             });
         });
         
+        // Track row selection (all modes)
+        document.querySelectorAll('.track').forEach(trackEl => {
+            trackEl.addEventListener('click', (e) => {
+                // Don't interfere with note clicks or track label clicks
+                if (e.target.closest('.cell-note') || 
+                    e.target.closest('.track-label') || 
+                    e.target.closest('.track-cell')) {
+                    return;
+                }
+                
+                const trackNum = parseInt(trackEl.dataset.track);
+                this.selectTrack(trackNum);
+            });
+        });
+        
         this.elements.closeTrackSettingsBtn.addEventListener('click', () => this.closeTrackSettings());
         this.elements.trackSettingsOverlay.addEventListener('click', () => this.closeTrackSettings());
         
@@ -360,6 +378,12 @@ class Game {
      * Preview a note (tap on palette)
      */
     previewNote(note, trackNum, octave = null) {
+        // Use selected track if trackNum not specified or is for piano
+        if (!trackNum || (trackNum === 1 || trackNum === 2)) {
+            const selectedTrack = this.getSelectedTrack();
+            trackNum = selectedTrack.trackNumber;
+        }
+        
         this.audio.playNote(note, trackNum, 0.25, 0.8, octave);
     }
 
@@ -639,6 +663,48 @@ class Game {
         
         this.currentBeat = beat;
         this.timeline.updatePlayheadPosition(beat);
+    }
+
+    /**
+     * Select a track for piano preview
+     * @param {number} trackNum - Track number (1, 2, or 3)
+     */
+    selectTrack(trackNum) {
+        // Deselect all tracks
+        Object.values(this.timeline.tracks).forEach(track => track.deselect());
+        
+        // Select target track
+        const track = this.timeline.tracks[trackNum];
+        if (track) {
+            track.select();
+            this.updateTrackVisuals();
+        }
+    }
+
+    /**
+     * Get the currently selected track
+     * @returns {Track} - Selected track or first track by default
+     */
+    getSelectedTrack() {
+        const selected = Object.values(this.timeline.tracks).find(t => t.selected);
+        return selected || this.timeline.tracks[1]; // Default to track 1
+    }
+
+    /**
+     * Update track row visual states based on selection
+     */
+    updateTrackVisuals() {
+        // Update track rows
+        document.querySelectorAll('.track').forEach(trackEl => {
+            const trackNum = parseInt(trackEl.dataset.track);
+            const track = this.timeline.tracks[trackNum];
+            
+            if (track && track.selected) {
+                trackEl.classList.add('selected');
+            } else {
+                trackEl.classList.remove('selected');
+            }
+        });
     }
 
     /**

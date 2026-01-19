@@ -6,6 +6,7 @@ class Track {
         this.trackNumber = trackNumber; // 1 = high piano, 2 = low piano, 3 = percussion
         this.length = length;
         this.notes = new Array(length).fill(null);
+        this.selected = false; // Track selection state for preview
     }
 
     /**
@@ -170,6 +171,20 @@ class Track {
      */
     getNotes() {
         return [...this.notes];
+    }
+
+    /**
+     * Select this track (for preview)
+     */
+    select() {
+        this.selected = true;
+    }
+
+    /**
+     * Deselect this track
+     */
+    deselect() {
+        this.selected = false;
     }
 
     /**
