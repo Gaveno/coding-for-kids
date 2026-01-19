@@ -96,6 +96,7 @@ class PatternDrawer {
                 <div class="pattern-timeline-wrapper">
                     <div class="timeline-scroll pattern-timeline-scroll" id="patternTimelineScroll">
                         <div class="timeline pattern-mini-timeline" id="patternMiniTimeline">
+                            <div class="playhead" id="patternPlayhead"></div>
                             <div class="beat-markers" id="patternBeatMarkers"></div>
                             <div class="track" data-track="1">
                                 <div class="track-label">🎹</div>
@@ -148,7 +149,7 @@ class PatternDrawer {
             container: this.drawerElement.querySelector('#patternMiniTimeline'),
             scrollContainer: this.drawerElement.querySelector('#patternTimelineScroll'),
             beatMarkers: this.drawerElement.querySelector('#patternBeatMarkers'),
-            playhead: null, // No playhead in pattern editor
+            playhead: this.drawerElement.querySelector('#patternPlayhead'),
             cells1: this.drawerElement.querySelector('#patternCells1'),
             cells2: this.drawerElement.querySelector('#patternCells2'),
             cells3: this.drawerElement.querySelector('#patternCells3'),
@@ -729,7 +730,8 @@ class PatternDrawer {
         this.playBtn.classList.add('playing');
         this.playBtn.textContent = '⏸️';
         
-        this.playNextBeat();
+        this.timeline.setPlayheadVisible(true);
+        this.startPlayback();
     }
     
     /**
@@ -741,31 +743,28 @@ class PatternDrawer {
         this.playBtn.textContent = '▶️';
         
         if (this.playbackTimer) {
-            clearTimeout(this.playbackTimer);
+            cancelAnimationFrame(this.playbackTimer);
             this.playbackTimer = null;
         }
+        
+        this.timeline.setPlayheadVisible(false);
+        this.timeline.highlightBeat(-1);
     }
     
     /**
-     * Play next beat in pattern
+     * Start the playback loop (similar to Game.js)
      */
-    playNextBeat() {
-        if (!this.isPlaying) return;
+    startPlayback() {
+        const beatDuration = this.game.getBeatDuration();
+        let lastBeatTime = performance.now();
+        let displayBeat = this.currentBeat;
         
-        // Play notes at current beat
-        for (let trackNum = 1; trackNum <= 3; trackNum++) {
-            const track = this.timeline.tracks[trackNum];
-            const note = track.getNote(this.currentBeat);
-            
-            if (note) {
-                this.game.audio.playNote(trackNum, note.note, note.velocity || 0.8);
-            }
-        }
-        
-        // Move to next beat
+        // Play first beat immediately
+        this.playBeat(this.currentBeat);
+        this.timeline.highlightBeat(this.currentBeat);
         this.currentBeat++;
         
-        // Check if pattern is done
+        // Check if only one beat
         if (this.currentBeat >= this.currentPatternLength) {
             if (this.isLooping) {
                 this.currentBeat = 0;
@@ -775,9 +774,68 @@ class PatternDrawer {
             }
         }
         
-        // Schedule next beat
-        const beatDuration = this.game.getBeatDuration();
-        this.playbackTimer = setTimeout(() => this.playNextBeat(), beatDuration);
+        const tick = (now) => {
+            if (!this.isPlaying) return;
+            
+            const elapsed = now - lastBeatTime;
+            const beatProgress = Math.min(elapsed / beatDuration, 1);
+            
+            // Update playhead position smoothly
+            this.timeline.updatePlayheadPosition(displayBeat + beatProgress);
+            
+            // Check if we've completed a beat
+            if (elapsed >= beatDuration) {
+                lastBeatTime = now;
+                displayBeat = this.currentBeat;
+                
+                this.playBeat(this.currentBeat);
+                this.timeline.highlightBeat(this.currentBeat);
+                
+                this.currentBeat++;
+                
+                // Check if we've reached the end
+                if (this.currentBeat >= this.currentPatternLength) {
+                    if (this.isLooping) {
+                        this.currentBeat = 0;
+                    } else {
+                        this.pause();
+                        return;
+                    }
+                }
+            }
+            
+            this.playbackTimer = requestAnimationFrame(tick);
+        };
+        
+        this.playbackTimer = requestAnimationFrame(tick);
+    }
+    
+    /**
+     * Play sounds for a beat (similar to Game.js)
+     */
+    playBeat(beat) {
+        const beatDurationMs = this.game.getBeatDuration();
+        const beatDurationSec = beatDurationMs / 1000;
+        
+        // Play notes for each track
+        for (let trackNum = 1; trackNum <= 3; trackNum++) {
+            const track = this.timeline.tracks[trackNum];
+            const note = track.getNote(beat);
+            
+            if (note) {
+                const noteDuration = (note.duration || 1) * beatDurationSec;
+                const velocity = note.velocity || 0.8;
+                const octave = note.octave || 4;
+                
+                if (trackNum === 3) {
+                    // Percussion doesn't use duration or octave
+                    this.game.audio.playNote(note.note, trackNum, undefined, velocity);
+                } else {
+                    // Piano tracks
+                    this.game.audio.playNote(note.note, trackNum, noteDuration, velocity, octave);
+                }
+            }
+        }
     }
     
     /**
