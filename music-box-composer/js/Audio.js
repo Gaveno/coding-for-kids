@@ -548,9 +548,8 @@ class Audio {
      * @param {string} waveform - Waveform type: 'sine', 'triangle', 'square', 'sawtooth'
      */
     setTrackWaveform(trackNumber, waveform) {
-        if (trackNumber >= 1 && trackNumber <= 2) {
-            this.trackWaveforms[trackNumber] = waveform;
-        }
+        // Allow all piano tracks to set waveforms (not just 1 and 2)
+        this.trackWaveforms[trackNumber] = waveform;
     }
     
     /**
@@ -568,10 +567,7 @@ class Audio {
      * @param {boolean} enabled - Whether to enable reverb
      */
     setReverbEnabled(trackNumber, enabled) {
-        const trackIndex = trackNumber - 1;
-        if (trackIndex >= 0 && trackIndex < 3) {
-            this.effectsEnabled.reverb[trackNumber] = enabled;
-        }
+        this.effectsEnabled.reverb[trackNumber] = enabled;
     }
     
     /**
@@ -580,10 +576,7 @@ class Audio {
      * @param {boolean} enabled - Whether to enable delay
      */
     setDelayEnabled(trackNumber, enabled) {
-        const trackIndex = trackNumber - 1;
-        if (trackIndex >= 0 && trackIndex < 3) {
-            this.effectsEnabled.delay[trackNumber] = enabled;
-        }
+        this.effectsEnabled.delay[trackNumber] = enabled;
     }
     
     /**
@@ -592,7 +585,6 @@ class Audio {
      * @returns {boolean} - Whether reverb is enabled
      */
     isReverbEnabled(trackNumber) {
-        const trackIndex = trackNumber - 1;
         return this.effectsEnabled.reverb[trackNumber] || false;
     }
     
@@ -602,7 +594,6 @@ class Audio {
      * @returns {boolean} - Whether delay is enabled
      */
     isDelayEnabled(trackNumber) {
-        const trackIndex = trackNumber - 1;
         return this.effectsEnabled.delay[trackNumber] || false;
     }
 
