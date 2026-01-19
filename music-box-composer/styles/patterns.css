@@ -563,11 +563,11 @@
 }
 
 /* Pattern note styling (75% opacity) */
-.note.from-pattern {
+.cell-note.from-pattern {
     opacity: 0.75;
 }
 
-.note.from-pattern::after {
+.cell-note.from-pattern::after {
     content: '';
     position: absolute;
     top: 2px;
