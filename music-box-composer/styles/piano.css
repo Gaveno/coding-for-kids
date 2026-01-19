@@ -193,7 +193,7 @@
 
 /* Disabled state */
 .piano-key.disabled {
-    opacity: 0.4;
+    opacity: 0.3;
     filter: grayscale(100%);
     cursor: not-allowed;
     pointer-events: none;
@@ -206,8 +206,13 @@
 }
 
 /* Dual octave mode: Visual separation for second octave */
-.piano-key[data-octave2] {
+.piano-key[data-octave2].enabled {
     opacity: 0.85;
+}
+
+/* Disabled keys in second octave should be equally transparent */
+.piano-key[data-octave2].disabled {
+    opacity: 0.3;
 }
 
 .piano-key[data-octave2].white-key {

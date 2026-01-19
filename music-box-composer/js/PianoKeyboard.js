@@ -20,6 +20,7 @@ class PianoKeyboard {
         this.octaveRange = [2, 3, 4, 5, 6]; // Available octaves (5 octaves for Studio Mode)
         this.showDualOctaves = false; // Show 2 octaves when there's space
         this.onRender = onRender; // Callback after rendering
+        this.allowedNoteIndices = null; // Store current allowed notes for key signature
         this.checkDualOctaveSupport();
         
         // Re-check on window resize
@@ -62,6 +63,11 @@ class PianoKeyboard {
             this.renderDualOctaves();
         } else {
             this.renderSingleOctave();
+        }
+        
+        // Re-apply key signature if one was set
+        if (this.allowedNoteIndices) {
+            this.updateDisabledKeys(this.allowedNoteIndices);
         }
         
         // Call render callback to re-setup event listeners
@@ -293,20 +299,26 @@ class PianoKeyboard {
     }
 
     updateDisabledKeys(allowedNoteIndices) {
+        // Store for re-application after renders (e.g., octave changes)
+        this.allowedNoteIndices = allowedNoteIndices;
+        
+        // Get all piano keys (including second octave in dual mode)
+        const allKeys = this.container.querySelectorAll('.piano-key');
+        
         // Disable all keys first
-        this.keys.forEach((key, index) => {
-            if (key && index > 0) {
-                key.classList.remove('enabled');
-                key.classList.add('disabled');
-            }
+        allKeys.forEach(key => {
+            key.classList.remove('enabled');
+            key.classList.add('disabled');
         });
+        
         // Enable allowed keys
         allowedNoteIndices.forEach(index => {
-            const key = this.keys[index];
-            if (key) {
+            // Enable keys for this note index in all octaves
+            const keysToEnable = this.container.querySelectorAll(`.piano-key[data-note-index="${index}"]`);
+            keysToEnable.forEach(key => {
                 key.classList.remove('disabled');
                 key.classList.add('enabled');
-            }
+            });
         });
     }
     
