@@ -9,7 +9,7 @@ const PIANO_ICONS = {
 };
 
 class PianoKeyboard {
-    constructor(containerElement) {
+    constructor(containerElement, onRender = null) {
         this.container = containerElement;
         this.keys = [];
         this.dragStartHandler = null;
@@ -18,6 +18,37 @@ class PianoKeyboard {
         this.currentOctave = 4; // Default octave for multi-octave mode
         this.multiOctaveMode = false; // Enable multi-octave in Studio Mode
         this.octaveRange = [2, 3, 4, 5, 6]; // Available octaves (5 octaves for Studio Mode)
+        this.showDualOctaves = false; // Show 2 octaves when there's space
+        this.onRender = onRender; // Callback after rendering
+        this.checkDualOctaveSupport();
+        
+        // Re-check on window resize
+        window.addEventListener('resize', () => this.handleResize());
+    }
+    
+    /**
+     * Check if there's enough space to show 2 octaves
+     */
+    checkDualOctaveSupport() {
+        // Calculate space needed for 2 octaves: 14 white keys + gaps + padding
+        // At base: 48px * 14 + 2px * 13 = 672 + 26 = 698px
+        // At 768px+: 52px * 14 + 2px * 13 = 728 + 26 = 754px
+        // At 1200px+: 58px * 14 + 2px * 13 = 812 + 26 = 838px
+        const minWidth = 800; // Safe minimum to show 2 octaves nicely
+        const wasShowing = this.showDualOctaves;
+        this.showDualOctaves = window.innerWidth >= minWidth && this.multiOctaveMode;
+        
+        // Re-render if state changed
+        if (wasShowing !== this.showDualOctaves && this.multiOctaveMode) {
+            this.render();
+        }
+    }
+    
+    /**
+     * Handle window resize
+     */
+    handleResize() {
+        this.checkDualOctaveSupport();
     }
 
     /**
@@ -27,13 +58,29 @@ class PianoKeyboard {
         this.container.innerHTML = '';
         this.container.className = 'piano-keyboard';
         
+        if (this.showDualOctaves) {
+            this.renderDualOctaves();
+        } else {
+            this.renderSingleOctave();
+        }
+        
+        // Call render callback to re-setup event listeners
+        if (this.onRender) {
+            this.onRender();
+        }
+    }
+    
+    /**
+     * Render single octave
+     */
+    renderSingleOctave() {
         // Create white keys container
         const whiteKeysContainer = document.createElement('div');
         whiteKeysContainer.className = 'white-keys';
         
         // Create white keys
         this.whiteKeyIndices.forEach(index => {
-            const key = this.createKey(index, 'white');
+            const key = this.createKey(index, 'white', this.currentOctave);
             whiteKeysContainer.appendChild(key);
             this.keys[index] = key;
         });
@@ -46,10 +93,9 @@ class PianoKeyboard {
         
         // Create black keys with dynamic positioning
         this.blackKeyIndices.forEach((index, i) => {
-            const key = this.createKey(index, 'black');
+            const key = this.createKey(index, 'black', this.currentOctave);
             
             // Position black keys between white keys using CSS calc
-            // C# is between C and D, D# is between D and E, etc.
             const positionMap = {
                 2: 0,   // C# - after C
                 4: 1,   // D# - after D
@@ -67,14 +113,77 @@ class PianoKeyboard {
         
         this.container.appendChild(blackKeysContainer);
     }
+    
+    /**
+     * Render dual octaves side-by-side
+     */
+    renderDualOctaves() {
+        const octave1 = this.currentOctave;
+        const octave2 = this.currentOctave + 1;
+        
+        // Create white keys container
+        const whiteKeysContainer = document.createElement('div');
+        whiteKeysContainer.className = 'white-keys';
+        
+        // Create first octave white keys
+        this.whiteKeyIndices.forEach(index => {
+            const key = this.createKey(index, 'white', octave1);
+            whiteKeysContainer.appendChild(key);
+            if (!this.keys[index]) this.keys[index] = [];
+            this.keys[index] = key;
+        });
+        
+        // Create second octave white keys
+        this.whiteKeyIndices.forEach(index => {
+            const key = this.createKey(index, 'white', octave2);
+            key.dataset.octave2 = 'true';
+            whiteKeysContainer.appendChild(key);
+        });
+        
+        this.container.appendChild(whiteKeysContainer);
+        
+        // Create black keys container
+        const blackKeysContainer = document.createElement('div');
+        blackKeysContainer.className = 'black-keys';
+        
+        const positionMap = {
+            2: 0,   // C# - after C
+            4: 1,   // D# - after D
+            7: 3,   // F# - after F
+            9: 4,   // G# - after G
+            11: 5   // A# - after A
+        };
+        
+        // Create first octave black keys
+        this.blackKeyIndices.forEach(index => {
+            const key = this.createKey(index, 'black', octave1);
+            const offset = positionMap[index];
+            key.style.left = `calc(${offset} * (var(--white-key-width) + var(--white-key-gap)) + var(--white-key-width) * 0.67)`;
+            blackKeysContainer.appendChild(key);
+            if (!this.keys[index]) this.keys[index] = [];
+            this.keys[index] = key;
+        });
+        
+        // Create second octave black keys
+        this.blackKeyIndices.forEach(index => {
+            const key = this.createKey(index, 'black', octave2);
+            key.dataset.octave2 = 'true';
+            const offset = positionMap[index];
+            key.style.left = `calc((${offset} + 7) * (var(--white-key-width) + var(--white-key-gap)) + var(--white-key-width) * 0.67)`;
+            blackKeysContainer.appendChild(key);
+        });
+        
+        this.container.appendChild(blackKeysContainer);
+    }
 
     /**
      * Create a piano key element
      * @param {number} noteIndex - Note index in PIANO_NOTES array
      * @param {string} keyType - 'white' or 'black'
+     * @param {number} octave - Octave number for this key
      * @returns {HTMLElement} - Key element
      */
-    createKey(noteIndex, keyType) {
+    createKey(noteIndex, keyType, octave) {
         const key = document.createElement('div');
         const note = PIANO_NOTES[noteIndex];
         const icon = PIANO_ICONS[note];
@@ -82,6 +191,7 @@ class PianoKeyboard {
         key.className = `piano-key ${keyType}-key enabled`;
         key.dataset.noteIndex = noteIndex;
         key.dataset.note = note;
+        key.dataset.octave = octave;
         
         // Add note label
         const label = document.createElement('div');
@@ -92,12 +202,19 @@ class PianoKeyboard {
         return key;
     }
 
-    getNoteData(noteIndex) {
+    getNoteData(noteIndex, keyElement = null) {
         const note = PIANO_NOTES[noteIndex];
+        let octave = this.currentOctave;
+        
+        // If key element is provided and has octave data, use that
+        if (keyElement && keyElement.dataset.octave) {
+            octave = parseInt(keyElement.dataset.octave);
+        }
+        
         return {
             note: note,
             icon: PIANO_ICONS[note],
-            octave: this.multiOctaveMode ? this.currentOctave : null
+            octave: this.multiOctaveMode ? octave : null
         };
     }
     
@@ -107,6 +224,9 @@ class PianoKeyboard {
      */
     setMultiOctaveMode(enabled) {
         this.multiOctaveMode = enabled;
+        
+        // Check if we can show dual octaves
+        this.checkDualOctaveSupport();
         
         // Show/hide octave controls
         const controls = this.container.parentElement.querySelector('.octave-controls');
@@ -125,8 +245,14 @@ class PianoKeyboard {
      * @param {number} octave - New octave number
      */
     setOctave(octave) {
+        // In dual octave mode, ensure we don't go beyond valid range
+        if (this.showDualOctaves && octave + 1 > this.octaveRange[this.octaveRange.length - 1]) {
+            return; // Can't show octave+1, so don't change
+        }
+        
         if (this.octaveRange.includes(octave)) {
             this.currentOctave = octave;
+            this.render(); // Re-render to show new octave(s)
             this.updateOctaveDisplay();
         }
     }
@@ -136,7 +262,8 @@ class PianoKeyboard {
      */
     octaveUp() {
         const currentIndex = this.octaveRange.indexOf(this.currentOctave);
-        if (currentIndex < this.octaveRange.length - 1) {
+        const maxIndex = this.showDualOctaves ? this.octaveRange.length - 2 : this.octaveRange.length - 1;
+        if (currentIndex < maxIndex) {
             this.setOctave(this.octaveRange[currentIndex + 1]);
         }
     }
@@ -157,7 +284,11 @@ class PianoKeyboard {
     updateOctaveDisplay() {
         const display = this.container.parentElement.querySelector('.octave-display');
         if (display) {
-            display.textContent = `Oct ${this.currentOctave}`;
+            if (this.showDualOctaves) {
+                display.textContent = `Oct ${this.currentOctave}-${this.currentOctave + 1}`;
+            } else {
+                display.textContent = `Oct ${this.currentOctave}`;
+            }
         }
     }
 

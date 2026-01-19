@@ -114,3 +114,25 @@
     --shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.6);
 }
+
+/* ===== Responsive Sizing for Wider Displays ===== */
+@media (min-width: 768px) {
+    :root {
+        --cell-size: 50px;
+        --track-label-width: 42px;
+    }
+}
+
+@media (min-width: 1200px) {
+    :root {
+        --cell-size: 56px;
+        --track-label-width: 48px;
+    }
+}
+
+@media (min-width: 1600px) {
+    :root {
+        --cell-size: 60px;
+        --track-label-width: 52px;
+    }
+}

@@ -130,6 +130,35 @@
     transform: scale(0.95);
 }
 
+/* Wider displays: larger control buttons */
+@media (min-width: 768px) {
+    .control-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+    }
+    
+    .play-btn {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .control-btn {
+        width: 80px;
+        height: 80px;
+        font-size: 2.2rem;
+    }
+    
+    .play-btn {
+        width: 90px;
+        height: 90px;
+        font-size: 2.8rem;
+    }
+}
+
 /* Kid Mode: Larger buttons and bouncier animations */
 [data-mode="kid"] .control-btn {
     width: 70px;

@@ -40,6 +40,25 @@ body {
     padding-bottom: var(--spacing-xl);
 }
 
+/* Wider displays: use more screen space */
+@media (min-width: 768px) {
+    .game-container {
+        max-width: 900px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .game-container {
+        max-width: 1200px;
+    }
+}
+
+@media (min-width: 1600px) {
+    .game-container {
+        max-width: 1400px;
+    }
+}
+
 /* ===== Header ===== */
 .game-header {
     display: flex;

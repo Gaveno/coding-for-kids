@@ -185,7 +185,15 @@ class Game {
         this.visualizer = new VisualizerManager(this.elements.stage);
         
         // Piano keyboard
-        this.pianoKeyboard = new PianoKeyboard(this.elements.pianoKeyboardContainer);
+        this.pianoKeyboard = new PianoKeyboard(
+            this.elements.pianoKeyboardContainer,
+            () => {
+                // Re-setup drag/drop listeners after keyboard renders
+                if (this.dragDrop) {
+                    this.dragDrop.setupPianoKeyboard();
+                }
+            }
+        );
         this.pianoKeyboard.render();
         
         // Enable all keys initially (C Major = all white keys)

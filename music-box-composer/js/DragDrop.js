@@ -27,6 +27,7 @@ class DragDrop {
 
     /**
      * Setup piano keyboard drag interactions
+     * This method can be called multiple times to re-attach listeners after keyboard re-renders
      */
     setupPianoKeyboard() {
         if (!this.pianoKeyboard || !this.pianoKeyboard.container) return;
@@ -132,7 +133,7 @@ class DragDrop {
         const noteIndex = parseInt(key.dataset.noteIndex);
         if (isNaN(noteIndex)) return;
         
-        const noteData = this.pianoKeyboard.getNoteData(noteIndex);
+        const noteData = this.pianoKeyboard.getNoteData(noteIndex, key);
         
         key.classList.add('playing');
         setTimeout(() => key.classList.remove('playing'), 300);
@@ -150,7 +151,7 @@ class DragDrop {
         const noteIndex = parseInt(key.dataset.noteIndex);
         if (isNaN(noteIndex)) return;
         
-        const noteData = this.pianoKeyboard.getNoteData(noteIndex);
+        const noteData = this.pianoKeyboard.getNoteData(noteIndex, key);
         
         this.dragState = {
             note: noteData.note,

@@ -13,6 +13,19 @@
     box-shadow: var(--shadow-lg);
 }
 
+/* Wider displays: taller stage */
+@media (min-width: 768px) {
+    .stage {
+        min-height: 180px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .stage {
+        min-height: 220px;
+    }
+}
+
 /* Studio Mode: Reduced height for visualizer */
 [data-mode="studio"] .stage {
     min-height: 70px;
@@ -80,6 +93,27 @@
 
 .character.backup.right {
     order: 1;
+}
+
+/* Wider displays: larger characters */
+@media (min-width: 768px) {
+    .character.main {
+        font-size: 5rem;
+    }
+    
+    .character.backup {
+        font-size: 3rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .character.main {
+        font-size: 6rem;
+    }
+    
+    .character.backup {
+        font-size: 3.5rem;
+    }
 }
 
 /* ===== Dance Animations ===== */

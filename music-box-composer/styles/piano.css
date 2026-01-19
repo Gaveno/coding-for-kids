@@ -10,6 +10,25 @@
     --black-key-height: 80px;
 }
 
+/* Wider displays: larger piano keys */
+@media (min-width: 768px) {
+    :root {
+        --white-key-width: 52px;
+        --white-key-height: 130px;
+        --black-key-width: 36px;
+        --black-key-height: 85px;
+    }
+}
+
+@media (min-width: 1200px) {
+    :root {
+        --white-key-width: 58px;
+        --white-key-height: 140px;
+        --black-key-width: 40px;
+        --black-key-height: 90px;
+    }
+}
+
 /* Kid Mode - Larger keys for easier touch */
 [data-mode="kid"] {
     --white-key-width: 60px;
@@ -184,6 +203,19 @@
 .piano-key.enabled {
     opacity: 1;
     filter: none;
+}
+
+/* Dual octave mode: Visual separation for second octave */
+.piano-key[data-octave2] {
+    opacity: 0.85;
+}
+
+.piano-key[data-octave2].white-key {
+    border-left: 3px solid rgba(0, 0, 0, 0.3);
+}
+
+.piano-key[data-octave2]:first-of-type.white-key {
+    border-left-width: 4px;
 }
 
 /* Tablet responsive - maintain good touch targets */
