@@ -1619,6 +1619,7 @@ class Game {
         // Track count (3-6 tracks)
         const trackNumbers = Object.keys(this.timeline.tracks).map(Number).sort();
         const trackCount = trackNumbers.length;
+        console.log(`[serializeV9] Serializing ${trackCount} tracks:`, trackNumbers);
         
         // Waveform indices for tracks 1-2
         const waveform1Index = Game.WAVEFORMS.indexOf(this.audio.trackWaveforms[1] || 'sine');
@@ -1660,6 +1661,7 @@ class Game {
             
             // Track type: 0=piano, 1=percussion
             const isPiano = track.isPiano();
+            console.log(`[serializeV9] Track ${trackNum}: type=${track.trackType}, isPiano=${isPiano}`);
             this.pushBits(bits, isPiano ? 0 : 1, 1);
             
             // Waveform (2 bits for piano, skip for percussion)
@@ -1728,7 +1730,9 @@ class Game {
         const data = btoa(base64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         
         // Prefix with version
-        return `v9_${data}`;
+        const result = `v9_${data}`;
+        console.log(`[serializeV9] Result length: ${result.length} chars, trackCount: ${trackCount}`);
+        return result;
     }
     
     /**
@@ -2522,6 +2526,7 @@ class Game {
         
         // Read track count (3 bits)
         const trackCount = this.readBits(bits, offset, 3); offset += 3;
+        console.log(`[deserializeV9] Read trackCount: ${trackCount}`);
         
         // Read additional track metadata for tracks 4-6
         const trackMetadata = [
@@ -2547,12 +2552,14 @@ class Game {
             const reverb = this.readBits(bits, offset, 1); offset += 1;
             const delay = this.readBits(bits, offset, 1); offset += 1;
             
-            trackMetadata.push({
+            const metadata = {
                 type: trackTypeFlag === 0 ? 'piano' : 'percussion',
                 waveform: trackTypeFlag === 0 ? (Game.WAVEFORMS[waveformIndex] || 'sine') : '',
                 reverb: reverb === 1,
                 delay: delay === 1
-            });
+            };
+            console.log(`[deserializeV9] Track ${trackNum} metadata:`, metadata);
+            trackMetadata.push(metadata);
         }
         
         // Decode BPM: value 0-76 maps to 40-800 in steps of 10
@@ -3702,10 +3709,15 @@ class Game {
         
         // Apply track metadata (v9 only) - additional tracks and their settings
         if (state.trackMetadata && state.trackCount > 3) {
+            console.log(`[applyState] Creating tracks 4-${state.trackCount} from v9 state`);
             // Create and configure tracks 4-6
             for (let trackNum = 4; trackNum <= state.trackCount; trackNum++) {
                 const metadata = state.trackMetadata[trackNum - 1];
-                if (!metadata) continue;
+                if (!metadata) {
+                    console.warn(`[applyState] No metadata for track ${trackNum}`);
+                    continue;
+                }
+                console.log(`[applyState] Creating track ${trackNum}:`, metadata);
                 
                 // Create additional track if it doesn't exist
                 if (!this.timeline.tracks[trackNum]) {
@@ -3722,9 +3734,11 @@ class Game {
                     
                     // Add to timeline
                     this.timeline.tracks[trackNum] = track;
+                    console.log(`[applyState] Added track ${trackNum} to timeline.tracks`);
                     
                     // Render UI for new track
                     this.timeline.renderNewTrack(trackNum);
+                    console.log(`[applyState] Rendered UI for track ${trackNum}`);
                 }
                 
                 // Apply waveform for piano tracks
@@ -3740,6 +3754,7 @@ class Game {
         
         // Apply tracks
         if (state.t) {
+            console.log(`[applyState] Deserializing tracks:`, Object.keys(state.t));
             this.timeline.deserializeTracks(state.t);
         }
         
