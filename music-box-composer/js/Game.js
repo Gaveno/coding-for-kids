@@ -1121,6 +1121,20 @@ class Game {
         if (this.isPlaying) {
             this.stop();
         }
+        
+        // Clear all pattern blocks
+        const placementIds = Array.from(this.patternPlacements.keys());
+        for (const placementId of placementIds) {
+            const patternBlock = this.patternBlocks.get(placementId);
+            if (patternBlock) {
+                patternBlock.onRemove = null; // Prevent callback
+                patternBlock.remove();
+                this.patternBlocks.delete(placementId);
+            }
+        }
+        this.patternPlacements.clear();
+        
+        // Clear all notes
         this.timeline.clearAll();
         this.updateURL();
     }
