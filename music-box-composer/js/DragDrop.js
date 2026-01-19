@@ -397,6 +397,8 @@ class DragDrop {
         // Find cell under pointer
         const cell = this.getCellUnderPointer(pointer);
         
+        console.log('Cell under pointer:', cell?.dataset, 'isValid:', cell ? this.isValidDrop(cell) : false);
+        
         if (cell && this.isValidDrop(cell)) {
             cell.classList.add('drop-target');
         }
@@ -440,7 +442,10 @@ class DragDrop {
         const trackNum = parseInt(cell.dataset.track);
         const track = this.timeline.tracks[trackNum];
         
-        if (!track) return false;
+        if (!track) {
+            console.warn(`Track ${trackNum} not found in timeline.tracks`, this.timeline.tracks);
+            return false;
+        }
         
         // Check if note type matches track type
         if (this.dragState.type === 'percussion') {
