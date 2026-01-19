@@ -221,10 +221,50 @@
     align-items: stretch;
     min-height: var(--cell-size);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .track:last-child {
     border-bottom: none;
+}
+
+/* Selected track styling */
+.track.selected {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    border: 2px solid #FFD700;
+    background: rgba(255, 215, 0, 0.05);
+    animation: pulse-track 0.3s ease-out;
+}
+
+/* Tween Mode: Cyan glow */
+[data-mode="tween"] .track.selected {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+    border-color: #00FFFF;
+    background: rgba(0, 255, 255, 0.05);
+}
+
+/* Studio Mode: Blue glow */
+[data-mode="studio"] .track.selected {
+    box-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+    border-color: #64C8FF;
+    background: rgba(100, 200, 255, 0.05);
+}
+
+/* Pulse animation on selection */
+@keyframes pulse-track {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.005);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .track-label {
