@@ -1338,13 +1338,14 @@ class Game {
     showTrackSettings(trackNum) {
         this.currentSettingsTrack = trackNum;
         
-        // Update modal title
-        const trackNames = ['', '🎹 Track 1 Settings', '🎹 Track 2 Settings', '🥁 Track 3 Settings'];
-        this.elements.trackSettingsTitle.textContent = trackNames[trackNum];
+        // Generate track name dynamically
+        const track = this.timeline.tracks[trackNum];
+        const icon = track && track.isPiano() ? '🎹' : '🥁';
+        this.elements.trackSettingsTitle.textContent = `${icon} Track ${trackNum} Settings`;
         
         // Show/hide waveform section for non-percussion tracks
         const waveformGroup = this.elements.waveformButtons.closest('.track-setting-group');
-        if (trackNum === 3) {
+        if (track && track.isPercussion()) {
             waveformGroup.style.display = 'none';
         } else {
             waveformGroup.style.display = 'block';
@@ -1380,14 +1381,18 @@ class Game {
      * @param {string} waveform - Waveform type
      */
     setModalWaveform(waveform) {
-        if (this.currentSettingsTrack && (this.currentSettingsTrack === 1 || this.currentSettingsTrack === 2)) {
-            this.setWaveform(this.currentSettingsTrack, waveform);
-            
-            // Update button states
-            const waveformBtns = this.elements.waveformButtons.querySelectorAll('.waveform-btn');
-            waveformBtns.forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-waveform') === waveform);
-            });
+        if (this.currentSettingsTrack) {
+            const track = this.timeline.tracks[this.currentSettingsTrack];
+            // Only allow waveform changes for piano tracks
+            if (track && track.isPiano()) {
+                this.setWaveform(this.currentSettingsTrack, waveform);
+                
+                // Update button states
+                const waveformBtns = this.elements.waveformButtons.querySelectorAll('.waveform-btn');
+                waveformBtns.forEach(btn => {
+                    btn.classList.toggle('active', btn.getAttribute('data-waveform') === waveform);
+                });
+            }
         }
     }
     
