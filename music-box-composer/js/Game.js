@@ -435,6 +435,13 @@ class Game {
             trackNum = selectedTrack ? selectedTrack.trackNumber : 1;
         }
         
+        // Get track's octave shift for preview
+        const track = this.timeline.tracks[trackNum];
+        if (track && track.isPiano() && octave !== null) {
+            // Apply track's octave shift to the preview
+            octave = octave + (track.octaveShift || 0);
+        }
+        
         this.audio.playNote(note, trackNum, 0.25, 0.8, octave);
     }
 

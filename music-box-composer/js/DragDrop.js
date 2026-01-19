@@ -138,8 +138,10 @@ class DragDrop {
         key.classList.add('playing');
         setTimeout(() => key.classList.remove('playing'), 300);
         
-        // Preview with the keyboard's current octave (or track 1 default if no octave set)
-        this.onPreview(noteData.note, 1, noteData.octave);
+        // Preview with selected piano track (not hardcoded track 1)
+        const selectedPianoTrack = window.game.getSelectedTrack('piano');
+        const trackNum = selectedPianoTrack ? selectedPianoTrack.trackNumber : 1;
+        this.onPreview(noteData.note, trackNum, noteData.octave);
     }
     
     /**
