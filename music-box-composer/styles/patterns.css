@@ -7,28 +7,37 @@
     position: absolute;
     bottom: 8px;
     right: 8px;
-    width: 48px;
-    height: 48px;
-    font-size: 24px;
-    background: var(--bg-secondary);
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+    background: rgba(50, 50, 70, 0.95);
+    border: 3px solid rgba(100, 100, 120, 0.8);
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
 }
 
 .pattern-drawer-toggle:hover {
-    transform: scale(1.05);
-    background: var(--primary-color);
+    transform: scale(1.08);
+    background: rgba(80, 80, 120, 0.95);
+    border-color: rgba(150, 150, 200, 0.9);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.pattern-drawer-toggle:active {
+    transform: scale(0.95);
 }
 
 .pattern-drawer-toggle.active {
-    background: var(--primary-color);
-    border-color: var(--primary-dark);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #a78bfa;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
 /* Pattern Drawer Container */
