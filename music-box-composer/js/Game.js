@@ -1585,6 +1585,9 @@ class Game {
      * @returns {string}
      */
     serializeState() {
+        // Guard: tracks may not be initialized yet during early init
+        if (!this.tracks) return '';
+        
         const trackCount = Object.keys(this.tracks).length;
         // Use v9 format if more than 3 tracks, otherwise use v7 for backwards compatibility
         return trackCount > 3 ? this.serializeV9() : this.serializeV7();
