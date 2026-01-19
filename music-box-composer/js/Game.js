@@ -3917,10 +3917,11 @@ class Game {
         
         // Disable effects in kid and tween modes (not modifiable)
         if (this.currentMode !== Game.MODES.STUDIO) {
-            for (let trackNum = 1; trackNum <= 3; trackNum++) {
-                this.audio.setReverbEnabled(trackNum, false);
-                this.audio.setDelayEnabled(trackNum, false);
-            }
+            // Disable effects for all tracks
+            Object.keys(this.timeline.tracks).forEach(trackNum => {
+                this.audio.setReverbEnabled(parseInt(trackNum), false);
+                this.audio.setDelayEnabled(parseInt(trackNum), false);
+            });
         }
         
         console.log('Applied mode config:', config);

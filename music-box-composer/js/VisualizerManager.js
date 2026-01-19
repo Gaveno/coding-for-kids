@@ -93,14 +93,16 @@ class VisualizerManager {
         
         if (this.currentMode === 'kid') {
             // Map track to Character.dance() format
+            // Tracks 1,2,4,5,6 = melody/bass, Track 3 = percussion
+            const isPiano = trackNum !== 3;
             const playing = {
-                melody: trackNum === 1,
-                bass: trackNum === 2,
+                melody: trackNum === 1 || trackNum === 4 || trackNum === 6,
+                bass: trackNum === 2 || trackNum === 5,
                 percussion: trackNum === 3
             };
             const durations = {
-                melody: trackNum === 1 ? duration : 1,
-                bass: trackNum === 2 ? duration : 1,
+                melody: (trackNum === 1 || trackNum === 4 || trackNum === 6) ? duration : 1,
+                bass: (trackNum === 2 || trackNum === 5) ? duration : 1,
                 percussion: 1
             };
             this.visualizer.dance(playing, durations);

@@ -361,9 +361,9 @@ class PatternDrawer {
      */
     clearPattern() {
         // Clear all tracks in the timeline
-        for (let trackNum = 1; trackNum <= 3; trackNum++) {
+        Object.keys(this.timeline.tracks).forEach(trackNum => {
             this.timeline.tracks[trackNum].clear();
-        }
+        });
         this.selectedPatternId = null;
         this.timeline.render();
         this.renderPatternBlocks(); // Update selected state
@@ -459,6 +459,7 @@ class PatternDrawer {
     extractPatternData() {
         const tracks = {};
         
+        // Note: Patterns are limited to 3 tracks for now (backwards compatibility)
         for (let trackNum = 1; trackNum <= 3; trackNum++) {
             const track = this.timeline.tracks[trackNum];
             const notes = [];
@@ -847,7 +848,7 @@ class PatternDrawer {
         const beatDurationMs = this.game.getBeatDuration();
         const beatDurationSec = beatDurationMs / 1000;
         
-        // Play notes for each track
+        // Play notes for each track (patterns limited to 3 tracks)
         for (let trackNum = 1; trackNum <= 3; trackNum++) {
             const track = this.timeline.tracks[trackNum];
             const note = track.getNote(beat);
