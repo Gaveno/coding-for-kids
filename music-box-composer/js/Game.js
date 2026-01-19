@@ -419,7 +419,7 @@ class Game {
                 
                 // Convert noteIndex to note name
                 const noteName = this.getNoteNameFromIndex(noteIndex, parseInt(trackId));
-                const icon = this.getNoteIcon(parseInt(trackId), noteIndex);
+                const icon = this.getNoteDisplayIcon(noteName, parseInt(trackId));
                 
                 // Create note data
                 const noteData = {
@@ -507,6 +507,27 @@ class Game {
             return '♪';
         }
     }
+    
+    /**
+     * Get display icon for note (shows note name for piano, emoji for percussion)
+     */
+    getNoteDisplayIcon(noteName, trackId) {
+        if (trackId === 3) {
+            // Percussion - use emoji icons
+            const percIcons = {
+                'kick': '🥁', 'snare': '🪘', 'hihat': '🔔', 'clap': '👏',
+                'tom': '🎵', 'cymbal': '💥', 'shaker': '🎶', 'cowbell': '🔊'
+            };
+            return percIcons[noteName] || '🥁';
+        } else {
+            // Piano - use note name with sharp symbol
+            const pianoIcons = {
+                'C': 'C', 'C#': 'C♯', 'D': 'D', 'D#': 'D♯', 'E': 'E', 'F': 'F',
+                'F#': 'F♯', 'G': 'G', 'G#': 'G♯', 'A': 'A', 'A#': 'A♯', 'B': 'B'
+            };
+            return pianoIcons[noteName] || noteName;
+        }
+    }
 
     getNoteNameFromIndex(noteIndex, trackId) {
         if (trackId === 3) {
@@ -561,7 +582,7 @@ class Game {
                     
                     // Convert noteIndex to note name
                     const noteName = this.getNoteNameFromIndex(noteIndex, parseInt(trackId));
-                    const icon = this.getNoteIcon(parseInt(trackId), noteIndex);
+                    const icon = this.getNoteDisplayIcon(noteName, parseInt(trackId));
                     
                     // Create note data
                     const noteData = {
