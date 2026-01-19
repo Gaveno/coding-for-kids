@@ -3702,15 +3702,29 @@ class Game {
         
         // Apply track metadata (v9 only) - additional tracks and their settings
         if (state.trackMetadata && state.trackCount > 3) {
-            // Apply waveforms and effects for tracks 4-6
+            // Create and configure tracks 4-6
             for (let trackNum = 4; trackNum <= state.trackCount; trackNum++) {
                 const metadata = state.trackMetadata[trackNum - 1];
                 if (!metadata) continue;
                 
                 // Create additional track if it doesn't exist
                 if (!this.timeline.tracks[trackNum]) {
-                    const track = this.addTrack(metadata.type);
-                    if (!track) continue; // Hit max tracks limit
+                    // Directly create track at specific number (don't use addTrack which picks next number)
+                    const track = new Track(trackNum, this.timeline.getBeatCount());
+                    track.trackType = metadata.type;
+                    
+                    // Set octave for piano tracks
+                    if (metadata.type === 'piano') {
+                        const pianoTracks = Object.values(this.timeline.tracks)
+                            .filter(t => t.trackType === 'piano' || t.trackNumber <= 2);
+                        track.octaveShift = pianoTracks.length % 2 === 0 ? 0 : -12;
+                    }
+                    
+                    // Add to timeline
+                    this.timeline.tracks[trackNum] = track;
+                    
+                    // Render UI for new track
+                    this.timeline.renderNewTrack(trackNum);
                 }
                 
                 // Apply waveform for piano tracks
