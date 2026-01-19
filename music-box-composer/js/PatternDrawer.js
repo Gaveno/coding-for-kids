@@ -708,7 +708,10 @@ class PatternDrawer {
      * Update drawer for mode change or track count change
      */
     updateForMode(mode) {
-        // Rebuild pattern tracks to match main timeline (handles track additions/removals)\n        this.rebuildPatternTracks();\n        this.renderPatternBlocks();\n    }
+        // Rebuild pattern tracks to match main timeline (handles track additions/removals)
+        this.rebuildPatternTracks();
+        this.renderPatternBlocks();
+    }
     
     /**
      * Start dragging a pattern block
