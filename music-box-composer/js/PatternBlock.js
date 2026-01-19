@@ -41,9 +41,9 @@ class PatternBlock {
         this.element.style.width = `${width}px`;
         this.element.style.height = `${height}px`;
         
-        // Add icon and delete button
+        // Add icon and delete button as footer below the tracks
         this.element.innerHTML = `
-            <div class="pattern-block-header">
+            <div class="pattern-block-footer">
                 <span class="pattern-block-icon">${this.pattern.icon}</span>
                 <button class="pattern-block-delete" aria-label="Delete Pattern">
                     🗑️
