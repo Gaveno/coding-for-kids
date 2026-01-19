@@ -12,7 +12,9 @@ class Game {
     // Mode configurations
     static MODE_CONFIGS = {
         kid: {
-            maxBeats: 16,
+            maxBeats: 64,
+            maxTracks: 3,
+            canAddTracks: false,
             showSharps: false,
             showKeySelector: false,
             showDuration: false,
@@ -20,7 +22,9 @@ class Game {
             percussionCount: 4
         },
         tween: {
-            maxBeats: 64,
+            maxBeats: 128,
+            maxTracks: 4,
+            canAddTracks: true,
             showSharps: true,
             showKeySelector: true,
             showDuration: true,
@@ -28,7 +32,9 @@ class Game {
             percussionCount: 8
         },
         studio: {
-            maxBeats: 128,
+            maxBeats: 256,
+            maxTracks: 6,
+            canAddTracks: true,
             showSharps: true,
             showKeySelector: true,
             showDuration: true,
@@ -688,6 +694,137 @@ class Game {
     getSelectedTrack() {
         const selected = Object.values(this.timeline.tracks).find(t => t.selected);
         return selected || this.timeline.tracks[1]; // Default to track 1
+    }
+
+    /**
+     * Get maximum tracks allowed for current mode
+     * @returns {number} - Max track count
+     */
+    getMaxTracks() {
+        return Game.MODE_CONFIGS[this.currentMode].maxTracks;
+    }
+
+    /**
+     * Get maximum beats allowed for current mode
+     * @returns {number} - Max beat count
+     */
+    getMaxBeats() {
+        return Game.MODE_CONFIGS[this.currentMode].maxBeats;
+    }
+
+    /**
+     * Check if user can add tracks in current mode
+     * @returns {boolean}
+     */
+    canAddTracks() {
+        return Game.MODE_CONFIGS[this.currentMode].canAddTracks && 
+               Object.keys(this.timeline.tracks).length < this.getMaxTracks();
+    }
+
+    /**
+     * Add a new track
+     * @param {string} trackType - 'piano' or 'percussion'
+     * @returns {number|null} - New track number or null if failed
+     */
+    addTrack(trackType) {
+        if (!this.canAddTracks()) {
+            console.warn('Cannot add more tracks in current mode');
+            return null;
+        }
+
+        // Find next available track number
+        const trackNumbers = Object.keys(this.timeline.tracks).map(n => parseInt(n));
+        const nextTrackNum = Math.max(...trackNumbers) + 1;
+
+        // Create new track
+        const track = new Track(nextTrackNum, this.beatCount);
+        track.trackType = trackType;
+        
+        // Assign octave for piano tracks (alternates high/low)
+        if (trackType === 'piano') {
+            const pianoTracks = Object.values(this.timeline.tracks)
+                .filter(t => t.trackType === 'piano' || t.trackNumber <= 2);
+            track.octaveShift = pianoTracks.length % 2 === 0 ? 0 : -12; // 0 = C4-B4, -12 = C3-B3
+        }
+
+        // Add to timeline
+        this.timeline.tracks[nextTrackNum] = track;
+        
+        // Request UI update
+        this.timeline.renderNewTrack(nextTrackNum);
+        
+        this.updateURL();
+        return nextTrackNum;
+    }
+
+    /**
+     * Remove a track
+     * @param {number} trackNum - Track number to remove
+     * @returns {boolean} - Success
+     */
+    removeTrack(trackNum) {
+        const trackCount = Object.keys(this.timeline.tracks).length;
+        
+        // Cannot remove if at minimum (3 tracks)
+        if (trackCount <= 3) {
+            console.warn('Cannot remove default tracks');
+            return false;
+        }
+
+        // Cannot remove default tracks (1, 2, 3)
+        if (trackNum <= 3) {
+            console.warn('Cannot remove default tracks');
+            return false;
+        }
+
+        // Remove from timeline
+        delete this.timeline.tracks[trackNum];
+        
+        // Request UI update
+        this.timeline.removeTrackRow(trackNum);
+        
+        this.updateURL();
+        return true;
+    }
+
+    /**
+     * Reorder tracks
+     * @param {number} fromIndex - Original track number
+     * @param {number} toIndex - Target track number
+     */
+    reorderTracks(fromIndex, toIndex) {
+        if (fromIndex === toIndex) return;
+
+        // Get all track numbers sorted
+        const trackNums = Object.keys(this.timeline.tracks)
+            .map(n => parseInt(n))
+            .sort((a, b) => a - b);
+
+        // Find positions in sorted array
+        const fromPos = trackNums.indexOf(fromIndex);
+        const toPos = trackNums.indexOf(toIndex);
+
+        if (fromPos === -1 || toPos === -1) return;
+
+        // Reorder array
+        trackNums.splice(fromPos, 1);
+        trackNums.splice(toPos, 0, fromIndex);
+
+        // Rebuild tracks object in new order (reassign track numbers)
+        const newTracks = {};
+        trackNums.forEach((oldNum, idx) => {
+            const track = this.timeline.tracks[oldNum];
+            const newNum = idx + 1;
+            track.trackNumber = newNum;
+            newTracks[newNum] = track;
+        });
+
+        this.timeline.tracks = newTracks;
+        
+        // Request UI update
+        this.timeline.reorderTrackRows();
+        
+        this.updateURL();
     }
 
     /**

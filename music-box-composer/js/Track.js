@@ -7,6 +7,54 @@ class Track {
         this.length = length;
         this.notes = new Array(length).fill(null);
         this.selected = false; // Track selection state for preview
+        
+        // Track type and configuration (v9)
+        this.trackType = this.getDefaultTrackType(trackNumber);
+        this.octaveShift = this.getDefaultOctaveShift(trackNumber);
+    }
+
+    /**
+     * Get default track type based on track number
+     * @param {number} trackNumber - Track number
+     * @returns {string} - 'piano' or 'percussion'
+     */
+    getDefaultTrackType(trackNumber) {
+        return trackNumber === 3 ? 'percussion' : 'piano';
+    }
+
+    /**
+     * Get default octave shift based on track number
+     * @param {number} trackNumber - Track number
+     * @returns {number} - Semitone shift (0 = C4-B4, -12 = C3-B3)
+     */
+    getDefaultOctaveShift(trackNumber) {
+        if (trackNumber === 1) return 0;   // High piano C4-B4
+        if (trackNumber === 2) return -12; // Low piano C3-B3
+        return 0; // Percussion (no shift)
+    }
+
+    /**
+     * Get instrument type for audio playback
+     * @returns {string} - 'piano' or 'percussion'
+     */
+    getInstrument() {
+        return this.trackType;
+    }
+
+    /**
+     * Check if this is a piano track
+     * @returns {boolean}
+     */
+    isPiano() {
+        return this.trackType === 'piano';
+    }
+
+    /**
+     * Check if this is a percussion track
+     * @returns {boolean}
+     */
+    isPercussion() {
+        return this.trackType === 'percussion';
     }
 
     /**
