@@ -830,8 +830,8 @@ class Timeline {
 
         // Bind track selection event
         trackRow.addEventListener('click', (e) => {
-            if (e.target.closest('.cell-note') || 
-                e.target.closest('.track-cell')) {
+            // Only block note clicks (allow track-label and track-cell clicks)
+            if (e.target.closest('.cell-note')) {
                 return;
             }
             if (this.onTrackSelect) {
