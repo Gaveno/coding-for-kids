@@ -53,10 +53,10 @@ class Pattern {
             }
             // Validate each note in track
             for (const note of track) {
-                if (!Array.isArray(note) || note.length !== 3) {
+                if (!Array.isArray(note) || (note.length !== 3 && note.length !== 4)) {
                     throw new Error(`Invalid note format in track ${trackId}`);
                 }
-                const [beat, noteIndex, duration] = note;
+                const [beat, noteIndex, duration, velocity] = note;
                 if (typeof beat !== 'number' || beat < 0 || beat >= this.length) {
                     throw new Error(`Invalid beat ${beat} in track ${trackId} (pattern length: ${this.length})`);
                 }
@@ -65,6 +65,9 @@ class Pattern {
                 }
                 if (typeof duration !== 'number' || duration <= 0) {
                     throw new Error(`Invalid duration in track ${trackId}`);
+                }
+                if (velocity !== undefined && (typeof velocity !== 'number' || velocity < 0 || velocity > 1)) {
+                    throw new Error(`Invalid velocity in track ${trackId}`);
                 }
             }
         }

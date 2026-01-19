@@ -347,15 +347,15 @@
 }
 
 /* Track backgrounds */
-.track[data-track="melody"] {
+.track[data-track="1"] {
     background: var(--track-melody);
 }
 
-.track[data-track="bass"] {
+.track[data-track="2"] {
     background: var(--track-bass);
 }
 
-.track[data-track="percussion"] {
+.track[data-track="3"] {
     background: var(--track-percussion);
 }
 

@@ -389,7 +389,7 @@ class DragDrop {
      */
     updateDropTargets(pointer) {
         // Clear previous targets
-        document.querySelectorAll('.track-cell.drop-target, .pattern-cell.drop-target').forEach(cell => {
+        document.querySelectorAll('.track-cell.drop-target').forEach(cell => {
             cell.classList.remove('drop-target');
         });
         
@@ -419,15 +419,11 @@ class DragDrop {
         }
         
         // Find the cell (might be the note inside)
-        // Check for both track-cell (main timeline) and pattern-cell (pattern timeline)
-        if (element?.classList.contains('track-cell') || element?.classList.contains('pattern-cell')) {
+        if (element?.classList.contains('track-cell')) {
             return element;
         }
         const trackCell = element?.closest('.track-cell');
         if (trackCell) return trackCell;
-        
-        const patternCell = element?.closest('.pattern-cell');
-        if (patternCell) return patternCell;
         
         return null;
     }
@@ -473,6 +469,9 @@ class DragDrop {
             const trackNum = parseInt(targetCell.dataset.track);
             const beat = parseInt(targetCell.dataset.beat);
             
+            // Check if this is a pattern timeline cell
+            const isPatternTimeline = targetCell.closest('.pattern-mini-timeline') !== null;
+            
             // Create note data using octave from drag state
             // If octave is not set (e.g., from palette in Studio Mode), use piano keyboard's current octave
             let octave = this.dragState.octave;
@@ -488,7 +487,15 @@ class DragDrop {
                 octave: octave
             };
             
-            this.onDrop(trackNum, beat, noteData);
+            if (isPatternTimeline) {
+                // Dispatch event for pattern timeline (PatternDrawer handles this)
+                window.dispatchEvent(new CustomEvent('patternTimelineDrop', {
+                    detail: { trackNum, beat, noteData }
+                }));
+            } else {
+                // Normal main timeline drop
+                this.onDrop(trackNum, beat, noteData);
+            }
         }
         
         this.cancelDrag();

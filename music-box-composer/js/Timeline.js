@@ -588,6 +588,8 @@ class Timeline {
      * @param {number} beat - Current beat (can be fractional for smooth animation)
      */
     updatePlayheadPosition(beat) {
+        if (!this.playhead) return; // No playhead (pattern editor)
+        
         const trackLabelWidth = parseInt(getComputedStyle(document.documentElement)
             .getPropertyValue('--track-label-width')) || 36;
         const position = trackLabelWidth + (beat * this.cellSize);
@@ -616,6 +618,7 @@ class Timeline {
      * @param {boolean} visible
      */
     setPlayheadVisible(visible) {
+        if (!this.playhead) return; // No playhead (pattern editor)
         this.playhead.classList.toggle('active', visible);
     }
 

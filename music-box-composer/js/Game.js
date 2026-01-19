@@ -408,19 +408,24 @@ class Game {
         // Stamp notes from pattern into timeline
         for (const trackId in pattern.tracks) {
             const trackNotes = pattern.tracks[trackId];
-            for (const [beat, noteIndex, duration] of trackNotes) {
+            for (const noteArr of trackNotes) {
+                const [beat, noteIndex, duration = 1, velocity = 0.8] = noteArr;
                 const absoluteBeat = startBeat + beat;
                 
                 // Don't place beyond timeline length
                 if (absoluteBeat >= this.timeline.beatCount) continue;
                 
+                // Convert noteIndex to note name
+                const noteName = this.getNoteNameFromIndex(noteIndex, parseInt(trackId));
+                const icon = this.getNoteIcon(parseInt(trackId), noteIndex);
+                
                 // Create note data
                 const noteData = {
-                    note: noteIndex,
+                    note: noteName,
                     duration: duration,
-                    velocity: 0.8,
+                    velocity: velocity,
                     octave: null,
-                    icon: this.getNoteIcon(parseInt(trackId), noteIndex),
+                    icon: icon,
                     patternPlacementId: placementId // Link to pattern
                 };
                 
@@ -474,9 +479,10 @@ class Game {
             }
         }
         
-        // Remove pattern block
+        // Remove pattern block (disable callback to prevent recursion)
         const patternBlock = this.patternBlocks.get(placementId);
         if (patternBlock) {
+            patternBlock.onRemove = null; // Prevent callback
             patternBlock.remove();
             this.patternBlocks.delete(placementId);
         }
@@ -499,6 +505,98 @@ class Game {
             // Piano - use musical note
             return '♪';
         }
+    }
+
+    getNoteNameFromIndex(noteIndex, trackId) {
+        if (trackId === 3) {
+            const percNames = ['kick', 'snare', 'hihat', 'clap', 'tom', 'cymbal', 'shaker', 'cowbell'];
+            return percNames[noteIndex] || 'kick';
+        } else {
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            return noteNames[noteIndex] || 'C';
+        }
+    }
+
+    /**
+     * Refresh all placements of a specific pattern (re-stamps notes with updated pattern data)
+     * @param {string} patternId - Pattern ID to refresh
+     */
+    refreshPatternPlacements(patternId) {
+        const pattern = this.patternLibrary.getPattern(patternId);
+        if (!pattern) return;
+
+        // Find all placements of this pattern
+        const placementsToRefresh = [];
+        for (const [placementId, placement] of this.patternPlacements.entries()) {
+            if (placement.patternId === patternId) {
+                placementsToRefresh.push({ placementId, placement });
+            }
+        }
+
+        // Refresh each placement
+        for (const { placementId, placement } of placementsToRefresh) {
+            // Remove old notes for this placement
+            for (const trackId in pattern.tracks) {
+                // Clear old notes (scan entire pattern range)
+                for (let beat = 0; beat < pattern.length; beat++) {
+                    const absoluteBeat = placement.startBeat + beat;
+                    const note = this.timeline.getNote(parseInt(trackId), absoluteBeat);
+                    
+                    if (note && note.patternPlacementId === placementId) {
+                        this.timeline.clearNote(parseInt(trackId), absoluteBeat);
+                    }
+                }
+            }
+
+            // Re-stamp notes from updated pattern
+            for (const trackId in pattern.tracks) {
+                const trackNotes = pattern.tracks[trackId];
+                for (const noteArr of trackNotes) {
+                    const [beat, noteIndex, duration = 1, velocity = 0.8] = noteArr;
+                    const absoluteBeat = placement.startBeat + beat;
+                    
+                    // Don't place beyond timeline length
+                    if (absoluteBeat >= this.timeline.beatCount) continue;
+                    
+                    // Convert noteIndex to note name
+                    const noteName = this.getNoteNameFromIndex(noteIndex, parseInt(trackId));
+                    const icon = this.getNoteIcon(parseInt(trackId), noteIndex);
+                    
+                    // Create note data
+                    const noteData = {
+                        note: noteName,
+                        duration: duration,
+                        velocity: velocity,
+                        octave: null,
+                        icon: icon,
+                        patternPlacementId: placementId
+                    };
+                    
+                    this.timeline.setNote(parseInt(trackId), absoluteBeat, noteData);
+                }
+            }
+
+            // Update pattern block overlay
+            const patternBlock = this.patternBlocks.get(placementId);
+            if (patternBlock) {
+                // Update pattern reference and re-render
+                patternBlock.pattern = pattern;
+                patternBlock.render();
+                
+                // Re-add event handler
+                const deleteBtn = patternBlock.element.querySelector('.pattern-block-delete');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.removePatternPlacement(placementId);
+                    });
+                }
+            }
+        }
+
+        // Re-render timeline to show updated notes
+        this.timeline.render();
+        this.updateURL();
     }
 
     /**

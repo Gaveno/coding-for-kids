@@ -23,16 +23,21 @@ class PatternBlock {
         this.element.dataset.placementId = this.placement.placementId;
         this.element.style.backgroundColor = this.pattern.color;
         
-        // Calculate position and size
-        const cellWidth = 50; // Match timeline cell width
-        const cellHeight = 60; // Match timeline track height
+        // Calculate position and size from CSS variable
+        const style = getComputedStyle(document.documentElement);
+        const cellSize = parseInt(style.getPropertyValue('--cell-size')) || 44;
+        const trackLabelWidth = parseInt(style.getPropertyValue('--track-label-width')) || 36;
         const trackCount = 3;
+        const beatMarkersHeight = 21; // 20px height + 1px border
         
-        const left = this.placement.startBeat * cellWidth;
-        const width = this.pattern.length * cellWidth;
-        const height = trackCount * cellHeight;
+        // Account for track label width offset and beat markers height
+        const left = trackLabelWidth + (this.placement.startBeat * cellSize);
+        const width = this.pattern.length * cellSize;
+        // Account for borders between tracks (1px each, minus 1 since last track has no border)
+        const height = (trackCount * cellSize) + (trackCount - 1);
         
         this.element.style.left = `${left}px`;
+        this.element.style.top = `${beatMarkersHeight}px`;
         this.element.style.width = `${width}px`;
         this.element.style.height = `${height}px`;
         
@@ -60,8 +65,10 @@ class PatternBlock {
      * Update position if pattern placement changes
      */
     updatePosition(startBeat) {
-        const cellWidth = 50;
-        const left = startBeat * cellWidth;
+        const style = getComputedStyle(document.documentElement);
+        const cellSize = parseInt(style.getPropertyValue('--cell-size')) || 44;
+        const trackLabelWidth = parseInt(style.getPropertyValue('--track-label-width')) || 36;
+        const left = trackLabelWidth + (startBeat * cellSize);
         this.element.style.left = `${left}px`;
         this.placement.startBeat = startBeat;
     }

@@ -218,189 +218,33 @@
     background: var(--success-dark);
 }
 
-/* Pattern Timeline Container */
-.pattern-timeline-container {
-    background: var(--bg-primary);
+/* ===== Pattern Timeline Wrapper ===== */
+/* Uses real Timeline component with scoped styling */
+
+.pattern-timeline-wrapper {
+    background: var(--color-surface);
     border: 2px solid var(--border-color);
     border-radius: 8px;
-    padding: 12px;
     overflow-x: auto;
 }
 
-/* Pattern Timeline */
-.pattern-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: max-content;
-}
-
-/* Pattern Beat Markers - Match main timeline styling */
-.pattern-beat-markers {
-    display: flex;
-    margin-left: var(--track-label-width);
-    height: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: var(--color-surface);
-}
-
-.pattern-beat-marker {
-    width: var(--cell-size);
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: normal;
-    color: rgba(255, 255, 255, 0.4);
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-    cursor: default;
-    transition: all var(--transition-fast);
-}
-
-.pattern-beat-marker:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.pattern-beat-marker.downbeat {
-    font-weight: bold;
-    border-right-color: rgba(255, 255, 255, 0.2);
-}
-
-.pattern-beat-marker.downbeat:hover {
-    color: white;
-}
-
-[data-mode="tween"] .pattern-beat-marker:hover {
-    background: var(--color-primary);
-    color: white;
-}
-
-/* Pattern Track - Match main timeline layout */
-.pattern-track {
-    display: flex;
-    align-items: stretch;
-    min-height: var(--cell-size);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    position: relative;
-}
-
-.pattern-track:last-child {
-    border-bottom: none;
-}
-
-/* Track backgrounds matching main timeline */
-.pattern-track[data-track="melody"] .pattern-track-cells {
-    background: var(--track-melody);
-}
-
-.pattern-track[data-track="bass"] .pattern-track-cells {
-    background: var(--track-bass);
-}
-
-.pattern-track[data-track="percussion"] .pattern-track-cells {
-    background: var(--track-percussion);
-}
-
-.pattern-track-label {
-    position: absolute;
-    left: 0;
-    width: var(--track-label-width);
-    height: var(--cell-size);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    background: var(--color-surface);
-    border: none;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+.pattern-timeline-scroll {
+    overflow-x: auto;
     padding: 0;
 }
 
-.pattern-track-cells {
-    display: flex;
-    flex: 1;
-    margin-left: var(--track-label-width);
+/* Scale down the mini timeline for patterns */
+.pattern-mini-timeline {
+    min-width: max-content;
 }
 
-/* Pattern Cell - Match main timeline cell styling */
-.pattern-cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background var(--transition-fast);
-    position: relative;
-    background: transparent;
+/* Hide playhead in pattern timeline */
+.pattern-mini-timeline .playhead {
+    display: none !important;
 }
 
-.pattern-cell:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.pattern-cell.downbeat {
-    border-right-color: rgba(255, 255, 255, 0.15);
-}
-
-.pattern-cell.has-note {
-    background: transparent;
-    overflow: visible;
-}
-
-.pattern-cell.covered-by-note {
-    cursor: not-allowed;
-    opacity: 0.5;
-}
-
-/* Pattern timeline note elements (match main timeline) */
-.pattern-timeline .cell-note {
-    position: absolute;
-    height: calc(100% - 4px);
-    background: var(--color-primary);
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    cursor: ew-resize;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    transition: transform 0.1s ease;
-    z-index: 2;
-}
-
-.pattern-timeline .cell-note:hover {
-    transform: scale(1.05);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-}
-
-.pattern-timeline .cell-note.resizing {
-    opacity: 0.8;
-}
-
-.pattern-timeline .cell-note.adjusting-velocity {
-    box-shadow: 0 0 0 2px var(--color-accent);
-}
-
-.pattern-timeline .velocity-indicator {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(255, 255, 255, 0.2);
-    pointer-events: none;
-    transition: height 0.1s ease;
-}
-
-/* Drag-over state for pattern cells */
-.pattern-cell.drag-over {
-    background: var(--color-primary) !important;
-    opacity: 0.5;
-    box-shadow: inset 0 0 0 2px white;
-}
+/* Pattern timeline uses same track structure as main timeline */
+/* Track styling is inherited from timeline.css */
 
 /* ===== Save Pattern Modal ===== */
 
@@ -617,7 +461,7 @@
     position: absolute;
     top: 0;
     opacity: 0.25;
-    pointer-events: auto;
+    pointer-events: none;
     border: 2px solid rgba(255, 255, 255, 0.4);
     border-radius: 4px;
     transition: opacity 0.2s ease;
@@ -637,7 +481,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    pointer-events: auto;
+    pointer-events: none;
 }
 
 .pattern-block-icon {
@@ -659,6 +503,7 @@
     align-items: center;
     justify-content: center;
     padding: 0;
+    pointer-events: auto;
 }
 
 .pattern-block-delete:hover {
