@@ -29,21 +29,22 @@ class PatternBlock {
         const trackLabelWidth = parseInt(style.getPropertyValue('--track-label-width')) || 36;
         const trackCount = 3;
         const beatMarkersHeight = 21; // 20px height + 1px border
+        const controlRowHeight = 32; // Height of pattern control row
         
-        // Account for track label width offset and beat markers height
+        // Account for track label width offset, beat markers, and control row
         const left = trackLabelWidth + (this.placement.startBeat * cellSize);
         const width = this.pattern.length * cellSize;
         // Account for borders between tracks (1px each, minus 1 since last track has no border)
         const height = (trackCount * cellSize) + (trackCount - 1);
         
         this.element.style.left = `${left}px`;
-        this.element.style.top = `${beatMarkersHeight}px`;
+        this.element.style.top = `${beatMarkersHeight + controlRowHeight}px`; // Below control row
         this.element.style.width = `${width}px`;
         this.element.style.height = `${height}px`;
         
-        // Add icon and delete button as footer below the tracks
+        // Add control row above the pattern overlay
         this.element.innerHTML = `
-            <div class="pattern-block-footer">
+            <div class="pattern-block-controls">
                 <span class="pattern-block-icon">${this.pattern.icon}</span>
                 <button class="pattern-block-delete" aria-label="Delete Pattern">
                     🗑️
