@@ -252,15 +252,27 @@ class PatternDrawer {
             }
         });
         
-        // Pattern blocks drag (delegated event)
-        this.blocksScroll?.addEventListener('pointerdown', (e) => {
+        // Pattern blocks drag - touchstart for mobile
+        this.blocksScroll?.addEventListener('touchstart', (e) => {
             const block = e.target.closest('.pattern-block');
             if (!block || block.classList.contains('new-pattern') || block.classList.contains('empty')) return;
             
             const patternId = block.dataset.patternId;
             if (!patternId) return;
             
-            this.startPatternDrag(block, patternId, e);
+            const touch = e.touches[0];
+            this.startPatternDrag(block, patternId, touch, true);
+        }, { passive: true });
+
+        // Pattern blocks drag - mousedown for desktop
+        this.blocksScroll?.addEventListener('mousedown', (e) => {
+            const block = e.target.closest('.pattern-block');
+            if (!block || block.classList.contains('new-pattern') || block.classList.contains('empty')) return;
+            
+            const patternId = block.dataset.patternId;
+            if (!patternId) return;
+            
+            this.startPatternDrag(block, patternId, e, false);
         });
 
         // Length selector buttons
@@ -634,14 +646,14 @@ class PatternDrawer {
     /**
      * Start dragging a pattern block
      */
-    startPatternDrag(block, patternId, startEvent) {
+    startPatternDrag(block, patternId, startEvent, isTouch) {
         const pattern = this.patternLibrary.getPattern(patternId);
         if (!pattern) return;
         
         let hasMoved = false;
         const dragThreshold = 15;
-        const startX = startEvent.clientX;
-        const startY = startEvent.clientY;
+        const startX = isTouch ? startEvent.clientX : startEvent.clientX;
+        const startY = isTouch ? startEvent.clientY : startEvent.clientY;
         
         // Create drag ghost
         const ghost = document.createElement('div');
@@ -658,38 +670,51 @@ class PatternDrawer {
         document.body.appendChild(ghost);
         
         const onMove = (e) => {
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+            const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+            const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+            
+            const dx = clientX - startX;
+            const dy = clientY - startY;
             
             if (!hasMoved && (Math.abs(dx) > dragThreshold || Math.abs(dy) > dragThreshold)) {
                 hasMoved = true;
                 ghost.style.display = 'flex';
+                if (isTouch) e.preventDefault(); // Prevent scrolling once drag starts
             }
             
             if (hasMoved) {
-                ghost.style.left = `${e.clientX - 32}px`;
-                ghost.style.top = `${e.clientY - 32}px`;
+                if (isTouch) e.preventDefault(); // Prevent scrolling during drag
+                ghost.style.left = `${clientX - 32}px`;
+                ghost.style.top = `${clientY - 32}px`;
             }
         };
         
         const onEnd = (e) => {
-            document.removeEventListener('pointermove', onMove);
-            document.removeEventListener('pointerup', onEnd);
+            if (isTouch) {
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend', onEnd);
+            } else {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onEnd);
+            }
             
             if (hasMoved) {
+                const clientX = isTouch ? e.changedTouches[0].clientX : e.clientX;
+                const clientY = isTouch ? e.changedTouches[0].clientY : e.clientY;
+                
                 // Check if dropped on timeline
                 const timelineEl = document.querySelector('.timeline');
                 if (timelineEl) {
                     const timelineRect = timelineEl.getBoundingClientRect();
-                    if (e.clientX >= timelineRect.left && e.clientX <= timelineRect.right &&
-                        e.clientY >= timelineRect.top && e.clientY <= timelineRect.bottom) {
+                    if (clientX >= timelineRect.left && clientX <= timelineRect.right &&
+                        clientY >= timelineRect.top && clientY <= timelineRect.bottom) {
                         
                         // Calculate beat position using CSS variables
                         const style = getComputedStyle(document.documentElement);
                         const cellSize = parseInt(style.getPropertyValue('--cell-size')) || 44;
                         const trackLabelWidth = parseInt(style.getPropertyValue('--track-label-width')) || 36;
                         
-                        const relativeX = e.clientX - timelineRect.left - trackLabelWidth;
+                        const relativeX = clientX - timelineRect.left - trackLabelWidth;
                         const beat = Math.floor(relativeX / cellSize);
                         
                         // Place pattern
@@ -698,16 +723,21 @@ class PatternDrawer {
                         }
                     }
                 }
+                
+                if (isTouch) e.preventDefault();
             }
             
             // Clean up ghost
             document.body.removeChild(ghost);
         };
         
-        document.addEventListener('pointermove', onMove);
-        document.addEventListener('pointerup', onEnd);
-        
-        startEvent.preventDefault();
+        if (isTouch) {
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('touchend', onEnd, { passive: false });
+        } else {
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onEnd);
+        }
     }
     
     /**
