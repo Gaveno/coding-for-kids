@@ -13,6 +13,12 @@ class PatternDrawer {
         this.currentPatternLength = 4; // Default pattern length
         this.selectedPatternId = null; // Currently selected pattern to edit
         
+        // Playback state
+        this.isPlaying = false;
+        this.isLooping = false;
+        this.currentBeat = 0;
+        this.playbackTimer = null;
+        
         // Will hold the Timeline instance for pattern editing
         this.timeline = null;
         
@@ -67,6 +73,14 @@ class PatternDrawer {
                         <button class="length-selector-btn active" data-length="4">4</button>
                         <button class="length-selector-btn" data-length="8">8</button>
                         <button class="length-selector-btn" data-length="16">16</button>
+                    </div>
+                    <div class="pattern-playback-controls">
+                        <button class="pattern-control-btn" id="patternPlayBtn" aria-label="Play Pattern">
+                            ▶️
+                        </button>
+                        <button class="pattern-control-btn" id="patternLoopBtn" aria-label="Loop Pattern">
+                            🔁
+                        </button>
                     </div>
                     <div class="pattern-editor-actions">
                         <button class="pattern-action-btn" id="clearPatternBtn" aria-label="Clear Pattern">
@@ -123,6 +137,8 @@ class PatternDrawer {
         this.clearBtn = this.drawerElement.querySelector('#clearPatternBtn');
         this.saveBtn = this.drawerElement.querySelector('#savePatternBtn');
         this.lengthBtns = this.drawerElement.querySelectorAll('.length-selector-btn');
+        this.playBtn = this.drawerElement.querySelector('#patternPlayBtn');
+        this.loopBtn = this.drawerElement.querySelector('#patternLoopBtn');
         this.saveModal = this.drawerElement.querySelector('#patternSaveModal');
         this.modalSlots = this.drawerElement.querySelector('#patternSlots');
         this.modalClose = this.drawerElement.querySelector('.modal-close');
@@ -259,6 +275,12 @@ class PatternDrawer {
 
         // Save button
         this.saveBtn?.addEventListener('click', () => this.showSaveModal());
+        
+        // Play button
+        this.playBtn?.addEventListener('click', () => this.togglePlay());
+        
+        // Loop button
+        this.loopBtn?.addEventListener('click', () => this.toggleLoop());
 
         // Modal close button
         this.modalClose?.addEventListener('click', () => this.closeSaveModal());
@@ -685,5 +707,84 @@ class PatternDrawer {
         document.addEventListener('pointerup', onEnd);
         
         startEvent.preventDefault();
+    }
+    
+    /**
+     * Toggle play/pause
+     */
+    togglePlay() {
+        if (this.isPlaying) {
+            this.pause();
+        } else {
+            this.play();
+        }
+    }
+    
+    /**
+     * Start playback
+     */
+    play() {
+        this.isPlaying = true;
+        this.currentBeat = 0;
+        this.playBtn.classList.add('playing');
+        this.playBtn.textContent = '⏸️';
+        
+        this.playNextBeat();
+    }
+    
+    /**
+     * Pause playback
+     */
+    pause() {
+        this.isPlaying = false;
+        this.playBtn.classList.remove('playing');
+        this.playBtn.textContent = '▶️';
+        
+        if (this.playbackTimer) {
+            clearTimeout(this.playbackTimer);
+            this.playbackTimer = null;
+        }
+    }
+    
+    /**
+     * Play next beat in pattern
+     */
+    playNextBeat() {
+        if (!this.isPlaying) return;
+        
+        // Play notes at current beat
+        for (let trackNum = 1; trackNum <= 3; trackNum++) {
+            const track = this.timeline.tracks[trackNum];
+            const note = track.getNote(this.currentBeat);
+            
+            if (note) {
+                this.game.audio.playNote(trackNum, note.note, note.velocity || 0.8);
+            }
+        }
+        
+        // Move to next beat
+        this.currentBeat++;
+        
+        // Check if pattern is done
+        if (this.currentBeat >= this.currentPatternLength) {
+            if (this.isLooping) {
+                this.currentBeat = 0;
+            } else {
+                this.pause();
+                return;
+            }
+        }
+        
+        // Schedule next beat
+        const beatDuration = this.game.getBeatDuration();
+        this.playbackTimer = setTimeout(() => this.playNextBeat(), beatDuration);
+    }
+    
+    /**
+     * Toggle loop mode
+     */
+    toggleLoop() {
+        this.isLooping = !this.isLooping;
+        this.loopBtn.classList.toggle('active', this.isLooping);
     }
 }

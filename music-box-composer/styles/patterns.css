@@ -178,6 +178,47 @@
     box-shadow: 0 0 8px var(--primary-color);
 }
 
+/* Pattern Playback Controls */
+.pattern-playback-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.pattern-control-btn {
+    min-width: 44px;
+    height: 44px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pattern-control-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.pattern-control-btn:active {
+    transform: scale(0.95);
+}
+
+.pattern-control-btn.playing {
+    background: var(--warning-color);
+    border-color: var(--warning-dark);
+}
+
+.pattern-control-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-dark);
+    box-shadow: 0 0 8px var(--primary-color);
+}
+
 /* Pattern Editor Actions */
 .pattern-editor-actions {
     display: flex;
