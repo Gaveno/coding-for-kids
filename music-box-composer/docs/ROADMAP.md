@@ -33,6 +33,10 @@ Each major feature release increments the major version number:
 | v4.0 | Multi-Mode Complexity System (Full) | ✅ Complete (Jan 17, 2026) |
 | v5.0 | Pattern Library & Loop Builder | 🔲 Not Started |
 | v6.0 | Live Performance / Jam Mode | 🔲 Not Started |
+| v7.0 | Track Selection & Preview | 🔲 Not Started |
+| v8.0 | Time Signature Support | 🔲 Not Started |
+| v9.0 | Additional Tracks | 🔲 Not Started |
+| v10.0 | Custom UI Layout (Widget Repositioning) | 🔲 Not Started |
 
 ### Backward Compatibility Requirements
 
@@ -146,6 +150,117 @@ Real-time instrument and recording capabilities:
 
 ---
 
+### 🎯 Feature 4: Track Selection & Preview (v7.0)
+**Priority:** MEDIUM | **Complexity:** Low | **Impact:** Medium
+
+Visual track selection with preview feedback:
+- Click/tap track row to select it
+- Selected track glows with mode-specific color
+- Piano preview uses selected track's instrument/effects
+- Percussion track shows drum labels on piano keys
+
+**Status:** 🔲 Not Started
+
+**Design Doc:** [docs/features/TRACK_SELECTION.md](features/TRACK_SELECTION.md)
+
+**Mobile Considerations:**
+- Track row tap area minimum 48px height
+- Don't conflict with note drag-drop interactions
+- Visual feedback immediate (<100ms)
+- Glow effect visible but not overwhelming on small screens
+
+**URL Serialization:**
+- No URL changes - track selection is UI state only
+- Default to first track on load
+
+---
+
+### 🎵 Feature 5: Time Signature Support (v8.0)
+**Priority:** MEDIUM | **Complexity:** Medium | **Impact:** Medium
+
+Musical time signatures for Studio Mode:
+- 5 common signatures: 4/4, 3/4, 6/8, 5/4, 7/8
+- Visual measure lines on timeline
+- Beat emphasis (strong/weak beats)
+- Metronome click patterns match signature
+
+**Status:** 🔲 Not Started
+
+**Design Doc:** [docs/features/TIME_SIGNATURES.md](features/TIME_SIGNATURES.md)
+
+**Mobile Considerations:**
+- Time signature selector accessible on mobile
+- Measure lines visible but not cluttered on small screens
+- Beat grouping clear even at 320px width
+- Use CSS transforms for positioning (GPU acceleration)
+
+**URL Serialization:**
+- Add 3 bits for time signature ID (0=4/4, 1=3/4, 2=6/8, 3=5/4, 4=7/8)
+- v7 and earlier URLs default to 4/4
+- Total: 3 bits (0.375 bytes)
+
+---
+
+### 🎛️ Feature 6: Additional Tracks (v9.0)
+**Priority:** LOW | **Complexity:** HIGH | **Impact:** Medium
+
+Add more tracks beyond the default 3:
+- Studio Mode: up to 8 tracks
+- Additional piano octaves (high, mid-high, mid-low, low)
+- Additional percussion types (drums, melodic)
+- Track add/remove/reorder UI
+
+**Status:** 🔲 Not Started
+
+**Design Doc:** [docs/features/ADDITIONAL_TRACKS.md](features/ADDITIONAL_TRACKS.md)
+
+**Mobile Considerations:**
+- 8 tracks require vertical scrolling on small screens
+- Add track button must remain accessible
+- Track reordering needs touch-friendly drag handles
+- Consider collapsible tracks to save space
+
+**URL Serialization:**
+- Add 3 bits for track count (3-8 tracks)
+- Add 3 bits per track for track type (highPiano, lowPiano, etc.)
+- **URL size impact:** 8 tracks worst-case = ~390 chars
+- **Shareability:** URLs >280 chars require QR code only (no SMS/Twitter)
+
+**URL Size Thresholds:**
+- <160 chars: Copy Link + QR Code + SMS ✅
+- <280 chars: Copy Link + QR Code (no SMS) ⚠️
+- >280 chars: QR Code Only ❌
+
+---
+
+### 🔧 Feature 7: Custom UI Layout (v10.0)
+**Priority:** LOW | **Complexity:** HIGH | **Impact:** Low
+
+Widget repositioning for Studio Mode:
+- Drag major UI components (piano, timeline, controls)
+- Edit mode with visible drag handles
+- Saved locally (localStorage, not URL)
+- Reset button to restore defaults
+
+**Status:** 🔲 Not Started
+
+**Design Doc:** [docs/features/CUSTOM_UI_LAYOUT.md](features/CUSTOM_UI_LAYOUT.md)
+
+**Mobile Considerations:**
+- Drag-and-drop on touch screens can be difficult with small widgets
+- Larger drag handles on mobile (48px vs. 32px desktop)
+- Long-press to enter drag mode (prevents accidental drags)
+- Warning: "Custom layouts work best on desktop/tablet"
+- Alternative: Preset layouts for mobile (Piano Top, Piano Bottom, etc.)
+
+**Local Storage:**
+- Layout saved to localStorage (not URL)
+- ~5KB storage limit (plenty for layout data)
+- Survives page refresh
+- Reset button clears localStorage and restores defaults
+
+---
+
 ## Feature Branch Workflow
 
 **All feature development must be done in feature branches, not on master.**
@@ -195,21 +310,31 @@ Examples:
 ## Implementation Order
 
 ```
-Phase 1: Mode System Foundation (v4.0)
+Phase 1: Mode System Foundation (v4.0) ✅ COMPLETE
     ├── Establish feature flagging infrastructure
     ├── Enable gating of future features by mode
     └── User Testing Checkpoint #1
     
-Phase 2: Pattern Library (v5.0 - depends on Phase 1)
+Phase 2: Pattern Library (v5.0 - depends on v4)
     ├── Use mode system to gate complexity
     ├── Kid Mode: pre-made patterns only
     ├── Tween/Studio: custom pattern creation
     └── User Testing Checkpoint #2
     
-Phase 3: Jam Mode (v6.0 - depends on Phase 1)
+Phase 3: Jam Mode (v6.0 - depends on v4)
     ├── Use mode system to gate features
     ├── Recording complexity varies by mode
     └── User Testing Checkpoint #3
+
+Phase 4: UX Enhancements (v7-v8 - independent)
+    ├── Track Selection (v7)
+    ├── Time Signatures (v8)
+    └── Can be implemented in parallel or either order
+
+Phase 5: Advanced Features (v9-v10 - depends on v7-v8)
+    ├── Additional Tracks (v9 - benefits from Track Selection)
+    ├── Custom UI Layout (v10 - Studio Mode polish)
+    └── User Testing Checkpoint #4
 ```
 
 ---
@@ -333,6 +458,49 @@ Phase 3: Jam Mode (v6.0 - depends on Phase 1)
 
 ---
 
+### Checkpoint #4: Advanced Features (After v9-v10)
+
+**Test Group:**
+- 10 teens ages 13-16 (Studio Mode power users)
+- 3 adults ages 18-25 (music hobbyists)
+
+**Test Procedure:**
+1. **Track Selection Test** - Work with multiple instruments
+   - Can users select tracks intuitively?
+   - Do they understand preview uses selected track?
+   - Does percussion preview mapping make sense?
+
+2. **Time Signature Test** - Create songs in different meters
+   - Can users find time signature selector?
+   - Do measure lines help or confuse?
+   - Can they create a recognizable waltz (3/4)?
+
+3. **Additional Tracks Test** - Complex arrangements
+   - Do users add 4+ tracks?
+   - Can they manage 8 tracks without confusion?
+   - Does share UI communicate URL size issues?
+
+4. **Custom Layout Test** - Personalize workspace
+   - Can users discover edit mode?
+   - Is drag-drop intuitive?
+   - Do they save and reuse custom layouts?
+
+**Expected Behaviors:**
+- ✅ Track selection discoverable within 2 minutes
+- ✅ Users create songs in non-4/4 time signatures
+- ✅ Complex arrangements (5+ tracks) created successfully
+- ✅ Custom layouts saved and reused
+- ✅ QR code sharing works for large songs
+
+**Failure Criteria:**
+- ❌ Track selection confuses users
+- ❌ Time signature measure lines add clutter without value
+- ❌ Users can't manage 8 tracks (too overwhelming)
+- ❌ Edit mode causes more frustration than benefit
+- ❌ Large songs fail to share (QR code too complex to scan)
+
+---
+
 ## Technical Dependencies
 
 ### Browser APIs
@@ -396,12 +564,21 @@ These ideas have been considered but are **not on the current roadmap**. They ma
 
 | Idea | Why Not Now | Revisit When |
 |------|-------------|-------------|
-| **Collaborative editing** | Requires server infrastructure | After v6, if user demand exists |
-| **Cloud save/accounts** | Adds complexity, goes against URL-only approach | If URL size becomes prohibitive |
-| **MIDI export** | Limited audience (needs desktop DAW) | After v6, if teens request it |
+| **Collaborative editing** | Requires server infrastructure | After v10, if user demand exists |
+| **Cloud save/accounts** | Adds complexity, goes against URL-only approach | If URL size becomes prohibitive (v9 analysis needed) |
+| **MIDI export** | Limited audience (needs desktop DAW) | After v10, if teens request it |
 | **Instrument packs** | Would increase audio file size significantly | After testing current sound set |
-| **Tutorial system** | Must remain pre-literate (no text) | Consider visual tutorial in v7 |
+| **Tutorial system** | Must remain pre-literate (no text) | Consider visual tutorial in v11 |
 | **Song gallery/sharing feed** | Requires moderation, server, accounts | Not aligned with privacy-first approach |
+| **Note velocity/dynamics** | Included in Tween Mode (v4) | ✅ Complete |
+| **Audio effects (reverb, delay)** | Scope creep toward professional DAW | Only if teaching effect programming concepts |
+| **Multiple instruments per track** | Complicates UI and data model | After pattern library proves useful |
+| **Custom percussion sounds** | File upload adds security concerns | Maybe in Studio Mode if requested |
+| **Track volume/pan controls** | Adds mixing console complexity | After v9 if multi-track users request |
+| **Waveform visualizer per track** | Performance impact, screen clutter | After v9 if multi-track proves popular |
+| **Track mute/solo buttons** | Nice-to-have for multi-track | Consider for v9 if testing shows need |
+| **Resize widgets** | Risk of unusable UI | After v10 if layout editing proves popular |
+| **Widget minimize/maximize** | Adds complexity, unclear value | After v10 if users requestt approach |
 | **Note velocity/dynamics** | Adds complexity to UI and data model | After v6, if Studio Mode users request |
 | **Audio effects (reverb, delay)** | Scope creep toward professional DAW | Only if teaching effect programming concepts |
 | **Multiple instruments per track** | Complicates UI and data model | After pattern library proves useful |
@@ -448,6 +625,10 @@ These ideas have been considered but are **not on the current roadmap**. They ma
 
 | Metric | Target | Measurement |
 |--------|--------|-------------|
+| Track selection improves workflow | >70% discover within 2 min | User testing |
+| Time signatures used | >20% Studio Mode songs | Analytics |
+| Additional tracks used | >30% try 4+ tracks | Analytics |
+| Custom layouts saved | >10% save layouts | Analytics |
 | Mode selector is discoverable | <2 min to find | User testing |
 | Kids complete songs in Kid Mode | >80% success | User testing |
 | Pattern library reduces frustration | Users create longer songs | Analytics / observation |
