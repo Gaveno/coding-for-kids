@@ -501,15 +501,27 @@
 .pattern-block-overlay {
     position: absolute;
     top: 0;
-    opacity: 0.25;
     pointer-events: none;
-    border: 2px solid rgba(255, 255, 255, 0.4);
     border-radius: 4px;
-    transition: opacity 0.2s ease;
     z-index: 5;
 }
 
-.pattern-block-overlay:hover {
+/* Semi-transparent pattern area (below controls) */
+.pattern-block-overlay::before {
+    content: '';
+    position: absolute;
+    top: 32px; /* Below control row */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: inherit;
+    opacity: 0.25;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    transition: opacity 0.2s ease;
+}
+
+.pattern-block-overlay:hover::before {
     opacity: 0.4;
     border-color: rgba(255, 255, 255, 0.8);
 }
@@ -517,7 +529,7 @@
 /* Pattern block controls - row above the pattern, below beat markers */
 .pattern-block-controls {
     position: absolute;
-    top: -32px; /* Above the pattern block overlay */
+    top: 0; /* At the top of the overlay */
     left: 0;
     right: 0;
     height: 32px;
