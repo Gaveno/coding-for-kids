@@ -772,6 +772,7 @@ class Timeline {
         const trackRow = document.createElement('div');
         trackRow.className = 'track';
         trackRow.dataset.track = trackNum;
+        trackRow.dataset.trackType = track.trackType; // Add track type for CSS styling
 
         // Create track label
         const trackLabel = document.createElement('button');
