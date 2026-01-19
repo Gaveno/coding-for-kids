@@ -16,8 +16,8 @@ class Audio {
         
         // Effects state (for Studio Mode)
         this.effectsEnabled = {
-            reverb: [false, false, false], // Per track
-            delay: [false, false, false]   // Per track
+            reverb: {}, // Per track (keyed by track number)
+            delay: {}   // Per track (keyed by track number)
         };
         
         // Effect nodes (initialized in init())
@@ -232,8 +232,8 @@ class Audio {
      */
     connectWithEffects(sourceNode, trackNumber) {
         const trackIndex = trackNumber - 1;
-        const reverbEnabled = this.effectsEnabled.reverb[trackIndex];
-        const delayEnabled = this.effectsEnabled.delay[trackIndex];
+        const reverbEnabled = this.effectsEnabled.reverb[trackNumber] || false;
+        const delayEnabled = this.effectsEnabled.delay[trackNumber] || false;
         
         // Always connect dry signal to destination
         const dryGain = this.audioContext.createGain();
@@ -570,7 +570,7 @@ class Audio {
     setReverbEnabled(trackNumber, enabled) {
         const trackIndex = trackNumber - 1;
         if (trackIndex >= 0 && trackIndex < 3) {
-            this.effectsEnabled.reverb[trackIndex] = enabled;
+            this.effectsEnabled.reverb[trackNumber] = enabled;
         }
     }
     
@@ -582,7 +582,7 @@ class Audio {
     setDelayEnabled(trackNumber, enabled) {
         const trackIndex = trackNumber - 1;
         if (trackIndex >= 0 && trackIndex < 3) {
-            this.effectsEnabled.delay[trackIndex] = enabled;
+            this.effectsEnabled.delay[trackNumber] = enabled;
         }
     }
     
@@ -593,7 +593,7 @@ class Audio {
      */
     isReverbEnabled(trackNumber) {
         const trackIndex = trackNumber - 1;
-        return this.effectsEnabled.reverb[trackIndex] || false;
+        return this.effectsEnabled.reverb[trackNumber] || false;
     }
     
     /**
@@ -603,7 +603,7 @@ class Audio {
      */
     isDelayEnabled(trackNumber) {
         const trackIndex = trackNumber - 1;
-        return this.effectsEnabled.delay[trackIndex] || false;
+        return this.effectsEnabled.delay[trackNumber] || false;
     }
 
     /**
