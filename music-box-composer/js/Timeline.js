@@ -59,9 +59,11 @@ class Timeline {
      */
     render() {
         this.renderBeatMarkers();
-        this.renderTrack(1);
-        this.renderTrack(2);
-        this.renderTrack(3);
+        
+        // Render all tracks dynamically (supports 1-6 tracks)
+        Object.keys(this.tracks).forEach(trackNum => {
+            this.renderTrack(parseInt(trackNum));
+        });
     }
 
     /**
