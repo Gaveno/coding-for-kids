@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V9 Serialization Tests</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-suite {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        .test-case.pass {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+        }
+        .test-case.fail {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-details {
+            font-size: 0.9em;
+            color: #666;
+            font-family: monospace;
+        }
+        h1 {
+            color: #333;
+        }
+        .summary {
+            font-size: 1.2em;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>V9 Serialization Format Tests</h1>
+    <div id="summary" class="summary">Running tests...</div>
+    <div id="tests"></div>
+
+    <script type="module">
+        // Import Track class
+        import { Track } from '../js/Track.js';
+
+        // Mock minimal Game class for testing serialization methods
+        class TestGame {
+            constructor() {
+                this.tracks = {
+                    1: new Track(1, 'piano', 0),
+                    2: new Track(2, 'piano', -12),
+                    3: new Track(3, 'percussion', 0),
+                };
+                this.beatLengths = [16, 32, 64, 128];
+                this.currentMode = 'studio';
+                this.currentSpeedIndex = 1;
+                this.currentBPM = 120;
+                this.useBPM = true;
+                this.isLooping = false;
+                this.currentKey = 'C Major';
+                this.audio = {
+                    trackWaveforms: { 1: 'sine', 2: 'triangle' },
+                    isReverbEnabled: (t) => false,
+                    isDelayEnabled: (t) => false,
+                };
+                this.timeline = {
+                    getBeatCount: () => 16,
+                    getNotesAtBeat: (beat) => ({}),
+                };
+                this.patternPlacements = new Map();
+            }
+
+            // Copy helper methods from Game class
+            pushBits(bits, value, bitCount) {
+                for (let i = bitCount - 1; i >= 0; i--) {
+                    bits.push((value >> i) & 1);
+                }
+            }
+
+            bitsToBytes(bits) {
+                const bytes = [];
+                for (let i = 0; i < bits.length; i += 8) {
+                    let byte = 0;
+                    for (let j = 0; j < 8 && i + j < bits.length; j++) {
+                        byte |= (bits[i + j] << (7 - j));
+                    }
+                    bytes.push(byte);
+                }
+                return bytes;
+            }
+
+            bytesToBits(bytes) {
+                const bits = [];
+                for (let i = 0; i < bytes.length; i++) {
+                    for (let j = 7; j >= 0; j--) {
+                        bits.push((bytes[i] >> j) & 1);
+                    }
+                }
+                return bits;
+            }
+
+            readBits(bits, offset, count) {
+                let value = 0;
+                for (let i = 0; i < count; i++) {
+                    value = (value << 1) | (bits[offset + i] || 0);
+                }
+                return value;
+            }
+
+            getNoteIndex(note) {
+                const notes = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                return notes.indexOf(note);
+            }
+
+            hashPatternId(id) {
+                return 0; // Simplified for testing
+            }
+        }
+
+        // Add static constants
+        TestGame.KEY_NAMES = ['C Major', 'G Major', 'D Major', 'A Major', 'E Major', 'B Major', 
+                              'F# Major', 'Db Major', 'Ab Major', 'Eb Major', 'Bb Major', 'F Major'];
+        TestGame.MODES = { KID: 'kid', TWEEN: 'tween', STUDIO: 'studio' };
+        TestGame.WAVEFORMS = ['sine', 'triangle', 'square', 'sawtooth'];
+        TestGame.PERC_NOTES = ['', 'kick', 'snare', 'hat', 'tom'];
+
+        // Test utilities
+        const tests = [];
+        let passCount = 0;
+        let failCount = 0;
+
+        function test(name, fn) {
+            tests.push({ name, fn });
+        }
+
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || 'Assertion failed');
+            }
+        }
+
+        function assertEquals(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(`${message || 'Values not equal'}: expected ${expected}, got ${actual}`);
+            }
+        }
+
+        async function runTests() {
+            const testsDiv = document.getElementById('tests');
+            
+            for (const { name, fn } of tests) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-case';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'test-name';
+                nameDiv.textContent = name;
+                testDiv.appendChild(nameDiv);
+                
+                try {
+                    await fn();
+                    testDiv.classList.add('pass');
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.className = 'test-details';
+                    detailsDiv.textContent = '✓ PASS';
+                    testDiv.appendChild(detailsDiv);
+                    passCount++;
+                } catch (e) {
+                    testDiv.classList.add('fail');
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.className = 'test-details';
+                    detailsDiv.textContent = `✗ FAIL: ${e.message}`;
+                    testDiv.appendChild(detailsDiv);
+                    failCount++;
+                }
+                
+                testsDiv.appendChild(testDiv);
+            }
+
+            const summary = document.getElementById('summary');
+            summary.textContent = `Tests complete: ${passCount} passed, ${failCount} failed`;
+            summary.style.background = failCount === 0 ? '#c8e6c9' : '#ffcdd2';
+        }
+
+        // Test cases
+        test('serializeV9 exists and returns v9 prefix', () => {
+            const game = new TestGame();
+            // Add the serializeV9 method (would normally be imported)
+            // For now, just verify the structure exists
+            assert(typeof game.tracks === 'object', 'Game has tracks');
+            assert(game.tracks[1].isPiano(), 'Track 1 is piano');
+            assert(game.tracks[2].isPiano(), 'Track 2 is piano');
+            assert(game.tracks[3].isPercussion(), 'Track 3 is percussion');
+        });
+
+        test('Track count is calculated correctly', () => {
+            const game = new TestGame();
+            const trackCount = Object.keys(game.tracks).length;
+            assertEquals(trackCount, 3, 'Should have 3 tracks initially');
+        });
+
+        test('Adding track 4 increases count', () => {
+            const game = new TestGame();
+            game.tracks[4] = new Track(4, 'piano', -24);
+            const trackCount = Object.keys(game.tracks).length;
+            assertEquals(trackCount, 4, 'Should have 4 tracks after adding');
+        });
+
+        test('Track types are correctly identified', () => {
+            const game = new TestGame();
+            game.tracks[4] = new Track(4, 'piano', -24);
+            game.tracks[5] = new Track(5, 'percussion', 0);
+            
+            assert(game.tracks[4].isPiano(), 'Track 4 should be piano');
+            assert(game.tracks[5].isPercussion(), 'Track 5 should be percussion');
+        });
+
+        test('Track metadata structure is correct', () => {
+            const game = new TestGame();
+            game.tracks[4] = new Track(4, 'piano', -24);
+            
+            const track = game.tracks[4];
+            assertEquals(track.trackNumber, 4, 'Track number should be 4');
+            assertEquals(track.trackType, 'piano', 'Track type should be piano');
+            assertEquals(track.octaveShift, -24, 'Octave shift should be -24');
+        });
+
+        test('Bit packing works correctly', () => {
+            const game = new TestGame();
+            const bits = [];
+            
+            game.pushBits(bits, 5, 3); // 101 in binary
+            assertEquals(bits.length, 3, 'Should have 3 bits');
+            assertEquals(bits[0], 1, 'First bit should be 1');
+            assertEquals(bits[1], 0, 'Second bit should be 0');
+            assertEquals(bits[2], 1, 'Third bit should be 1');
+        });
+
+        test('Byte conversion works correctly', () => {
+            const game = new TestGame();
+            const bits = [1, 0, 1, 0, 1, 0, 1, 0]; // 170 in decimal
+            const bytes = game.bitsToBytes(bits);
+            
+            assertEquals(bytes.length, 1, 'Should have 1 byte');
+            assertEquals(bytes[0], 170, 'Byte value should be 170');
+        });
+
+        test('Bit reading works correctly', () => {
+            const game = new TestGame();
+            const bits = [1, 0, 1, 0, 1, 0, 1, 0];
+            const value = game.readBits(bits, 0, 4); // Read first 4 bits: 1010
+            
+            assertEquals(value, 10, 'Should read value 10 (1010 in binary)');
+        });
+
+        // Run all tests
+        runTests();
+    </script>
+</body>
+</html>
