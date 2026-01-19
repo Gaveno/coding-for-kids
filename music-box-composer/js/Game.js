@@ -627,7 +627,9 @@ class Game {
      * Get icon for note (helper method)
      */
     getNoteIcon(trackId, noteIndex) {
-        if (trackId === 3) {
+        const track = this.timeline && this.timeline.tracks ? this.timeline.tracks[trackId] : null;
+        const isPercussion = track ? track.isPercussion() : trackId === 3;
+        if (isPercussion) {
             // Percussion
             const percIcons = ['🥁', '🪘', '🔔', '👏', '🎵', '💥', '🎶', '🔊'];
             return percIcons[noteIndex] || '🥁';
@@ -641,7 +643,9 @@ class Game {
      * Get display icon for note (shows note name for piano, emoji for percussion)
      */
     getNoteDisplayIcon(noteName, trackId) {
-        if (trackId === 3) {
+        const track = this.timeline && this.timeline.tracks ? this.timeline.tracks[trackId] : null;
+        const isPercussion = track ? track.isPercussion() : trackId === 3;
+        if (isPercussion) {
             // Percussion - use emoji icons
             const percIcons = {
                 'kick': '🥁', 'snare': '🪘', 'hihat': '🔔', 'clap': '👏',
@@ -659,7 +663,9 @@ class Game {
     }
 
     getNoteNameFromIndex(noteIndex, trackId) {
-        if (trackId === 3) {
+        const track = this.timeline && this.timeline.tracks ? this.timeline.tracks[trackId] : null;
+        const isPercussion = track ? track.isPercussion() : trackId === 3;
+        if (isPercussion) {
             const percNames = ['kick', 'snare', 'hihat', 'clap', 'tom', 'cymbal', 'shaker', 'cowbell'];
             return percNames[noteIndex] || 'kick';
         } else {
@@ -3827,6 +3833,11 @@ class Game {
         if (state.t) {
             console.log(`[applyState] Deserializing tracks:`, Object.keys(state.t));
             this.timeline.deserializeTracks(state.t);
+        }
+
+        // Sync pattern drawer tracks with main timeline after load
+        if (this.patternDrawer) {
+            this.patternDrawer.updateForMode(this.currentMode);
         }
         
         // Apply pattern placements (v7+)

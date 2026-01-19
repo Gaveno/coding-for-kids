@@ -9,17 +9,45 @@ class Timeline {
         this.patternBlocksRow = options.patternBlocksRow;
         this.playhead = options.playhead;
         
-        this.trackElements = {
-            1: options.cells1,
-            2: options.cells2,
-            3: options.cells3
-        };
+        this.trackElements = {};
+        this.tracks = {};
         
-        this.tracks = {
-            1: new Track(1),
-            2: new Track(2),
-            3: new Track(3)
-        };
+        // Initialize track elements dynamically (supports 1-6 tracks)
+        Object.keys(options).forEach(key => {
+            const match = key.match(/^cells(\d+)$/);
+            if (!match) return;
+            const trackNum = parseInt(match[1], 10);
+            const cellsEl = options[key];
+            if (!cellsEl) return;
+            this.trackElements[trackNum] = cellsEl;
+            
+            const track = new Track(trackNum);
+            if (options.trackConfigs && options.trackConfigs[trackNum]) {
+                const config = options.trackConfigs[trackNum];
+                if (config.trackType) {
+                    track.trackType = config.trackType;
+                }
+                if (typeof config.octaveShift === 'number') {
+                    track.octaveShift = config.octaveShift;
+                }
+            }
+            this.tracks[trackNum] = track;
+        });
+        
+        // Fallback to default 3 tracks if no cells were provided
+        if (Object.keys(this.trackElements).length === 0) {
+            this.trackElements = {
+                1: options.cells1,
+                2: options.cells2,
+                3: options.cells3
+            };
+            
+            this.tracks = {
+                1: new Track(1),
+                2: new Track(2),
+                3: new Track(3)
+            };
+        }
         
         this.beatCount = 16;
         this.cellSize = 44; // Will be updated from CSS

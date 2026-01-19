@@ -148,9 +148,17 @@ class PatternDrawer {
         };
 
         // Add cells references for all existing tracks
+        timelineConfig.trackConfigs = {};
         Object.keys(this.game.timeline.tracks).forEach(trackNum => {
             const cellsElement = this.drawerElement.querySelector(`#patternCells${trackNum}`);
             timelineConfig[`cells${trackNum}`] = cellsElement;
+            const mainTrack = this.game.timeline.tracks[trackNum];
+            if (mainTrack) {
+                timelineConfig.trackConfigs[trackNum] = {
+                    trackType: mainTrack.trackType,
+                    octaveShift: mainTrack.octaveShift
+                };
+            }
         });
 
         this.timeline = new Timeline(timelineConfig);
@@ -219,9 +227,17 @@ class PatternDrawer {
             };
 
             // Add cells references for all tracks
+            timelineConfig.trackConfigs = {};
             Object.keys(this.game.timeline.tracks).forEach(trackNum => {
                 const cellsElement = this.drawerElement.querySelector(`#patternCells${trackNum}`);
                 timelineConfig[`cells${trackNum}`] = cellsElement;
+                const mainTrack = this.game.timeline.tracks[trackNum];
+                if (mainTrack) {
+                    timelineConfig.trackConfigs[trackNum] = {
+                        trackType: mainTrack.trackType,
+                        octaveShift: mainTrack.octaveShift
+                    };
+                }
             });
 
             this.timeline = new Timeline(timelineConfig);
@@ -498,7 +514,9 @@ class PatternDrawer {
      * Get note name from index
      */
     getNoteNameFromIndex(noteIndex, trackId) {
-        if (trackId === 3) {
+        const track = this.timeline && this.timeline.tracks ? this.timeline.tracks[trackId] : null;
+        const isPercussion = track ? track.isPercussion() : trackId === 3;
+        if (isPercussion) {
             const percNames = ['kick', 'snare', 'hihat', 'clap', 'tom', 'cymbal', 'shaker', 'cowbell'];
             return percNames[noteIndex] || 'kick';
         } else {
@@ -511,7 +529,9 @@ class PatternDrawer {
      * Get default icon for note
      */
     getDefaultIcon(trackId, noteIndex) {
-        if (trackId === 3) {
+        const track = this.timeline && this.timeline.tracks ? this.timeline.tracks[trackId] : null;
+        const isPercussion = track ? track.isPercussion() : trackId === 3;
+        if (isPercussion) {
             const percIcons = ['🥁', '🪘', '🔔', '👏', '🎵', '💥', '🎶', '🔊'];
             return percIcons[noteIndex] || '🥁';
         } else {
@@ -550,7 +570,9 @@ class PatternDrawer {
      * Convert note name to index
      */
     getNoteIndexFromName(noteName, trackId) {
-        if (trackId === 3) {
+        const track = this.timeline && this.timeline.tracks ? this.timeline.tracks[trackId] : null;
+        const isPercussion = track ? track.isPercussion() : trackId === 3;
+        if (isPercussion) {
             const percNames = ['kick', 'snare', 'hihat', 'clap', 'tom', 'cymbal', 'shaker', 'cowbell'];
             const idx = percNames.indexOf(noteName);
             return idx >= 0 ? idx : 0;
