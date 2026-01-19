@@ -1531,10 +1531,8 @@ class Game {
      * @param {string} waveform - Waveform type ('sine', 'square', 'sawtooth', 'triangle')
      */
     setWaveform(trackNum, waveform) {
-        if (trackNum === 1 || trackNum === 2) {
-            this.audio.trackWaveforms[trackNum] = waveform;
-            this.updateURL();
-        }
+        this.audio.setTrackWaveform(trackNum, waveform);
+        this.updateURL();
     }
     
     /**
