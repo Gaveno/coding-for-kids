@@ -1283,6 +1283,17 @@ class Game {
             this.pushBits(bits, velocity3, 4);
         }
         
+        // Pattern placements: count (5 bits) + for each: patternId-hash (12 bits) + startBeat (7 bits)
+        const placements = Array.from(this.patternPlacements.values());
+        this.pushBits(bits, Math.min(31, placements.length), 5); // Max 31 patterns
+        
+        for (const placement of placements.slice(0, 31)) {
+            // Hash the pattern ID to 12 bits (for preset/custom patterns)
+            const patternIdHash = this.hashPatternId(placement.patternId);
+            this.pushBits(bits, patternIdHash, 12);
+            this.pushBits(bits, placement.startBeat, 7); // Max beat 127
+        }
+        
         // Convert bits to bytes
         const bytes = this.bitsToBytes(bits);
         
@@ -1295,6 +1306,34 @@ class Game {
         
         // Prefix with version
         return `v${Game.ENCODING_VERSION}_${data}`;
+    }
+    
+    /**
+     * Hash pattern ID to 12 bits for compact storage
+     */
+    hashPatternId(patternId) {
+        const presetMap = {
+            'preset_happy_bounce': 1, 'preset_march': 2, 'preset_lullaby': 3,
+            'preset_dance': 4, 'preset_fanfare': 5, 'preset_rain': 6,
+            'preset_drop': 7, 'preset_chill': 8, 'preset_epic': 9, 'preset_glitch': 10
+        };
+        if (presetMap[patternId]) return presetMap[patternId];
+        if (patternId.startsWith('custom_')) return 100 + parseInt(patternId.split('_')[1]);
+        return 0;
+    }
+    
+    /**
+     * Reverse hash pattern ID from 12-bit value
+     */
+    unhashPatternId(hash) {
+        const presetMap = {
+            1: 'preset_happy_bounce', 2: 'preset_march', 3: 'preset_lullaby',
+            4: 'preset_dance', 5: 'preset_fanfare', 6: 'preset_rain',
+            7: 'preset_drop', 8: 'preset_chill', 9: 'preset_epic', 10: 'preset_glitch'
+        };
+        if (presetMap[hash]) return presetMap[hash];
+        if (hash >= 100 && hash <= 107) return `custom_${hash - 100}`;
+        return null;
     }
     
     /**
@@ -2012,6 +2051,20 @@ class Game {
             }
         }
         
+        // Read pattern placements: count (5 bits) + for each: patternId-hash (12 bits) + startBeat (7 bits)
+        const patternCount = this.readBits(bits, offset, 5); offset += 5;
+        const patterns = [];
+        
+        for (let i = 0; i < patternCount; i++) {
+            const patternIdHash = this.readBits(bits, offset, 12); offset += 12;
+            const startBeat = this.readBits(bits, offset, 7); offset += 7;
+            
+            const patternId = this.unhashPatternId(patternIdHash);
+            if (patternId) {
+                patterns.push({ patternId, startBeat });
+            }
+        }
+        
         return {
             mode,
             s: speedIndex,
@@ -2026,7 +2079,8 @@ class Game {
                 reverb: [t1Reverb === 1, t2Reverb === 1, t3Reverb === 1],
                 delay: [t1Delay === 1, t2Delay === 1, t3Delay === 1]
             },
-            t: { track1: piano1, track2: piano2, track3: percussion }
+            t: { track1: piano1, track2: piano2, track3: percussion },
+            patterns
         };
     }
     
@@ -2969,6 +3023,13 @@ class Game {
         // Apply tracks
         if (state.t) {
             this.timeline.deserializeTracks(state.t);
+        }
+        
+        // Apply pattern placements (v7+)
+        if (state.patterns && Array.isArray(state.patterns)) {
+            for (const placement of state.patterns) {
+                this.placePattern(placement.patternId, placement.startBeat);
+            }
         }
         
         // Update URL
