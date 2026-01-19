@@ -249,8 +249,9 @@ class Game {
         this.patternLibrary = new PatternLibrary();
         this.patternDrawer = new PatternDrawer(this, this.patternLibrary);
         
-        // Select first track by default
-        this.selectTrack(1);
+        // Select default tracks (one piano, one percussion)
+        this.selectTrack(1); // Select first piano track
+        this.selectTrack(3); // Select first percussion track
     }
 
     /**
@@ -414,10 +415,16 @@ class Game {
      * Preview a note (tap on palette)
      */
     previewNote(note, trackNum, octave = null) {
-        // Use selected track if trackNum not specified or is for piano
-        if (!trackNum || (trackNum === 1 || trackNum === 2)) {
-            const selectedTrack = this.getSelectedTrack();
-            trackNum = selectedTrack.trackNumber;
+        // Determine track type from note
+        const isPianoNote = !trackNum || trackNum === 1 || trackNum === 2;
+        
+        // Use selected track of appropriate type if trackNum not specified
+        if (!trackNum) {
+            const trackType = note === 'kick' || note === 'snare' || note === 'hihat' || 
+                            note === 'clap' || note === 'tambourine' || note === 'cowbell' ||
+                            note === 'shaker' || note === 'woodblock' ? 'percussion' : 'piano';
+            const selectedTrack = this.getSelectedTrack(trackType);
+            trackNum = selectedTrack ? selectedTrack.trackNumber : 1;
         }
         
         this.audio.playNote(note, trackNum, 0.25, 0.8, octave);
@@ -436,6 +443,14 @@ class Game {
      * Handle note drop from palette
      */
     handleNoteDrop(trackNum, beat, noteData) {
+        // If no trackNum specified, use selected track of appropriate type
+        if (!trackNum) {
+            const trackType = noteData.note === 'kick' || noteData.note === 'snare' || 
+                            noteData.note === 'hihat' || noteData.note === 'clap' ? 'percussion' : 'piano';
+            const selectedTrack = this.getSelectedTrack(trackType);
+            trackNum = selectedTrack ? selectedTrack.trackNumber : 1;
+        }
+        
         this.timeline.setNote(trackNum, beat, noteData);
         // Preview the dropped note with its octave
         this.audio.playNote(noteData.note, trackNum, 0.25, noteData.velocity || 0.8, noteData.octave);
@@ -702,26 +717,44 @@ class Game {
     }
 
     /**
-     * Select a track for piano preview
-     * @param {number} trackNum - Track number (1, 2, or 3)
+     * Select a track for piano/percussion preview
+     * @param {number} trackNum - Track number
      */
     selectTrack(trackNum) {
-        // Deselect all tracks
-        Object.values(this.timeline.tracks).forEach(track => track.deselect());
+        const track = this.timeline.tracks[trackNum];
+        if (!track) return;
+        
+        // Deselect all tracks of the same type (piano or percussion)
+        Object.values(this.timeline.tracks).forEach(t => {
+            if (t.trackType === track.trackType) {
+                t.deselect();
+            }
+        });
         
         // Select target track
-        const track = this.timeline.tracks[trackNum];
-        if (track) {
-            track.select();
-            this.updateTrackVisuals();
-        }
+        track.select();
+        this.updateTrackVisuals();
     }
 
     /**
      * Get the currently selected track
-     * @returns {Track} - Selected track or first track by default
+     * @param {string} trackType - 'piano' or 'percussion' (optional)
+     * @returns {Track} - Selected track or first track of type
      */
-    getSelectedTrack() {
+    getSelectedTrack(trackType = null) {
+        if (trackType) {
+            // Find selected track of specific type
+            const selected = Object.values(this.timeline.tracks).find(
+                t => t.selected && t.trackType === trackType
+            );
+            // Default to first track of that type
+            if (!selected) {
+                return Object.values(this.timeline.tracks).find(t => t.trackType === trackType);
+            }
+            return selected;
+        }
+        
+        // No type specified - return any selected track
         const selected = Object.values(this.timeline.tracks).find(t => t.selected);
         return selected || this.timeline.tracks[1]; // Default to track 1
     }

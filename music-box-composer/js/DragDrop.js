@@ -438,14 +438,17 @@ class DragDrop {
         if (!this.dragState) return false;
         
         const trackNum = parseInt(cell.dataset.track);
+        const track = this.timeline.tracks[trackNum];
         
-        // Check if note type matches track
+        if (!track) return false;
+        
+        // Check if note type matches track type
         if (this.dragState.type === 'percussion') {
-            // Percussion only on track 3
-            if (trackNum !== 3) return false;
+            // Percussion notes only on percussion tracks
+            if (track.trackType !== 'percussion') return false;
         } else {
-            // Piano notes on tracks 1 or 2
-            if (trackNum !== 1 && trackNum !== 2) return false;
+            // Piano notes only on piano tracks
+            if (track.trackType !== 'piano') return false;
         }
         
         // Don't allow dropping on cells covered by extended notes
