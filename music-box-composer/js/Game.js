@@ -423,9 +423,6 @@ class Game {
      * Preview a note (tap on palette)
      */
     previewNote(note, trackNum, octave = null) {
-        // Determine track type from note
-        const isPianoNote = !trackNum || trackNum === 1 || trackNum === 2;
-        
         // Use selected track of appropriate type if trackNum not specified
         if (!trackNum) {
             const trackType = note === 'kick' || note === 'snare' || note === 'hihat' || 
@@ -435,13 +432,7 @@ class Game {
             trackNum = selectedTrack ? selectedTrack.trackNumber : 1;
         }
         
-        // Get track's octave shift for preview
-        const track = this.timeline.tracks[trackNum];
-        if (track && track.isPiano() && octave !== null) {
-            // Apply track's octave shift to the preview
-            octave = octave + (track.octaveShift || 0);
-        }
-        
+        // Use default velocity of 0.8 for preview (notes can have custom velocity set later)
         this.audio.playNote(note, trackNum, 0.25, 0.8, octave);
     }
 
