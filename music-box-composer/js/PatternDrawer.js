@@ -98,18 +98,7 @@ class PatternDrawer {
                         <div class="timeline pattern-mini-timeline" id="patternMiniTimeline">
                             <div class="playhead" id="patternPlayhead"></div>
                             <div class="beat-markers" id="patternBeatMarkers"></div>
-                            <div class="track" data-track="1">
-                                <div class="track-label">🎹</div>
-                                <div class="track-cells" id="patternCells1"></div>
-                            </div>
-                            <div class="track" data-track="2">
-                                <div class="track-label">🎹</div>
-                                <div class="track-cells" id="patternCells2"></div>
-                            </div>
-                            <div class="track" data-track="3">
-                                <div class="track-label">🥁</div>
-                                <div class="track-cells" id="patternCells3"></div>
-                            </div>
+                            <!-- Track rows will be dynamically created -->
                         </div>
                     </div>
                 </div>
@@ -144,19 +133,27 @@ class PatternDrawer {
         this.modalSlots = this.drawerElement.querySelector('#patternSlots');
         this.modalClose = this.drawerElement.querySelector('.modal-close');
 
+        // Build pattern tracks dynamically to match main timeline
+        this.buildPatternTracks();
+
         // Create a real Timeline instance for the pattern editor
-        this.timeline = new Timeline({
+        const timelineConfig = {
             container: this.drawerElement.querySelector('#patternMiniTimeline'),
             scrollContainer: this.drawerElement.querySelector('#patternTimelineScroll'),
             beatMarkers: this.drawerElement.querySelector('#patternBeatMarkers'),
             playhead: this.drawerElement.querySelector('#patternPlayhead'),
-            cells1: this.drawerElement.querySelector('#patternCells1'),
-            cells2: this.drawerElement.querySelector('#patternCells2'),
-            cells3: this.drawerElement.querySelector('#patternCells3'),
             onCellClick: (trackNum, beat) => this.handlePatternCellClick(trackNum, beat),
             onNoteChange: () => {}, // No URL updates for pattern
             onBeatClick: () => {} // No seek for pattern
+        };
+
+        // Add cells references for all existing tracks
+        Object.keys(this.game.timeline.tracks).forEach(trackNum => {
+            const cellsElement = this.drawerElement.querySelector(`#patternCells${trackNum}`);
+            timelineConfig[`cells${trackNum}`] = cellsElement;
         });
+
+        this.timeline = new Timeline(timelineConfig);
         
         // Set initial beat count
         this.timeline.setBeatCount(this.currentPatternLength);
@@ -165,6 +162,73 @@ class PatternDrawer {
         this.renderPatternBlocks();
     }
     
+    /**
+     * Build pattern timeline tracks to match main timeline
+     */
+    buildPatternTracks() {
+        const timelineElement = this.drawerElement.querySelector('#patternMiniTimeline');
+        const mainTracks = this.game.timeline.tracks;
+
+        // Create track rows for all tracks in main timeline
+        Object.keys(mainTracks).forEach(trackNum => {
+            const track = mainTracks[trackNum];
+            const icon = track.isPiano() ? '🎹' : '🥁';
+
+            const trackRow = document.createElement('div');
+            trackRow.className = 'track';
+            trackRow.setAttribute('data-track', trackNum);
+            trackRow.setAttribute('data-track-type', track.trackType);
+
+            const trackLabel = document.createElement('div');
+            trackLabel.className = 'track-label';
+            trackLabel.textContent = icon;
+
+            const trackCells = document.createElement('div');
+            trackCells.className = 'track-cells';
+            trackCells.id = `patternCells${trackNum}`;
+
+            trackRow.appendChild(trackLabel);
+            trackRow.appendChild(trackCells);
+            timelineElement.appendChild(trackRow);
+        });
+    }
+
+    /**
+     * Rebuild pattern tracks when main timeline tracks change
+     */
+    rebuildPatternTracks() {
+        const timelineElement = this.drawerElement.querySelector('#patternMiniTimeline');
+        
+        // Remove all track rows (keep playhead and beat markers)
+        const tracks = timelineElement.querySelectorAll('.track');
+        tracks.forEach(track => track.remove());
+
+        // Rebuild tracks
+        this.buildPatternTracks();
+
+        // Reinitialize timeline with new tracks
+        if (this.timeline) {
+            const timelineConfig = {
+                container: timelineElement,
+                scrollContainer: this.drawerElement.querySelector('#patternTimelineScroll'),
+                beatMarkers: this.drawerElement.querySelector('#patternBeatMarkers'),
+                playhead: this.drawerElement.querySelector('#patternPlayhead'),
+                onCellClick: (trackNum, beat) => this.handlePatternCellClick(trackNum, beat),
+                onNoteChange: () => {},
+                onBeatClick: () => {}
+            };
+
+            // Add cells references for all tracks
+            Object.keys(this.game.timeline.tracks).forEach(trackNum => {
+                const cellsElement = this.drawerElement.querySelector(`#patternCells${trackNum}`);
+                timelineConfig[`cells${trackNum}`] = cellsElement;
+            });
+
+            this.timeline = new Timeline(timelineConfig);
+            this.timeline.setBeatCount(this.currentPatternLength);
+        }
+    }
+
     /**
      * Handle cell click in pattern timeline (remove note - same as main timeline)
      */
@@ -404,6 +468,9 @@ class PatternDrawer {
             const trackNum = parseInt(trackId);
             const track = this.timeline.tracks[trackNum];
             
+            // Skip if pattern has tracks that don't exist in current timeline
+            if (!track) continue;
+            
             pattern.tracks[trackId].forEach(noteArr => {
                 const [beat, noteIndex, duration = 1, velocity = 0.8] = noteArr;
                 const icon = this.getDefaultIcon(trackNum, noteIndex);
@@ -459,8 +526,8 @@ class PatternDrawer {
     extractPatternData() {
         const tracks = {};
         
-        // Note: Patterns are limited to 3 tracks for now (backwards compatibility)
-        for (let trackNum = 1; trackNum <= 3; trackNum++) {
+        // Extract notes from all tracks (supports 1-6 tracks)
+        Object.keys(this.timeline.tracks).forEach(trackNum => {
             const track = this.timeline.tracks[trackNum];
             const notes = [];
             
@@ -468,13 +535,13 @@ class PatternDrawer {
                 const note = track.getNote(beat);
                 if (note) {
                     // Convert to pattern format: [beat, noteIndex, duration, velocity]
-                    const noteIndex = this.getNoteIndexFromName(note.note, trackNum);
+                    const noteIndex = this.getNoteIndexFromName(note.note, parseInt(trackNum));
                     notes.push([beat, noteIndex, note.duration || 1, note.velocity || 0.8]);
                 }
             }
             
             tracks[trackNum] = notes;
-        }
+        });
         
         return tracks;
     }
@@ -638,11 +705,10 @@ class PatternDrawer {
     }
 
     /**
-     * Update drawer for mode change
+     * Update drawer for mode change or track count change
      */
     updateForMode(mode) {
-        this.renderPatternBlocks();
-    }
+        // Rebuild pattern tracks to match main timeline (handles track additions/removals)\n        this.rebuildPatternTracks();\n        this.renderPatternBlocks();\n    }
     
     /**
      * Start dragging a pattern block
@@ -848,8 +914,8 @@ class PatternDrawer {
         const beatDurationMs = this.game.getBeatDuration();
         const beatDurationSec = beatDurationMs / 1000;
         
-        // Play notes for each track (patterns limited to 3 tracks)
-        for (let trackNum = 1; trackNum <= 3; trackNum++) {
+        // Play notes for all tracks (supports tracks 1-6)
+        Object.keys(this.timeline.tracks).forEach(trackNum => {
             const track = this.timeline.tracks[trackNum];
             const note = track.getNote(beat);
             
@@ -858,15 +924,15 @@ class PatternDrawer {
                 const velocity = note.velocity || 0.8;
                 const octave = note.octave || 4;
                 
-                if (trackNum === 3) {
+                if (track.isPercussion()) {
                     // Percussion doesn't use duration or octave
-                    this.game.audio.playNote(note.note, trackNum, undefined, velocity);
+                    this.game.audio.playNote(note.note, parseInt(trackNum), undefined, velocity);
                 } else {
                     // Piano tracks
-                    this.game.audio.playNote(note.note, trackNum, noteDuration, velocity, octave);
+                    this.game.audio.playNote(note.note, parseInt(trackNum), noteDuration, velocity, octave);
                 }
             }
-        }
+        });
     }
     
     /**

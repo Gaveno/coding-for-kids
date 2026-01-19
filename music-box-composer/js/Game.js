@@ -862,6 +862,11 @@ class Game {
         // Request UI update
         this.timeline.renderNewTrack(nextTrackNum);
         
+        // Update pattern drawer to match track count
+        if (this.patternDrawer) {
+            this.patternDrawer.updateForMode(this.currentMode);
+        }
+        
         this.updateURL();
         return nextTrackNum;
     }
@@ -891,6 +896,11 @@ class Game {
         
         // Request UI update
         this.timeline.removeTrackRow(trackNum);
+        
+        // Update pattern drawer to match track count
+        if (this.patternDrawer) {
+            this.patternDrawer.updateForMode(this.currentMode);
+        }
         
         this.updateURL();
         return true;
