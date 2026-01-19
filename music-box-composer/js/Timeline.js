@@ -783,6 +783,14 @@ class Timeline {
         const icon = track.isPiano() ? '🎹' : '🥁';
         trackLabel.textContent = icon;
         
+        // Bind track label click for settings
+        trackLabel.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent track row click
+            if (this.onTrackLabelClick) {
+                this.onTrackLabelClick(trackNum);
+            }
+        });
+        
         // Add remove button for non-default tracks (track > 3)
         if (trackNum > 3) {
             const removeBtn = document.createElement('button');
@@ -814,11 +822,15 @@ class Timeline {
 
         // Render cells
         this.renderTrack(trackNum);
+        
+        // Apply selected state if track is selected
+        if (track.selected) {
+            trackRow.classList.add('selected');
+        }
 
         // Bind track selection event
         trackRow.addEventListener('click', (e) => {
             if (e.target.closest('.cell-note') || 
-                e.target.closest('.track-label') || 
                 e.target.closest('.track-cell')) {
                 return;
             }
@@ -876,6 +888,14 @@ class Timeline {
      */
     setOnTrackSelect(callback) {
         this.onTrackSelect = callback;
+    }
+    
+    /**
+     * Set callback for track label click (settings)
+     * @param {Function} callback - Callback function(trackNum)
+     */
+    setOnTrackLabelClick(callback) {
+        this.onTrackLabelClick = callback;
     }
 }
 

@@ -235,6 +235,11 @@ class Game {
         // Set up track management callbacks
         this.timeline.setOnTrackRemove((trackNum) => this.removeTrack(trackNum));
         this.timeline.setOnTrackSelect((trackNum) => this.selectTrack(trackNum));
+        this.timeline.setOnTrackLabelClick((trackNum) => {
+            if (this.currentMode === Game.MODES.STUDIO) {
+                this.showTrackSettings(trackNum);
+            }
+        });
         
         // Drag and drop
         this.dragDrop = new DragDrop({
