@@ -696,18 +696,21 @@ class Timeline {
      * @param {Object} data - Serialized track data
      */
     deserializeTracks(data) {
-        // Handle v3 format (track1, track2, track3)
-        if (data.track1 || data.track2 || data.track3) {
-            if (data.track1) this.tracks[1].deserialize(data.track1);
-            if (data.track2) this.tracks[2].deserialize(data.track2);
-            if (data.track3) this.tracks[3].deserialize(data.track3);
+        // Handle v9 format with dynamic tracks (track1, track2, ..., track6)
+        // Also backwards compatible with v3 format
+        for (let trackNum = 1; trackNum <= 6; trackNum++) {
+            const trackKey = `track${trackNum}`;
+            if (data[trackKey] && this.tracks[trackNum]) {
+                console.log(`[Timeline.deserializeTracks] Restoring ${data[trackKey].length} notes to track ${trackNum}`);
+                this.tracks[trackNum].deserialize(data[trackKey]);
+            }
         }
-        // Handle v1/v2 format (melody, bass, percussion)
-        else {
-            if (data.melody) this.tracks[1].deserialize(data.melody);
-            if (data.bass) this.tracks[2].deserialize(data.bass);
-            if (data.percussion) this.tracks[3].deserialize(data.percussion);
-        }
+        
+        // Handle legacy v1/v2 format (melody, bass, percussion)
+        if (data.melody && this.tracks[1]) this.tracks[1].deserialize(data.melody);
+        if (data.bass && this.tracks[2]) this.tracks[2].deserialize(data.bass);
+        if (data.percussion && this.tracks[3]) this.tracks[3].deserialize(data.percussion);
+        
         this.render();
     }
     
