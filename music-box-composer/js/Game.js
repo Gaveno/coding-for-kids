@@ -1586,9 +1586,9 @@ class Game {
      */
     serializeState() {
         // Guard: tracks may not be initialized yet during early init
-        if (!this.tracks) return '';
+        if (!this.timeline || !this.timeline.tracks) return '';
         
-        const trackCount = Object.keys(this.tracks).length;
+        const trackCount = Object.keys(this.timeline.tracks).length;
         // Use v9 format if more than 3 tracks, otherwise use v7 for backwards compatibility
         return trackCount > 3 ? this.serializeV9() : this.serializeV7();
     }
@@ -1617,7 +1617,7 @@ class Game {
         const modeIndex = Object.values(Game.MODES).indexOf(this.currentMode);
         
         // Track count (3-6 tracks)
-        const trackNumbers = Object.keys(this.tracks).map(Number).sort();
+        const trackNumbers = Object.keys(this.timeline.tracks).map(Number).sort();
         const trackCount = trackNumbers.length;
         
         // Waveform indices for tracks 1-2
@@ -1655,7 +1655,7 @@ class Game {
         
         // Additional track metadata (tracks 4-6): type (1) + waveform (2 for piano, 0 for perc) + effects (2)
         for (let trackNum = 4; trackNum <= Math.min(6, trackCount); trackNum++) {
-            const track = this.tracks[trackNum];
+            const track = this.timeline.tracks[trackNum];
             if (!track) continue;
             
             // Track type: 0=piano, 1=percussion
@@ -1682,7 +1682,7 @@ class Game {
             const notes = this.timeline.getNotesAtBeat(beat);
             
             for (const trackNum of trackNumbers) {
-                const track = this.tracks[trackNum];
+                const track = this.timeline.tracks[trackNum];
                 const note = notes[trackNum];
                 
                 if (track.isPiano()) {
@@ -3708,7 +3708,7 @@ class Game {
                 if (!metadata) continue;
                 
                 // Create additional track if it doesn't exist
-                if (!this.tracks[trackNum]) {
+                if (!this.timeline.tracks[trackNum]) {
                     const track = this.addTrack(metadata.type);
                     if (!track) continue; // Hit max tracks limit
                 }
