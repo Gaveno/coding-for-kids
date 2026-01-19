@@ -36,6 +36,9 @@
     --track-melody: rgba(255, 107, 107, 0.3);
     --track-bass: rgba(108, 99, 255, 0.3);
     --track-percussion: rgba(78, 205, 196, 0.3);
+    --track-melody-2: rgba(255, 159, 67, 0.3);
+    --track-bass-2: rgba(165, 94, 234, 0.3);
+    --track-percussion-2: rgba(6, 214, 160, 0.3);
 
     /* Spacing */
     --spacing-xs: 4px;

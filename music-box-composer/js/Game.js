@@ -1665,50 +1665,45 @@ class Game {
         // Guard: tracks may not be initialized yet during early init
         if (!this.timeline || !this.timeline.tracks) return '';
         
-        const trackCount = Object.keys(this.timeline.tracks).length;
-        // Use v9 format if more than 3 tracks, otherwise use v7 for backwards compatibility
-        return trackCount > 3 ? this.serializeV9() : this.serializeV7();
+        // Always use v9 compressed format
+        return this.serializeV9();
     }
 
     /**
-     * Serialize v9 format with additional tracks support
-     * 
+     * Serialize v9 format with compression (RLE + optional piano delta runs)
+     *
      * v9 Binary format:
-     * Header: 32-44 bits (base + optional track metadata for tracks 4-6)
-     *   Base (32): mode:2, speed:2, useBPM:1, bpm:7, loop:1, lengthIndex:2, keyIndex:4, 
-     *              waveform1:2, waveform2:2, effects:6, trackCount:3
-     *   Track 4 (4): type:1, waveform:2, effects:2 (only if trackCount >= 4)
-     *   Track 5 (4): type:1, waveform:2, effects:2 (only if trackCount >= 5)
-     *   Track 6 (4): type:1, waveform:2, effects:2 (only if trackCount >= 6)
-     * Per beat: 35 bits for tracks 1-3, +14 or +7 bits per additional track
-     * Piano tracks: note(4) + duration(3) + velocity(4) + octave(3) = 14 bits
-     * Percussion tracks: note(3) + velocity(4) = 7 bits
+     * Header: same as v9 base (32-44 bits)
+     * Track data: compressed per track with tokens
+     *   Token 00: normal note (same payload as v9)
+     *   Token 01: silence run (7 bits length = 1-128)
+     *   Token 10: piano delta run (length + base note + deltas)
+     *   Token 11: reserved (treated as normal)
      * @returns {string}
      */
     serializeV9() {
         const beatCount = this.timeline.getBeatCount();
         const lengthIndex = this.beatLengths.indexOf(beatCount);
         const keyIndex = Game.KEY_NAMES.indexOf(this.currentKey);
-        
+
         // Mode index (0=kid, 1=tween, 2=studio)
         const modeIndex = Object.values(Game.MODES).indexOf(this.currentMode);
-        
+
         // Track count (3-6 tracks)
         const trackNumbers = Object.keys(this.timeline.tracks).map(Number).sort();
         const trackCount = trackNumbers.length;
-        console.log(`[serializeV9] Serializing ${trackCount} tracks:`, trackNumbers);
-        
+
         // Waveform indices for tracks 1-2
         const waveform1Index = Game.WAVEFORMS.indexOf(this.audio.trackWaveforms[1] || 'sine');
         const waveform2Index = Game.WAVEFORMS.indexOf(this.audio.trackWaveforms[2] || 'triangle');
-        
+
         // BPM encoding: (bpm - 40) / 10 = value 0-76
         const bpmValue = Math.max(0, Math.min(76, Math.round((this.currentBPM - 40) / 10)));
-        
+
         // Build bit array
         const bits = [];
-        
-        // Header base (32 bits): mode (2), speed (2), useBPM (1), bpm (7), loop (1), length (2), 
+
+        // Header base (32 bits): mode (2), speed (2), useBPM (1), bpm (7), loop (1), length (2),
         //                        key (4), waveforms (2+2), effects (6), trackCount (3)
         this.pushBits(bits, modeIndex, 2);
         this.pushBits(bits, this.currentSpeedIndex, 2);
@@ -1719,99 +1714,204 @@ class Game {
         this.pushBits(bits, keyIndex, 4);
         this.pushBits(bits, waveform1Index, 2);
         this.pushBits(bits, waveform2Index, 2);
-        
-        // Effects for tracks 1-3: 6 bits (track1 reverb, track1 delay, track2 reverb, track2 delay, track3 reverb, track3 delay)
+
+        // Effects for tracks 1-3: 6 bits
         this.pushBits(bits, this.audio.isReverbEnabled(1) ? 1 : 0, 1);
         this.pushBits(bits, this.audio.isDelayEnabled(1) ? 1 : 0, 1);
         this.pushBits(bits, this.audio.isReverbEnabled(2) ? 1 : 0, 1);
         this.pushBits(bits, this.audio.isDelayEnabled(2) ? 1 : 0, 1);
         this.pushBits(bits, this.audio.isReverbEnabled(3) ? 1 : 0, 1);
         this.pushBits(bits, this.audio.isDelayEnabled(3) ? 1 : 0, 1);
-        
+
         // Track count (3 bits = 0-7, we use 3-6)
         this.pushBits(bits, trackCount, 3);
-        
-        // Additional track metadata (tracks 4-6): type (1) + waveform (2 for piano, 0 for perc) + effects (2)
+
+        // Additional track metadata (tracks 4-6)
         for (let trackNum = 4; trackNum <= Math.min(6, trackCount); trackNum++) {
             const track = this.timeline.tracks[trackNum];
             if (!track) continue;
-            
+
             // Track type: 0=piano, 1=percussion
             const isPiano = track.isPiano();
-            console.log(`[serializeV9] Track ${trackNum}: type=${track.trackType}, isPiano=${isPiano}`);
             this.pushBits(bits, isPiano ? 0 : 1, 1);
-            
+
             // Waveform (2 bits for piano, skip for percussion)
             if (isPiano) {
                 const waveform = this.audio.trackWaveforms[trackNum] || 'sine';
                 const waveformIndex = Game.WAVEFORMS.indexOf(waveform);
                 this.pushBits(bits, waveformIndex, 2);
             } else {
-                // For percussion, use 00 for waveform (unused but keeps structure consistent)
                 this.pushBits(bits, 0, 2);
             }
-            
+
             // Effects (2 bits: reverb + delay)
             this.pushBits(bits, this.audio.isReverbEnabled(trackNum) ? 1 : 0, 1);
             this.pushBits(bits, this.audio.isDelayEnabled(trackNum) ? 1 : 0, 1);
         }
-        
-        // Track data per beat: serialize all tracks dynamically
-        for (let beat = 0; beat < beatCount; beat++) {
-            const notes = this.timeline.getNotesAtBeat(beat);
-            
-            for (const trackNum of trackNumbers) {
-                const track = this.timeline.tracks[trackNum];
-                const note = notes[trackNum];
-                
+
+        // Track data per track (compressed)
+        for (const trackNum of trackNumbers) {
+            const track = this.timeline.tracks[trackNum];
+            let beat = 0;
+
+            while (beat < beatCount) {
+                const note = track.getNote(beat);
+                const isNote = note && !note.sustained;
+
+                // Silence run (RLE)
+                if (!isNote) {
+                    const silenceRun = this.getSilentRunLength(track, beat, beatCount);
+                    if (silenceRun >= 4) {
+                        const runLength = Math.min(128, silenceRun);
+                        this.pushBits(bits, 1, 2); // 01 = silence run
+                        this.pushBits(bits, runLength - 1, 7);
+                        beat += runLength;
+                        continue;
+                    }
+                }
+
+                // Piano delta run (piano only)
+                if (track.isPiano() && isNote) {
+                    const deltaRun = this.getPianoDeltaRun(track, beat, beatCount);
+                    if (deltaRun) {
+                        this.pushBits(bits, 2, 2); // 10 = delta run
+                        this.pushBits(bits, deltaRun.length - 2, 4);
+                        this.pushBits(bits, deltaRun.noteIndex, 4);
+                        this.pushBits(bits, deltaRun.durationBits, 3);
+                        this.pushBits(bits, deltaRun.velocityBits, 4);
+                        this.pushBits(bits, deltaRun.octaveBits, 3);
+                        deltaRun.deltas.forEach(deltaBits => {
+                            this.pushBits(bits, deltaBits, 3);
+                        });
+                        beat += deltaRun.length;
+                        continue;
+                    }
+                }
+
+                // Normal note
+                this.pushBits(bits, 0, 2); // 00 = normal
                 if (track.isPiano()) {
-                    // Piano track: note (4 bits) + duration (3 bits) + velocity (4 bits) + octave (3 bits)
-                    const noteIndex = note && !note.sustained ? this.getNoteIndex(note.note) : 0;
-                    const duration = note && !note.sustained ? note.duration : 1;
-                    const velocity = note && !note.sustained ? Math.round((note.velocity || 0.8) * 15) : 12;
-                    const octave = note && !note.sustained && note.octave !== null ? note.octave - 2 : 
-                                   (trackNum === 1 ? 2 : 1); // Default octaves
+                    const noteIndex = isNote ? this.getNoteIndex(note.note) : 0;
+                    const duration = isNote ? note.duration : 1;
+                    const velocity = isNote ? Math.round((note.velocity || 0.8) * 15) : 12;
+                    const octave = isNote && note.octave !== null ? note.octave - 2 :
+                        (trackNum === 1 ? 2 : 1);
                     this.pushBits(bits, noteIndex, 4);
                     this.pushBits(bits, Math.min(7, Math.max(0, duration - 1)), 3);
                     this.pushBits(bits, velocity, 4);
                     this.pushBits(bits, octave, 3);
                 } else {
-                    // Percussion track: note index (3 bits) + velocity (4 bits)
-                    const noteIndex = note && !note.sustained ? Game.PERC_NOTES.indexOf(note.note) : 0;
-                    const velocity = note && !note.sustained ? Math.round((note.velocity || 0.8) * 15) : 12;
+                    const noteIndex = isNote ? Game.PERC_NOTES.indexOf(note.note) : 0;
+                    const velocity = isNote ? Math.round((note.velocity || 0.8) * 15) : 12;
                     this.pushBits(bits, Math.max(0, noteIndex), 3);
                     this.pushBits(bits, velocity, 4);
                 }
+
+                beat += 1;
             }
         }
-        
-        // Pattern placements: count (5 bits) + for each: patternId-hash (12 bits) + startBeat (7 bits)
+
+        // Pattern placements
         const placements = Array.from(this.patternPlacements.values());
-        this.pushBits(bits, Math.min(31, placements.length), 5); // Max 31 patterns
-        
+        this.pushBits(bits, Math.min(31, placements.length), 5);
+
         for (const placement of placements.slice(0, 31)) {
-            // Hash the pattern ID to 12 bits (for preset/custom patterns)
             const patternIdHash = this.hashPatternId(placement.patternId);
             this.pushBits(bits, patternIdHash, 12);
-            this.pushBits(bits, placement.startBeat, 7); // Max beat 127
+            this.pushBits(bits, placement.startBeat, 7);
         }
-        
+
         // Convert bits to bytes
         const bytes = this.bitsToBytes(bits);
-        
+
         // Convert to URL-safe base64
         let base64 = '';
         for (let i = 0; i < bytes.length; i++) {
             base64 += String.fromCharCode(bytes[i]);
         }
         const data = btoa(base64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        
-        // Prefix with version
-        const result = `v9_${data}`;
-        console.log(`[serializeV9] Result length: ${result.length} chars, trackCount: ${trackCount}`);
-        return result;
+
+        return `v9_${data}`;
     }
-    
+
+    /**
+     * Get silence run length (beats with no starting note)
+     * @param {Track} track
+     * @param {number} startBeat
+     * @param {number} beatCount
+     * @returns {number}
+     */
+    getSilentRunLength(track, startBeat, beatCount) {
+        let count = 0;
+        for (let i = startBeat; i < beatCount && count < 128; i++) {
+            const note = track.getNote(i);
+            if (note && !note.sustained) break;
+            count += 1;
+        }
+        return count;
+    }
+
+    /**
+     * Get piano delta run metadata (length >= 3, duration=1, same velocity/octave)
+     * @param {Track} track
+     * @param {number} startBeat
+     * @param {number} beatCount
+     * @returns {Object|null}
+     */
+    getPianoDeltaRun(track, startBeat, beatCount) {
+        const note = track.getNote(startBeat);
+        if (!note || note.sustained) return null;
+
+        const duration = note.duration || 1;
+        if (duration !== 1) return null;
+
+        const noteIndex = this.getNoteIndex(note.note);
+        if (noteIndex <= 0) return null;
+
+        const velocityBits = Math.round((note.velocity || 0.8) * 15);
+        const octaveBits = note.octave !== null ? note.octave - 2 :
+            (track.trackNumber === 1 ? 2 : 1);
+
+        const deltas = [];
+        let currentIndex = noteIndex;
+        let length = 1;
+
+        for (let i = startBeat + 1; i < beatCount && length < 16; i++) {
+            const next = track.getNote(i);
+            if (!next || next.sustained) break;
+            if ((next.duration || 1) !== 1) break;
+
+            const nextVelocityBits = Math.round((next.velocity || 0.8) * 15);
+            if (nextVelocityBits !== velocityBits) break;
+
+            const nextOctaveBits = next.octave !== null ? next.octave - 2 : octaveBits;
+            if (nextOctaveBits !== octaveBits) break;
+
+            const nextIndex = this.getNoteIndex(next.note);
+            if (nextIndex <= 0) break;
+
+            const delta = nextIndex - currentIndex;
+            if (delta < -3 || delta > 3) break;
+
+            deltas.push(delta + 3); // Encode -3..3 as 0..6
+            currentIndex = nextIndex;
+            length += 1;
+        }
+
+        if (length >= 3) {
+            return {
+                length,
+                noteIndex,
+                durationBits: 0,
+                velocityBits,
+                octaveBits,
+                deltas
+            };
+        }
+
+        return null;
+    }
+
     /**
      * Serialize v7 format with BPM support (legacy - only supports 3 tracks)
      * 
@@ -2575,13 +2675,11 @@ class Game {
     }
 
     /**
-     * Deserialize v9 format with additional tracks support
-     * Header: 32-44 bits (base + optional track metadata for tracks 4-6)
-     * Per beat: 35 bits for tracks 1-3, +14 or +7 bits per additional track
+     * Deserialize v9 format with compression (RLE + piano delta runs)
      */
     deserializeV9(bits) {
         let offset = 0;
-        
+
         // Read base header (32 bits)
         const modeIndex = this.readBits(bits, offset, 2); offset += 2;
         const speedIndex = this.readBits(bits, offset, 2); offset += 2;
@@ -2592,7 +2690,7 @@ class Game {
         const keyIndex = this.readBits(bits, offset, 4); offset += 4;
         const waveform1Index = this.readBits(bits, offset, 2); offset += 2;
         const waveform2Index = this.readBits(bits, offset, 2); offset += 2;
-        
+
         // Read effects for tracks 1-3 (6 bits)
         const t1Reverb = this.readBits(bits, offset, 1); offset += 1;
         const t1Delay = this.readBits(bits, offset, 1); offset += 1;
@@ -2600,18 +2698,17 @@ class Game {
         const t2Delay = this.readBits(bits, offset, 1); offset += 1;
         const t3Reverb = this.readBits(bits, offset, 1); offset += 1;
         const t3Delay = this.readBits(bits, offset, 1); offset += 1;
-        
+
         // Read track count (3 bits)
         const trackCount = this.readBits(bits, offset, 3); offset += 3;
-        console.log(`[deserializeV9] Read trackCount: ${trackCount}`);
-        
+
         // Read additional track metadata for tracks 4-6
         const trackMetadata = [
-            { type: 'piano', waveform: 'sine', reverb: false, delay: false }, // Track 1
-            { type: 'piano', waveform: 'triangle', reverb: false, delay: false }, // Track 2
-            { type: 'percussion', waveform: '', reverb: false, delay: false } // Track 3
+            { type: 'piano', waveform: 'sine', reverb: false, delay: false },
+            { type: 'piano', waveform: 'triangle', reverb: false, delay: false },
+            { type: 'percussion', waveform: '', reverb: false, delay: false }
         ];
-        
+
         // Set effects for tracks 1-3
         trackMetadata[0].reverb = t1Reverb === 1;
         trackMetadata[0].delay = t1Delay === 1;
@@ -2621,91 +2718,122 @@ class Game {
         trackMetadata[1].waveform = Game.WAVEFORMS[waveform2Index] || 'triangle';
         trackMetadata[2].reverb = t3Reverb === 1;
         trackMetadata[2].delay = t3Delay === 1;
-        
+
         // Read metadata for tracks 4-6 if they exist
         for (let trackNum = 4; trackNum <= trackCount; trackNum++) {
             const trackTypeFlag = this.readBits(bits, offset, 1); offset += 1;
             const waveformIndex = this.readBits(bits, offset, 2); offset += 2;
             const reverb = this.readBits(bits, offset, 1); offset += 1;
             const delay = this.readBits(bits, offset, 1); offset += 1;
-            
-            const metadata = {
+
+            trackMetadata.push({
                 type: trackTypeFlag === 0 ? 'piano' : 'percussion',
                 waveform: trackTypeFlag === 0 ? (Game.WAVEFORMS[waveformIndex] || 'sine') : '',
                 reverb: reverb === 1,
                 delay: delay === 1
-            };
-            console.log(`[deserializeV9] Track ${trackNum} metadata:`, metadata);
-            trackMetadata.push(metadata);
+            });
         }
-        
-        // Decode BPM: value 0-76 maps to 40-800 in steps of 10
+
+        // Decode BPM
         const bpm = 40 + (bpmValue * 10);
-        
+
         // Get mode
         const mode = Object.values(Game.MODES)[modeIndex] || Game.MODES.KID;
-        
+
         // Get beat count
         const beatCount = this.beatLengths[lengthIndex] || 16;
-        
+
         // Get key
         const key = Game.KEY_NAMES[keyIndex] || 'C Major';
-        
-        // Read track data per beat
+
+        // Read compressed track data
         const tracks = {};
         const PIANO_NOTES = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        
-        // Initialize track arrays
+        const deltaMap = [-3, -2, -1, 0, 1, 2, 3, 0];
+
         for (let trackNum = 1; trackNum <= trackCount; trackNum++) {
             tracks[`track${trackNum}`] = [];
-        }
-        
-        for (let beat = 0; beat < beatCount; beat++) {
-            for (let trackNum = 1; trackNum <= trackCount; trackNum++) {
-                const metadata = trackMetadata[trackNum - 1];
-                
+            const metadata = trackMetadata[trackNum - 1];
+            let beat = 0;
+
+            while (beat < beatCount) {
+                const token = this.readBits(bits, offset, 2); offset += 2;
+
+                // Silence run
+                if (token === 1) {
+                    const runLength = this.readBits(bits, offset, 7) + 1; offset += 7;
+                    beat += runLength;
+                    continue;
+                }
+
+                // Piano delta run
+                if (token === 2 && metadata.type === 'piano') {
+                    const runLength = this.readBits(bits, offset, 4) + 2; offset += 4;
+                    let noteIndex = this.readBits(bits, offset, 4); offset += 4;
+                    const duration = this.readBits(bits, offset, 3); offset += 3;
+                    const velocity = this.readBits(bits, offset, 4); offset += 4;
+                    const octave = this.readBits(bits, offset, 3); offset += 3;
+
+                    if (noteIndex > 0 && noteIndex < PIANO_NOTES.length) {
+                        const note = PIANO_NOTES[noteIndex];
+                        const icon = this.getPianoIcon(note);
+                        tracks[`track${trackNum}`].push([beat, note, icon, duration + 1, octave + 2, velocity / 15]);
+                    }
+
+                    for (let i = 1; i < runLength; i++) {
+                        const deltaBits = this.readBits(bits, offset, 3); offset += 3;
+                        const delta = deltaMap[deltaBits] || 0;
+                        noteIndex += delta;
+                        if (noteIndex > 0 && noteIndex < PIANO_NOTES.length) {
+                            const note = PIANO_NOTES[noteIndex];
+                            const icon = this.getPianoIcon(note);
+                            tracks[`track${trackNum}`].push([beat + i, note, icon, duration + 1, octave + 2, velocity / 15]);
+                        }
+                    }
+
+                    beat += runLength;
+                    continue;
+                }
+
+                // Normal note (or reserved token)
                 if (metadata.type === 'piano') {
-                    // Piano track: note (4) + duration (3) + velocity (4) + octave (3)
                     const noteIndex = this.readBits(bits, offset, 4); offset += 4;
                     const duration = this.readBits(bits, offset, 3); offset += 3;
                     const velocity = this.readBits(bits, offset, 4); offset += 4;
                     const octave = this.readBits(bits, offset, 3); offset += 3;
-                    
+
                     if (noteIndex > 0 && noteIndex < PIANO_NOTES.length) {
                         const note = PIANO_NOTES[noteIndex];
                         const icon = this.getPianoIcon(note);
-                        const dur = duration + 1;
-                        const vel = velocity / 15;
-                        const oct = octave + 2; // Map 0-4 back to octaves 2-6
-                        tracks[`track${trackNum}`].push([beat, note, icon, dur, oct, vel]);
+                        tracks[`track${trackNum}`].push([beat, note, icon, duration + 1, octave + 2, velocity / 15]);
                     }
                 } else {
-                    // Percussion track: note (3) + velocity (4)
                     const noteIndex = this.readBits(bits, offset, 3); offset += 3;
                     const velocity = this.readBits(bits, offset, 4); offset += 4;
-                    
+
                     if (noteIndex > 0 && noteIndex < Game.PERC_NOTES.length) {
-                        const vel = velocity / 15;
-                        tracks[`track${trackNum}`].push([beat, Game.PERC_NOTES[noteIndex], Game.PERC_ICONS[noteIndex], 1, null, vel]);
+                        tracks[`track${trackNum}`].push([beat, Game.PERC_NOTES[noteIndex], Game.PERC_ICONS[noteIndex], 1, null, velocity / 15]);
                     }
                 }
+
+                beat += 1;
             }
         }
-        
-        // Read pattern placements: count (5 bits) + for each: patternId-hash (12 bits) + startBeat (7 bits)
+
+        // Read pattern placements
         const patternCount = this.readBits(bits, offset, 5); offset += 5;
         const patterns = [];
-        
+
         for (let i = 0; i < patternCount; i++) {
             const patternIdHash = this.readBits(bits, offset, 12); offset += 12;
             const startBeat = this.readBits(bits, offset, 7); offset += 7;
-            
+
             const patternId = this.unhashPatternId(patternIdHash);
             if (patternId) {
                 patterns.push({ patternId, startBeat });
             }
         }
-        
+
         return {
             mode,
             s: speedIndex,
