@@ -2931,6 +2931,9 @@ class Game {
      */
     updateURL() {
         const encoded = this.serializeState();
+        // Don't update URL if serialization returns empty (tracks not initialized yet)
+        if (!encoded) return;
+        
         const newURL = `${window.location.pathname}?c=${encoded}`;
         window.history.replaceState(null, '', newURL);
         this.updateShareButtons();
