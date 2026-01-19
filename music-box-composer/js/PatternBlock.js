@@ -26,11 +26,10 @@ class PatternBlock {
         // Calculate position and size from CSS variable
         const style = getComputedStyle(document.documentElement);
         const cellSize = parseInt(style.getPropertyValue('--cell-size')) || 44;
-        const trackLabelWidth = parseInt(style.getPropertyValue('--track-label-width')) || 36;
         const controlRowHeight = 32; // Height of pattern control row
         
-        // Position relative to pattern-blocks-row
-        const left = trackLabelWidth + (this.placement.startBeat * cellSize);
+        // Position relative to pattern-blocks-row (row has left padding for alignment)
+        const left = this.placement.startBeat * cellSize;
         const width = this.pattern.length * cellSize;
         
         this.element.style.left = `${left}px`;
