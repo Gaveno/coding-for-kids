@@ -205,6 +205,15 @@
     color: white;
 }
 
+/* ===== Pattern Blocks Row ===== */
+.pattern-blocks-row {
+    position: relative;
+    height: 32px;
+    min-height: 32px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
 /* ===== Track ===== */
 .track {
     display: flex;

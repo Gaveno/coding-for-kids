@@ -496,40 +496,20 @@
     }
 }
 
-/* ===== Pattern Block Overlay (Main Timeline) ===== */
+/* ===== Pattern Block Overlay (Pattern Blocks Row) ===== */
 
 .pattern-block-overlay {
     position: absolute;
     top: 0;
+    height: 32px;
     pointer-events: none;
-    border-radius: 4px;
     z-index: 5;
 }
 
-/* Semi-transparent pattern area (below controls) */
-.pattern-block-overlay::before {
-    content: '';
-    position: absolute;
-    top: 32px; /* Below control row */
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: inherit;
-    opacity: 0.25;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-radius: 4px;
-    transition: opacity 0.2s ease;
-}
-
-.pattern-block-overlay:hover::before {
-    opacity: 0.4;
-    border-color: rgba(255, 255, 255, 0.8);
-}
-
-/* Pattern block controls - row above the pattern, below beat markers */
+/* Pattern block controls within the row */
 .pattern-block-controls {
     position: absolute;
-    top: 0; /* At the top of the overlay */
+    top: 0;
     left: 0;
     right: 0;
     height: 32px;
@@ -542,6 +522,7 @@
     padding: 0 6px;
     pointer-events: auto;
     backdrop-filter: blur(4px);
+    box-sizing: border-box;
 }
 
 .pattern-block-overlay:hover .pattern-block-controls {

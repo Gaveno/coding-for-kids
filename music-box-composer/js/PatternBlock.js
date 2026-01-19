@@ -27,21 +27,16 @@ class PatternBlock {
         const style = getComputedStyle(document.documentElement);
         const cellSize = parseInt(style.getPropertyValue('--cell-size')) || 44;
         const trackLabelWidth = parseInt(style.getPropertyValue('--track-label-width')) || 36;
-        const trackCount = 3;
-        const beatMarkersHeight = 21; // 20px height + 1px border
         const controlRowHeight = 32; // Height of pattern control row
         
-        // Account for track label width offset and beat markers
+        // Position relative to pattern-blocks-row
         const left = trackLabelWidth + (this.placement.startBeat * cellSize);
         const width = this.pattern.length * cellSize;
-        // Height includes control row + tracks + borders between tracks
-        const trackHeight = (trackCount * cellSize) + (trackCount - 1);
-        const totalHeight = controlRowHeight + trackHeight;
         
         this.element.style.left = `${left}px`;
-        this.element.style.top = `${beatMarkersHeight}px`; // Right after beat markers
+        this.element.style.top = `0px`; // Relative to pattern-blocks-row
         this.element.style.width = `${width}px`;
-        this.element.style.height = `${totalHeight}px`;
+        this.element.style.height = `${controlRowHeight}px`; // Only control row height
         
         // Add control row above the pattern overlay
         this.element.innerHTML = `

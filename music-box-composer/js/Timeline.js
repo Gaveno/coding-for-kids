@@ -6,6 +6,7 @@ class Timeline {
         this.container = options.container;
         this.scrollContainer = options.scrollContainer;
         this.beatMarkersEl = options.beatMarkers;
+        this.patternBlocksRow = options.patternBlocksRow;
         this.playhead = options.playhead;
         
         this.trackElements = {

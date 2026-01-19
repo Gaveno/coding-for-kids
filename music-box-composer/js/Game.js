@@ -144,6 +144,7 @@ class Game {
             timeline: document.getElementById('timeline'),
             timelineScroll: document.getElementById('timelineScroll'),
             beatMarkers: document.getElementById('beatMarkers'),
+            patternBlocksRow: document.getElementById('patternBlocksRow'),
             playhead: document.getElementById('playhead'),
             cells1: document.getElementById('cells1'),
             cells2: document.getElementById('cells2'),
@@ -198,6 +199,7 @@ class Game {
             container: this.elements.timeline,
             scrollContainer: this.elements.timelineScroll,
             beatMarkers: this.elements.beatMarkers,
+            patternBlocksRow: this.elements.patternBlocksRow,
             playhead: this.elements.playhead,
             cells1: this.elements.cells1,
             cells2: this.elements.cells2,
@@ -446,9 +448,8 @@ class Game {
         patternBlock.onRemove = (id) => this.removePatternPlacement(id);
         this.patternBlocks.set(placementId, patternBlock);
         
-        // Add to timeline container
-        const timelineContainer = this.timeline.container;
-        timelineContainer.appendChild(patternBlock.getElement());
+        // Add to pattern blocks row
+        this.timeline.patternBlocksRow.appendChild(patternBlock.getElement());
         
         this.updateURL();
         return true;
