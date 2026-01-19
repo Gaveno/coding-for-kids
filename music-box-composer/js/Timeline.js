@@ -719,6 +719,164 @@ class Timeline {
             this.render();
         }
     }
+
+    /**
+     * Get current beat count
+     * @returns {number}
+     */
+    getBeatCount() {
+        return this.beatCount;
+    }
+
+    /**
+     * Set beat count and re-render timeline
+     * @param {number} count - New beat count
+     */
+    setBeatCount(count) {
+        this.beatCount = count;
+        
+        // Adjust track lengths
+        Object.values(this.tracks).forEach(track => {
+            track.length = count;
+            // Pad or truncate notes array
+            if (track.notes.length < count) {
+                track.notes = track.notes.concat(new Array(count - track.notes.length).fill(null));
+            } else if (track.notes.length > count) {
+                track.notes = track.notes.slice(0, count);
+            }
+        });
+        
+        this.render();
+    }
+
+    /**
+     * Render a new track dynamically
+     * @param {number} trackNum - Track number to render
+     */
+    renderNewTrack(trackNum) {
+        const track = this.tracks[trackNum];
+        if (!track) {
+            console.error(`Track ${trackNum} not found`);
+            return;
+        }
+
+        // Check if track row already exists
+        const existingRow = document.querySelector(`.track[data-track="${trackNum}"]`);
+        if (existingRow) {
+            // Just re-render the cells
+            this.renderTrack(trackNum);
+            return;
+        }
+
+        // Create new track row
+        const trackRow = document.createElement('div');
+        trackRow.className = 'track';
+        trackRow.dataset.track = trackNum;
+
+        // Create track label
+        const trackLabel = document.createElement('button');
+        trackLabel.className = 'track-label clickable';
+        trackLabel.dataset.track = trackNum;
+        trackLabel.setAttribute('aria-label', `Track ${trackNum} Settings`);
+        
+        // Set icon based on track type
+        const icon = track.isPiano() ? '🎹' : '🥁';
+        trackLabel.textContent = icon;
+        
+        // Add remove button for non-default tracks (track > 3)
+        if (trackNum > 3) {
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-track-btn';
+            removeBtn.textContent = '❌';
+            removeBtn.setAttribute('aria-label', `Remove Track ${trackNum}`);
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.onTrackRemove) {
+                    this.onTrackRemove(trackNum);
+                }
+            });
+            trackLabel.appendChild(removeBtn);
+        }
+
+        // Create cells container
+        const cellsContainer = document.createElement('div');
+        cellsContainer.className = 'track-cells';
+        cellsContainer.id = `cells${trackNum}`;
+
+        trackRow.appendChild(trackLabel);
+        trackRow.appendChild(cellsContainer);
+
+        // Add to timeline (before pattern blocks row if it exists, otherwise at end)
+        this.container.appendChild(trackRow);
+
+        // Register elements
+        this.trackElements[trackNum] = cellsContainer;
+
+        // Render cells
+        this.renderTrack(trackNum);
+
+        // Bind track selection event
+        trackRow.addEventListener('click', (e) => {
+            if (e.target.closest('.cell-note') || 
+                e.target.closest('.track-label') || 
+                e.target.closest('.track-cell')) {
+                return;
+            }
+            if (this.onTrackSelect) {
+                this.onTrackSelect(trackNum);
+            }
+        });
+    }
+
+    /**
+     * Remove a track row from the UI
+     * @param {number} trackNum - Track number to remove
+     */
+    removeTrackRow(trackNum) {
+        // Remove from DOM
+        const trackRow = document.querySelector(`.track[data-track="${trackNum}"]`);
+        if (trackRow) {
+            trackRow.remove();
+        }
+
+        // Remove from trackElements
+        delete this.trackElements[trackNum];
+    }
+
+    /**
+     * Reorder all track rows based on current tracks object
+     */
+    reorderTrackRows() {
+        // Get all track numbers in order
+        const trackNums = Object.keys(this.tracks)
+            .map(n => parseInt(n))
+            .sort((a, b) => a - b);
+
+        // Remove all track rows
+        const trackRows = Array.from(document.querySelectorAll('.track'));
+        trackRows.forEach(row => row.remove());
+
+        // Re-add in new order
+        trackNums.forEach(trackNum => {
+            this.renderNewTrack(trackNum);
+        });
+    }
+
+    /**
+     * Set callback for track removal
+     * @param {Function} callback - Callback function(trackNum)
+     */
+    setOnTrackRemove(callback) {
+        this.onTrackRemove = callback;
+    }
+
+    /**
+     * Set callback for track selection
+     * @param {Function} callback - Callback function(trackNum)
+     */
+    setOnTrackSelect(callback) {
+        this.onTrackSelect = callback;
+    }
 }
 
 window.Timeline = Timeline;

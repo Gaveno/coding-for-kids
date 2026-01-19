@@ -232,6 +232,10 @@ class Game {
             onBeatClick: (beat) => this.seekToBeat(beat)
         });
         
+        // Set up track management callbacks
+        this.timeline.setOnTrackRemove((trackNum) => this.removeTrack(trackNum));
+        this.timeline.setOnTrackSelect((trackNum) => this.selectTrack(trackNum));
+        
         // Drag and drop
         this.dragDrop = new DragDrop({
             palette: this.elements.palette,
