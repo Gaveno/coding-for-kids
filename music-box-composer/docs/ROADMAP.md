@@ -33,7 +33,7 @@ Each major feature release increments the major version number:
 | v4.0 | Multi-Mode Complexity System (Full) | ✅ Complete (Jan 17, 2026) |
 | v5.0 | Pattern Library & Loop Builder | 🔲 Not Started |
 | v6.0 | Live Performance / Jam Mode | 🔲 Not Started |
-| v7.0 | Track Selection & Preview | 🔲 Not Started |
+| v7.0 | Track Selection & Preview | ✅ Complete (Jan 19, 2026) |
 | v8.0 | Time Signature Support | 🔲 Not Started |
 | v9.0 | Additional Tracks | 🔲 Not Started |
 | v10.0 | Custom UI Layout (Widget Repositioning) | 🔲 Not Started |
