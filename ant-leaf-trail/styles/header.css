@@ -61,6 +61,13 @@
     background: var(--color-panel-light);
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: var(--radius-lg);
+    border: 2px solid transparent;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.level-indicator:active {
+    transform: scale(0.92);
+    border-color: var(--color-border);
 }
 
 .star {

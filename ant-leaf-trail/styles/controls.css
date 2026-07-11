@@ -32,6 +32,7 @@
 .command-btn[data-command="left"] { background: var(--color-block-rotate); }
 .command-btn[data-command="pickup"],
 .command-btn[data-command="drop"] { background: var(--color-block-leaf); }
+.command-btn[data-command="loop"] { background: #9c59b6; }
 
 .command-icon {
     font-size: 1.8rem;
@@ -49,6 +50,55 @@
     width: 34px;
     height: 34px;
     object-fit: contain;
+}
+
+/* ===== Sandbox Editor Toolbar ===== */
+.sandbox-bar {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    background: rgba(90, 58, 28, 0.85);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+}
+
+body.sandbox-mode .sandbox-bar {
+    display: flex;
+}
+
+body.sandbox-mode .next-btn {
+    display: none;
+}
+
+.tool-btn {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-panel-light);
+    border: 2px solid transparent;
+    transition: transform 0.15s ease;
+}
+
+.tool-btn img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.tool-btn:active {
+    transform: scale(0.9);
+}
+
+.tool-btn.active {
+    border-color: #ffe66d;
+    background: rgba(255, 230, 109, 0.25);
 }
 
 /* ===== Control Buttons ===== */

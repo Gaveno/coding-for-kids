@@ -1,5 +1,5 @@
 /**
- * Blocks - Builds DOM for command blocks in the sequence area.
+ * Blocks - Builds DOM for command blocks and loop blocks in the sequence area.
  * Every block carries its own count with +/- controls directly on it.
  */
 const EMOJI_ICONS = { forward: '⬆️', right: '↩️', left: '↪️' };
@@ -27,58 +27,88 @@ export function makeIcon(action) {
     return icon;
 }
 
-/**
- * Create a sequence block element
- * @param {object} cmd - { action, count }
- * @param {number} index - Position in the sequence
- * @param {object} handlers - { onCountChange(index, delta), onRemove(index) }
- */
-export function createCommandBlock(cmd, index, handlers) {
-    const block = document.createElement('div');
-    block.className = `cmd-block cmd-${cmd.action}`;
-    block.dataset.index = index;
+function makeButton(className, label, text, onClick) {
+    const btn = document.createElement('button');
+    btn.className = className;
+    btn.setAttribute('aria-label', label);
+    btn.textContent = text;
+    btn.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+    return btn;
+}
 
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'block-remove';
-    removeBtn.setAttribute('aria-label', 'Remove block');
-    removeBtn.textContent = '✕';
-    removeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handlers.onRemove(index);
-    });
-    block.appendChild(removeBtn);
-
-    block.appendChild(makeIcon(cmd.action));
-
+function makeCounter(cmd, onChange) {
     const counter = document.createElement('div');
     counter.className = 'block-counter';
-
-    const minus = document.createElement('button');
-    minus.className = 'count-btn';
-    minus.setAttribute('aria-label', 'Fewer');
-    minus.textContent = '−';
-    minus.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handlers.onCountChange(index, -1);
-    });
-
+    counter.appendChild(makeButton('count-btn', 'Fewer', '−', () => onChange(-1)));
     const num = document.createElement('span');
     num.className = 'block-count';
     num.textContent = cmd.count;
-
-    const plus = document.createElement('button');
-    plus.className = 'count-btn';
-    plus.setAttribute('aria-label', 'More');
-    plus.textContent = '+';
-    plus.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handlers.onCountChange(index, 1);
-    });
-
-    counter.appendChild(minus);
     counter.appendChild(num);
-    counter.appendChild(plus);
-    block.appendChild(counter);
+    counter.appendChild(makeButton('count-btn', 'More', '+', () => onChange(1)));
+    return counter;
+}
 
+/**
+ * Create a command block. childIndex is non-null for blocks inside a loop
+ * (then index refers to the loop's top-level position).
+ */
+export function createCommandBlock(cmd, index, handlers, childIndex = null) {
+    const block = document.createElement('div');
+    block.className = `cmd-block cmd-${cmd.action}` + (childIndex !== null ? ' loop-child' : '');
+    block.appendChild(makeButton('block-remove', 'Remove block', '✕',
+        () => handlers.onRemove(index, childIndex)));
+    block.appendChild(makeIcon(cmd.action));
+    block.appendChild(makeCounter(cmd, (d) => handlers.onCountChange(index, d, childIndex)));
     return block;
+}
+
+/** Create a loop container block with iteration counter and child blocks */
+export function createLoopBlock(cmd, index, handlers, isActive) {
+    const block = document.createElement('div');
+    block.className = 'loop-block' + (isActive ? ' active' : '');
+
+    const header = document.createElement('div');
+    header.className = 'loop-header';
+    const icon = document.createElement('span');
+    icon.className = 'loop-icon';
+    icon.textContent = '🔁';
+    header.appendChild(icon);
+    header.appendChild(makeCounter(cmd, (d) => handlers.onCountChange(index, d, null)));
+    header.appendChild(makeButton('block-remove', 'Remove loop', '✕',
+        () => handlers.onRemove(index, null)));
+    block.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'loop-body';
+    if (cmd.children.length === 0) {
+        const hint = document.createElement('div');
+        hint.className = 'loop-placeholder';
+        hint.textContent = '👆';
+        body.appendChild(hint);
+    } else {
+        cmd.children.forEach((child, ci) => {
+            body.appendChild(createCommandBlock(child, index, handlers, ci));
+        });
+    }
+    block.appendChild(body);
+
+    block.addEventListener('click', (e) => {
+        if (!e.target.closest('button') && !e.target.closest('.cmd-block')) {
+            handlers.onToggleLoop(index);
+        }
+    });
+    return block;
+}
+
+/** Render the full sequence into the sequence area */
+export function renderSequence(area, placeholder, sequence, handlers) {
+    area.querySelectorAll('.cmd-block, .loop-block').forEach(el => el.remove());
+    placeholder.style.display = sequence.isEmpty() ? 'flex' : 'none';
+    sequence.commands.forEach((cmd, index) => {
+        const el = cmd.action === 'loop'
+            ? createLoopBlock(cmd, index, handlers, sequence.activeLoop === index)
+            : createCommandBlock(cmd, index, handlers);
+        el.dataset.index = index;
+        area.appendChild(el);
+    });
 }

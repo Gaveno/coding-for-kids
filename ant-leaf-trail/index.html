@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="styles/controls.css">
     <link rel="stylesheet" href="styles/overlays.css">
     <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/levelmap.css">
     <link rel="stylesheet" href="styles/responsive.css">
 </head>
 <body>
@@ -21,10 +22,10 @@
             <a href="../index.html" class="home-btn" aria-label="Back to Home">🏠</a>
             <div class="logo" aria-label="Ant game">🐜</div>
             <div class="leaf-tracker" id="leafTracker" aria-label="Leaves delivered"></div>
-            <div class="level-indicator">
+            <button class="level-indicator" id="mapBtn" aria-label="Open level map">
                 <span class="star" aria-hidden="true">⭐</span>
                 <span class="level-num" id="levelNum" aria-label="Current level">1</span>
-            </div>
+            </button>
             <button class="help-btn" id="helpBtn" aria-label="Help">❓</button>
         </header>
 
@@ -39,6 +40,17 @@
 
             <!-- Command sequence + palette + controls -->
             <div class="panel">
+                <!-- Sandbox editor tools (visible only in sandbox mode) -->
+                <section class="sandbox-bar" id="sandboxBar" aria-label="Level Editor Tools">
+                    <button class="tool-btn" data-tool="start" aria-label="Place ant start">🐜</button>
+                    <button class="tool-btn" data-tool="nest" aria-label="Place nest">🕳️</button>
+                    <button class="tool-btn active" data-tool="rock" aria-label="Place rock">🪨</button>
+                    <button class="tool-btn" data-tool="leaf" aria-label="Place leaf">
+                        <img src="../art/leaf.png" alt="" draggable="false">
+                    </button>
+                    <button class="tool-btn" data-tool="crumb" aria-label="Place crumb">🍪</button>
+                    <button class="tool-btn" data-tool="erase" aria-label="Erase">🧽</button>
+                </section>
                 <section class="sequence-section" aria-label="Command Sequence">
                     <div class="sequence-header">
                         <div class="sequence-label" aria-hidden="true">📝</div>
@@ -61,6 +73,9 @@
                     </button>
                     <button class="command-btn" data-command="right" aria-label="Rotate Right">
                         <span class="command-icon" aria-hidden="true">↩️</span>
+                    </button>
+                    <button class="command-btn loop-cmd" data-command="loop" aria-label="Add Repeat Loop">
+                        <span class="command-icon" aria-hidden="true">🔁</span>
                     </button>
                     <button class="command-btn leaf-btn" data-command="pickup" aria-label="Pick Up Leaf">
                         <span class="command-icon leaf-icon" aria-hidden="true">
@@ -92,8 +107,21 @@
         <div class="overlay success-overlay" id="successOverlay" role="dialog" aria-label="Level Complete">
             <div class="overlay-content">
                 <div class="success-animation" aria-hidden="true">🎉</div>
-                <div class="stars" aria-label="Three stars">⭐⭐⭐</div>
-                <button class="next-btn" id="nextBtn" aria-label="Next Level">➡️</button>
+                <div class="stars" id="successStars" aria-label="Stars earned"></div>
+                <div class="success-crumbs" id="successCrumbs" aria-label="Crumbs collected"></div>
+                <div class="success-actions">
+                    <button class="map-open-btn" id="successMapBtn" aria-label="Level Map">🗺️</button>
+                    <button class="next-btn" id="nextBtn" aria-label="Next Level">➡️</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level map overlay -->
+        <div class="overlay map-overlay" id="mapOverlay" role="dialog" aria-label="Level Map">
+            <div class="overlay-content map-content">
+                <button class="close-btn" id="closeMapBtn" aria-label="Close map">✖️</button>
+                <div class="map-title" aria-hidden="true">🗺️</div>
+                <div class="map-nodes" id="mapNodes"></div>
             </div>
         </div>
 

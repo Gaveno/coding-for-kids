@@ -1,5 +1,5 @@
 /**
- * Game Controller - Coordinates Ant, Grid, Sequence, Sprite, Runner, Audio
+ * Game Controller - Coordinates all modules; owns level/sandbox lifecycle
  */
 import { Ant } from './Ant.js';
 import { Grid } from './Grid.js';
@@ -7,32 +7,49 @@ import { Sequence } from './Sequence.js';
 import { Audio } from './Audio.js';
 import { AntSprite } from './AntSprite.js';
 import { Runner } from './Runner.js';
-import { createCommandBlock } from './Blocks.js';
-import { getLevel, getTotalLevels } from './Levels.js';
+import { Patrol } from './Patrol.js';
+import { Progress } from './Progress.js';
+import { Hud } from './Hud.js';
+import { LevelMap } from './LevelMap.js';
+import { Sandbox } from './Sandbox.js';
+import { renderSequence } from './Blocks.js';
+import { bindControls } from './Controls.js';
+import { getLevel, getTotalLevels, starsFor } from './Levels.js';
 
 export class Game {
     constructor() {
         this.currentLevel = 1;
+        this.mode = 'campaign';
         this.isPlaying = false;
+        this.patrol = null;
+        this.patrolEl = null;
         this.initializeElements();
         this.initializeComponents();
-        this.setupEventListeners();
-        this.setupResizeHandling();
+        bindControls(this);
         this.loadLevel(this.currentLevel);
+        this.sprite.startIdleLoop();
     }
 
     initializeElements() {
         const ids = ['gridContainer', 'gridSection', 'sequenceArea', 'sequencePlaceholder',
             'leafTracker', 'playBtn', 'resetBtn', 'clearBtn', 'helpBtn', 'closeHelpBtn',
-            'nextBtn', 'successOverlay', 'helpOverlay', 'levelNum'];
+            'nextBtn', 'successOverlay', 'helpOverlay', 'levelNum', 'successStars',
+            'successCrumbs', 'successMapBtn', 'mapBtn', 'mapOverlay', 'mapNodes',
+            'closeMapBtn', 'sandboxBar'];
         this.elements = {};
         ids.forEach(id => { this.elements[id] = document.getElementById(id); });
     }
 
     initializeComponents() {
-        const levelData = getLevel(1);
-        this.ant = new Ant(levelData.start, levelData.heading);
-        this.grid = new Grid(levelData.gridSize, levelData.nest, levelData.leaves, levelData.obstacles);
+        this.progress = new Progress();
+        this.sandbox = new Sandbox(this.progress);
+        this.hud = new Hud(this.elements);
+        this.map = new LevelMap(this.elements, {
+            onSelect: (level) => this.loadLevel(level),
+            onSandbox: () => this.enterSandbox()
+        });
+        this.ant = new Ant(getLevel(1).start, getLevel(1).heading);
+        this.grid = new Grid(getLevel(1));
         this.sequence = new Sequence();
         this.audio = new Audio();
         this.sprite = new AntSprite(this.elements.gridContainer);
@@ -40,16 +57,35 @@ export class Game {
     }
 
     loadLevel(levelNum) {
-        this.levelData = getLevel(levelNum);
-        const { start, heading, gridSize, nest, leaves, obstacles } = this.levelData;
-        this.ant.setStart(start, heading);
-        this.grid.configure(gridSize, nest, leaves, obstacles);
-        this.sequence.clear();
+        this.mode = 'campaign';
+        this.currentLevel = levelNum;
+        document.body.classList.remove('sandbox-mode');
         this.elements.levelNum.textContent = levelNum;
-        document.body.classList.toggle('has-leaves', leaves.length > 0);
-        this.updateLeafTracker();
-        this.renderGrid();
+        this.applyLevelData(getLevel(levelNum));
+    }
+
+    enterSandbox() {
+        this.mode = 'sandbox';
+        document.body.classList.add('sandbox-mode');
+        this.elements.levelNum.textContent = '🛠';
+        this.applyLevelData(this.sandbox.toLevelData());
+    }
+
+    applyLevelData(levelData) {
+        this.sequence.clear();
         this.renderSequence();
+        this.refreshBoard(levelData);
+    }
+
+    refreshBoard(levelData) {
+        this.levelData = levelData;
+        this.ant.setStart(levelData.start, levelData.heading);
+        this.grid.configure(levelData);
+        this.patrol = levelData.patrol ? new Patrol(levelData.patrol) : null;
+        document.body.classList.toggle('has-leaves',
+            levelData.leaves.length > 0 || this.mode === 'sandbox');
+        this.hud.updateLeafTracker(this.grid);
+        this.renderGrid();
         requestAnimationFrame(() => requestAnimationFrame(() => this.syncSprite()));
     }
 
@@ -62,6 +98,7 @@ export class Game {
         this.sizeGrid();
         this.moveSpriteToAnt(false);
         this.sprite.setRotation(this.ant.rotationDeg, false);
+        this.movePatrolOverlay(false);
     }
 
     sizeGrid() {
@@ -79,55 +116,77 @@ export class Game {
         this.sprite.setPosition(pos, animate);
     }
 
+    movePatrolOverlay(animate = true) {
+        if (!this.patrol) {
+            if (this.patrolEl) { this.patrolEl.remove(); this.patrolEl = null; }
+            return;
+        }
+        if (!this.patrolEl || !this.patrolEl.isConnected) {
+            this.patrolEl = document.createElement('div');
+            this.patrolEl.className = 'patrol-overlay';
+            this.patrolEl.textContent = '🕷️';
+            this.elements.gridContainer.appendChild(this.patrolEl);
+        }
+        const { x, y } = this.patrol.position();
+        const pos = this.grid.getCellPosition(this.elements.gridContainer, x, y);
+        if (!pos) return;
+        const el = this.patrolEl;
+        if (!animate) el.style.transition = 'none';
+        el.style.left = `${pos.left}px`;
+        el.style.top = `${pos.top}px`;
+        el.style.fontSize = `${pos.width * 0.55}px`;
+        if (!animate) { el.offsetHeight; el.style.transition = ''; }
+    }
+
     renderSequence() {
-        this.elements.sequenceArea.querySelectorAll('.cmd-block').forEach(el => el.remove());
-        this.elements.sequencePlaceholder.style.display = this.sequence.isEmpty() ? 'flex' : 'none';
-        const handlers = {
-            onCountChange: (i, d) => { if (!this.isPlaying && this.sequence.changeCount(i, d)) { this.renderSequence(); this.audio.play('click'); } },
-            onRemove: (i) => { if (!this.isPlaying && this.sequence.removeAt(i)) { this.renderSequence(); this.audio.play('clear'); } }
-        };
-        this.sequence.commands.forEach((cmd, index) => {
-            this.elements.sequenceArea.appendChild(createCommandBlock(cmd, index, handlers));
-        });
+        renderSequence(this.elements.sequenceArea, this.elements.sequencePlaceholder,
+            this.sequence, {
+                onCountChange: (i, d, c) => this.editSequence(() => this.sequence.changeCount(i, d, c), 'click'),
+                onRemove: (i, c) => this.editSequence(() => this.sequence.removeAt(i, c), 'clear'),
+                onToggleLoop: (i) => this.editSequence(() => { this.sequence.setActiveLoop(i); return true; })
+            });
+    }
+
+    editSequence(fn, sound) {
+        if (this.isPlaying) return;
+        if (fn()) {
+            this.renderSequence();
+            if (sound) this.audio.play(sound);
+        }
     }
 
     highlightBlock(index) {
-        this.elements.sequenceArea.querySelectorAll('.cmd-block').forEach((el, i) => {
-            el.classList.toggle('executing', i === index);
-        });
-        const active = this.elements.sequenceArea.querySelector('.cmd-block.executing');
+        this.elements.sequenceArea.querySelectorAll(':scope > .cmd-block, :scope > .loop-block')
+            .forEach(el => el.classList.toggle('executing', Number(el.dataset.index) === index));
+        const active = this.elements.sequenceArea.querySelector('.executing');
         if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-    }
-
-    updateLeafTracker() {
-        const tracker = this.elements.leafTracker;
-        tracker.innerHTML = '';
-        for (let i = 0; i < this.grid.totalLeaves; i++) {
-            const leaf = document.createElement('img');
-            leaf.src = '../art/leaf.png';
-            leaf.alt = 'Leaf';
-            leaf.className = 'tracker-leaf' + (i < this.grid.delivered ? ' delivered' : '');
-            tracker.appendChild(leaf);
-        }
     }
 
     addCommand(action) {
         if (this.isPlaying) return;
-        this.sequence.add(action);
+        if (action === 'loop') this.sequence.addLoop();
+        else this.sequence.add(action);
         this.renderSequence();
         this.audio.play('click');
     }
 
     async play() {
-        if (this.isPlaying || this.sequence.isEmpty()) return;
+        if (this.isPlaying || this.sequence.totalSteps() === 0) return;
         this.isPlaying = true;
         this.elements.playBtn.disabled = true;
+        this.sprite.stopIdleLoop();
         this.restoreLevelState();
 
         const { result } = await this.runner.run();
 
         if (result === 'success') {
             await this.runner.delay(300);
+            let stars = 0;
+            if (this.mode === 'campaign') {
+                stars = starsFor(this.currentLevel, this.sequence.countBlocks());
+                this.progress.setStars(this.currentLevel, stars);
+            }
+            this.hud.fillSuccess(stars, this.grid);
             this.elements.successOverlay.classList.add('active');
             this.audio.playSuccessMelody();
         } else if (result === 'crash') {
@@ -140,71 +199,35 @@ export class Game {
         this.isPlaying = false;
         this.elements.playBtn.disabled = false;
         this.highlightBlock(-1);
+        this.sprite.startIdleLoop();
     }
 
     restoreLevelState() {
         this.ant.reset();
-        this.grid.reset(this.levelData.leaves, this.levelData.obstacles);
+        this.grid.reset(this.levelData);
+        if (this.patrol) this.patrol.reset();
         this.sprite.setCarrying(false);
-        this.updateLeafTracker();
+        this.hud.updateLeafTracker(this.grid);
         this.renderGrid();
         this.moveSpriteToAnt(false);
         this.sprite.setRotation(this.ant.rotationDeg, false);
-    }
-
-    resetLevel() {
-        if (this.isPlaying) return;
-        this.restoreLevelState();
-        this.highlightBlock(-1);
+        this.movePatrolOverlay(false);
     }
 
     nextLevel() {
-        if (this.currentLevel < getTotalLevels()) this.currentLevel++;
-        this.loadLevel(this.currentLevel);
+        if (this.mode === 'campaign' && this.currentLevel < getTotalLevels()) {
+            this.loadLevel(this.currentLevel + 1);
+        }
         this.elements.successOverlay.classList.remove('active');
     }
 
+    openMap() {
+        this.elements.successOverlay.classList.remove('active');
+        this.map.open(this.progress, getTotalLevels(),
+            this.mode === 'campaign' ? this.currentLevel : 0);
+    }
+
     showFeedback(emoji) {
-        const feedback = document.createElement('div');
-        feedback.className = 'floating-feedback';
-        feedback.textContent = emoji;
-        document.body.appendChild(feedback);
-        setTimeout(() => feedback.remove(), 800);
-    }
-
-    setupEventListeners() {
-        document.querySelectorAll('.command-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.addCommand(btn.dataset.command));
-        });
-        this.elements.playBtn.addEventListener('click', () => this.play());
-        this.elements.resetBtn.addEventListener('click', () => this.resetLevel());
-        this.elements.clearBtn.addEventListener('click', () => {
-            if (this.isPlaying) return;
-            this.sequence.clear();
-            this.renderSequence();
-            this.audio.play('clear');
-        });
-        this.elements.nextBtn.addEventListener('click', () => this.nextLevel());
-        this.elements.helpBtn.addEventListener('click', () => this.elements.helpOverlay.classList.add('active'));
-        this.elements.closeHelpBtn.addEventListener('click', () => this.elements.helpOverlay.classList.remove('active'));
-        this.elements.helpOverlay.addEventListener('click', (e) => {
-            if (e.target === this.elements.helpOverlay) this.elements.helpOverlay.classList.remove('active');
-        });
-        document.addEventListener('keydown', (e) => {
-            if (this.isPlaying) return;
-            const keyMap = { ArrowUp: 'forward', ArrowRight: 'right', ArrowLeft: 'left' };
-            if (keyMap[e.key]) this.addCommand(keyMap[e.key]);
-            else if (e.key === 'Enter' || e.key === ' ') this.play();
-            else if (e.key === 'Escape') this.resetLevel();
-        });
-    }
-
-    setupResizeHandling() {
-        const resync = () => { if (!this.isPlaying) requestAnimationFrame(() => this.syncSprite()); };
-        window.addEventListener('resize', resync);
-        window.addEventListener('orientationchange', () => setTimeout(resync, 100));
-        if (typeof ResizeObserver !== 'undefined') {
-            new ResizeObserver(resync).observe(this.elements.gridSection);
-        }
+        this.hud.showFeedback(emoji);
     }
 }

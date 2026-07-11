@@ -35,6 +35,8 @@ export class Audio {
                 'pickup': { freq: 750, duration: 0.15, type: 'sine' },
                 'drop': { freq: 550, duration: 0.15, type: 'sine' },
                 'deliver': { freq: 880, duration: 0.25, type: 'sine' },
+                'crumb': { freq: 1000, duration: 0.12, type: 'sine' },
+                'teleport': { freq: 250, duration: 0.3, type: 'triangle' },
                 'error': { freq: 200, duration: 0.3, type: 'sawtooth' },
                 'clear': { freq: 300, duration: 0.2, type: 'triangle' },
                 'incomplete': { freq: 350, duration: 0.4, type: 'sine' }

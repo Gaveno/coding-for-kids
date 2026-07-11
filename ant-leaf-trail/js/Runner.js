@@ -1,5 +1,6 @@
 /**
  * Runner - Executes the command sequence step by step with animation.
+ * Handles obstacles, bounds, leaves, crumbs, tunnels, and the patrol bug.
  * Returns { result: 'success' | 'crash' | 'incomplete' }
  */
 const MOVE_MS = 380;
@@ -17,58 +18,79 @@ export class Runner {
 
     async run() {
         const g = this.game;
-        const steps = g.sequence.expand();
-
-        for (const step of steps) {
+        for (const step of g.sequence.expand()) {
             g.highlightBlock(step.blockIndex);
-            const ok = await this.executeStep(step.action);
-            if (!ok) return { result: 'crash' };
+            if (!await this.executeStep(step.action)) return { result: 'crash' };
+            if (!await this.advancePatrol()) return { result: 'crash' };
         }
-
         const atNest = g.grid.isNest(g.ant.getPositionKey());
         const done = atNest && g.grid.allLeavesDelivered() && !g.ant.carrying;
         return { result: done ? 'success' : 'incomplete' };
     }
 
-    async executeStep(action) {
+    executeStep(action) {
         switch (action) {
             case 'forward': return this.stepForward();
             case 'right':
             case 'left': return this.stepRotate(action);
             case 'pickup': return this.stepPickup();
             case 'drop': return this.stepDrop();
-            default: return true;
+            default: return Promise.resolve(true);
         }
+    }
+
+    /** Crash: show feedback, play the death animation, report failure */
+    async fail(feedback) {
+        const g = this.game;
+        g.audio.play('error');
+        g.showFeedback(feedback);
+        await g.sprite.playDie();
+        await this.delay(600);
+        return false;
     }
 
     async stepForward() {
         const g = this.game;
         const next = g.ant.getForwardPosition();
-        const nextKey = `${next.x},${next.y}`;
-
-        if (g.grid.hasObstacle(nextKey)) {
+        if (g.grid.hasObstacle(`${next.x},${next.y}`)) {
             g.sprite.shake();
-            g.audio.play('error');
-            g.showFeedback('💥🪨');
-            await this.delay(600);
-            return false;
+            return this.fail('💥🪨');
         }
 
         g.ant.moveForward();
-
-        if (g.ant.isOutOfBounds(g.grid.size)) {
-            g.audio.play('error');
-            g.showFeedback('💥');
-            await this.delay(600);
-            return false;
-        }
+        if (g.ant.isOutOfBounds(g.grid.size)) return this.fail('💥');
 
         g.sprite.startWalk();
         g.moveSpriteToAnt(true);
         g.audio.play('move');
         await this.delay(MOVE_MS);
         g.sprite.stopWalk();
+
+        await this.checkTunnel();
+        this.collectCrumb();
         return true;
+    }
+
+    async checkTunnel() {
+        const g = this.game;
+        const exit = g.grid.tunnelExit(g.ant.getPositionKey());
+        if (!exit) return;
+        await this.delay(150);
+        const [x, y] = exit.split(',').map(Number);
+        g.ant.position = { x, y };
+        g.audio.play('teleport');
+        g.moveSpriteToAnt(false);
+        g.sprite.pulse();
+        await this.delay(250);
+    }
+
+    collectCrumb() {
+        const g = this.game;
+        if (g.grid.collectCrumb(g.ant.getPositionKey())) {
+            g.audio.play('crumb');
+            g.sprite.pulse();
+            g.renderGrid();
+        }
     }
 
     async stepRotate(direction) {
@@ -84,18 +106,18 @@ export class Runner {
         const g = this.game;
         const key = g.ant.getPositionKey();
         if (!g.ant.carrying && g.grid.hasLeaf(key)) {
+            await g.sprite.playOnce('bite', { fps: 18 });
             g.grid.removeLeaf(key);
             g.ant.carrying = true;
             g.renderGrid();
             g.sprite.setCarrying(true);
-            g.sprite.pulse();
             g.audio.play('pickup');
         } else {
             g.sprite.shake();
             g.audio.play('incomplete');
             g.showFeedback('🤔');
+            await this.delay(ACTION_MS);
         }
-        await this.delay(ACTION_MS);
         return true;
     }
 
@@ -107,7 +129,7 @@ export class Runner {
             g.sprite.setCarrying(false);
             if (g.grid.isNest(key)) {
                 g.grid.deliverLeaf();
-                g.updateLeafTracker();
+                g.hud.updateLeafTracker(g.grid);
                 g.sprite.pulse();
                 g.audio.play('deliver');
             } else {
@@ -121,6 +143,19 @@ export class Runner {
             g.showFeedback('🤔');
         }
         await this.delay(ACTION_MS);
+        return true;
+    }
+
+    /** The patrol bug takes one step after every ant step */
+    async advancePatrol() {
+        const g = this.game;
+        if (!g.patrol) return true;
+        const antKey = g.ant.getPositionKey();
+        if (g.patrol.key() === antKey) return this.fail('🕷️');
+        g.patrol.step();
+        g.movePatrolOverlay(true);
+        await this.delay(180);
+        if (g.patrol.key() === antKey) return this.fail('🕷️');
         return true;
     }
 }

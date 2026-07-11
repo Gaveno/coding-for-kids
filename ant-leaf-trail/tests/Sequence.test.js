@@ -79,6 +79,61 @@ export function runSequenceTests() {
         assertTrue(seq.isEmpty());
     }));
 
+    results.push(test('Active loop receives new commands', () => {
+        const seq = new Sequence();
+        seq.addLoop();
+        seq.add('forward');
+        seq.add('right');
+        assertEqual(seq.commands.length, 1);
+        assertEqual(seq.commands[0].children.length, 2);
+        seq.setActiveLoop(0); // deactivate
+        seq.add('forward');
+        assertEqual(seq.commands.length, 2);
+    }));
+
+    results.push(test('Loop expands children by iteration count', () => {
+        const seq = new Sequence();
+        seq.addLoop();          // iterations default 2
+        seq.add('forward');
+        seq.changeCount(0, 1, 0); // forward x2 inside loop
+        seq.add('right');
+        const steps = seq.expand();
+        // (F F R) x2 = 6 steps, all tagged with block 0
+        assertEqual(steps.length, 6);
+        assertTrue(steps.every(s => s.blockIndex === 0));
+        assertEqual(steps.map(s => s.action).join(','),
+            'forward,forward,right,forward,forward,right');
+    }));
+
+    results.push(test('countBlocks counts loop plus its children', () => {
+        const seq = new Sequence();
+        seq.add('forward');
+        seq.addLoop();
+        seq.add('right');
+        assertEqual(seq.countBlocks(), 3);
+    }));
+
+    results.push(test('Removing a child block from a loop', () => {
+        const seq = new Sequence();
+        seq.addLoop();
+        seq.add('forward');
+        seq.add('right');
+        assertTrue(seq.removeAt(0, 0));
+        assertEqual(seq.commands[0].children.length, 1);
+        assertEqual(seq.commands[0].children[0].action, 'right');
+    }));
+
+    results.push(test('Removing a loop clears/adjusts the active index', () => {
+        const seq = new Sequence();
+        seq.add('forward');
+        seq.addLoop();
+        assertEqual(seq.activeLoop, 1);
+        seq.removeAt(0);
+        assertEqual(seq.activeLoop, 0);
+        seq.removeAt(0);
+        assertEqual(seq.activeLoop, null);
+    }));
+
     return results;
 }
 

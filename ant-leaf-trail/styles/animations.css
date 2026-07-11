@@ -36,6 +36,33 @@
     animation: spriteShake 0.4s ease;
 }
 
+@keyframes crumbTwinkle {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12) rotate(8deg); }
+}
+
+@keyframes tunnelGlow {
+    0%, 100% { box-shadow: 0 0 8px 1px rgba(150, 100, 255, 0.35); }
+    50% { box-shadow: 0 0 14px 4px rgba(150, 100, 255, 0.6); }
+}
+
+@keyframes patrolWiggle {
+    0%, 100% { margin-top: 0; }
+    50% { margin-top: -3px; }
+}
+
+@keyframes starPop {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.success-star {
+    display: inline-block;
+    transform: scale(0);
+    animation: starPop 0.5s ease forwards;
+}
+
 /* Floating emoji feedback */
 .floating-feedback {
     position: fixed;

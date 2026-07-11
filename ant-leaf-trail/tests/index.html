@@ -111,12 +111,14 @@
         import { runGridTests } from './Grid.test.js';
         import { runLevelsTests } from './Levels.test.js';
         import { runSequenceTests } from './Sequence.test.js';
+        import { runPatrolTests } from './Patrol.test.js';
 
         const testSuites = [
             { name: '🐜 Ant', run: runAntTests },
             { name: '🎯 Grid', run: runGridTests },
             { name: '📊 Levels', run: runLevelsTests },
-            { name: '📝 Sequence', run: runSequenceTests }
+            { name: '📝 Sequence', run: runSequenceTests },
+            { name: '🕷️ Patrol', run: runPatrolTests }
         ];
 
         function renderResults(suiteResults) {

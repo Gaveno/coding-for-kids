@@ -1,48 +1,48 @@
 /**
- * Grid - Handles grid state (nest, leaves, obstacles) and rendering
+ * Grid - Handles grid state (nest, leaves, obstacles, crumbs, tunnels) and rendering
  */
 export class Grid {
-    constructor(size, nest, leaves = [], obstacles = []) {
-        this.configure(size, nest, leaves, obstacles);
+    constructor(levelData) {
+        this.configure(levelData);
     }
 
-    configure(size, nest, leaves = [], obstacles = []) {
-        this.size = size;
-        this.nest = nest;
-        this.leaves = new Set(leaves);
-        this.obstacles = new Set(obstacles);
-        this.totalLeaves = leaves.length;
+    configure(levelData) {
+        this.size = levelData.gridSize;
+        this.nest = levelData.nest;
+        this.tunnels = levelData.tunnels ? [...levelData.tunnels] : [];
+        this.totalLeaves = (levelData.leaves || []).length;
+        this.reset(levelData);
+    }
+
+    reset(levelData) {
+        this.leaves = new Set(levelData.leaves || []);
+        this.obstacles = new Set(levelData.obstacles || []);
+        this.crumbs = new Set(levelData.crumbs || []);
+        this.totalCrumbs = this.crumbs.size;
+        this.crumbsCollected = 0;
         this.delivered = 0;
     }
 
-    reset(leaves = [], obstacles = []) {
-        this.leaves = new Set(leaves);
-        this.obstacles = new Set(obstacles);
-        this.delivered = 0;
+    isNest(key) { return this.nest === key; }
+    hasLeaf(key) { return this.leaves.has(key); }
+    removeLeaf(key) { return this.leaves.delete(key); }
+    addLeaf(key) { this.leaves.add(key); }
+    deliverLeaf() { this.delivered++; }
+    hasObstacle(key) { return this.obstacles.has(key); }
+    hasCrumb(key) { return this.crumbs.has(key); }
+
+    collectCrumb(key) {
+        if (!this.crumbs.delete(key)) return false;
+        this.crumbsCollected++;
+        return true;
     }
 
-    isNest(positionKey) {
-        return this.nest === positionKey;
-    }
-
-    hasLeaf(positionKey) {
-        return this.leaves.has(positionKey);
-    }
-
-    removeLeaf(positionKey) {
-        return this.leaves.delete(positionKey);
-    }
-
-    addLeaf(positionKey) {
-        this.leaves.add(positionKey);
-    }
-
-    deliverLeaf() {
-        this.delivered++;
-    }
-
-    hasObstacle(positionKey) {
-        return this.obstacles.has(positionKey);
+    /** If key is one end of the tunnel pair, returns the other end */
+    tunnelExit(key) {
+        if (this.tunnels.length !== 2) return null;
+        if (this.tunnels[0] === key) return this.tunnels[1];
+        if (this.tunnels[1] === key) return this.tunnels[0];
+        return null;
     }
 
     allLeavesDelivered() {
@@ -59,7 +59,6 @@ export class Grid {
                 cell.className = 'grid-cell';
                 cell.dataset.x = x;
                 cell.dataset.y = y;
-
                 const key = `${x},${y}`;
 
                 if (this.isNest(key)) {
@@ -68,12 +67,24 @@ export class Grid {
                     hole.className = 'nest-hole';
                     cell.appendChild(hole);
                 }
+                if (this.tunnels.includes(key)) {
+                    cell.classList.add('tunnel');
+                    const hole = document.createElement('div');
+                    hole.className = 'tunnel-hole';
+                    cell.appendChild(hole);
+                }
                 if (this.hasLeaf(key)) {
                     const leaf = document.createElement('img');
                     leaf.className = 'cell-leaf';
                     leaf.src = '../art/leaf.png';
                     leaf.alt = 'Leaf';
                     cell.appendChild(leaf);
+                }
+                if (this.hasCrumb(key)) {
+                    const crumb = document.createElement('span');
+                    crumb.className = 'crumb-emoji';
+                    crumb.textContent = '🍪';
+                    cell.appendChild(crumb);
                 }
                 if (this.hasObstacle(key)) {
                     cell.classList.add('obstacle');
