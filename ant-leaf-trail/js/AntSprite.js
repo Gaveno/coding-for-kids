@@ -3,7 +3,7 @@
  * frame animations (walk, idle fidget, look around, bite, die).
  * Art frames all face UP; rotation is applied with CSS transforms.
  */
-const ART = '../art/ant/__leaf_cutter_';
+const ART = '../art/ant/leaf_cutter_';
 const SETS = { move: 8, idle: 20, bite: 8, die: 10 };
 const WALK_FRAME_MS = 45;
 
