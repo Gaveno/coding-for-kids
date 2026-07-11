@@ -1,0 +1,55 @@
+/* ===== Animations ===== */
+@keyframes nestPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 236, 160, 0.0); }
+    50% { box-shadow: 0 0 12px 3px rgba(255, 236, 160, 0.35); }
+}
+
+@keyframes leafSway {
+    0%, 100% { transform: rotate(-6deg); }
+    50% { transform: rotate(6deg); }
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-14px); }
+}
+
+@keyframes spritePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
+@keyframes spriteShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+.ant-overlay.pulse {
+    animation: spritePulse 0.35s ease;
+}
+
+.ant-overlay.shake {
+    animation: spriteShake 0.4s ease;
+}
+
+/* Floating emoji feedback */
+.floating-feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    z-index: 1000;
+    pointer-events: none;
+    animation: feedbackPop 0.8s ease forwards;
+}
+
+@keyframes feedbackPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -100%) scale(1); opacity: 0; }
+}

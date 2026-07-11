@@ -1,0 +1,34 @@
+/* ===== CSS Custom Properties ===== */
+:root {
+    /* Earthy palette */
+    --color-bg-top: #6b4423;
+    --color-bg-bottom: #3a2412;
+    --color-panel: rgba(46, 28, 14, 0.72);
+    --color-panel-light: rgba(255, 236, 208, 0.10);
+    --color-border: rgba(255, 224, 178, 0.28);
+    --color-accent: #8bc34a;
+    --color-accent-dark: #558b2f;
+    --color-danger: #e57373;
+    --color-text: #fff8ec;
+
+    /* Block colors */
+    --color-block-move: #4fa3d1;
+    --color-block-rotate: #e0a437;
+    --color-block-leaf: #6faf4b;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+
+    /* Sizes */
+    --touch-target: 60px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+
+    /* Motion */
+    --move-duration: 0.38s;
+    --turn-duration: 0.26s;
+}

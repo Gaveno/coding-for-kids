@@ -1,0 +1,155 @@
+/* ===== Responsive Layout =====
+   Portrait (iPhone/iPad): grid on top, blocks below.
+   Landscape (iPhone/iPad): grid fills the left, panel on the right. */
+
+/* Landscape: side-by-side so the square grid uses full height */
+@media (orientation: landscape) {
+    .game-main {
+        flex-direction: row;
+    }
+
+    .panel {
+        flex: 0 0 clamp(300px, 38vw, 460px);
+    }
+
+    .sequence-section {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .sequence-area {
+        flex: 1;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        overflow-x: hidden;
+        overflow-y: auto;
+        min-height: 0;
+    }
+}
+
+/* Short screens (iPhone landscape): compress chrome */
+@media (max-height: 480px) {
+    .game-container {
+        gap: var(--spacing-xs);
+    }
+
+    .game-header {
+        padding: 2px var(--spacing-sm);
+    }
+
+    .home-btn,
+    .help-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1.2rem;
+    }
+
+    .logo {
+        font-size: 1.5rem;
+    }
+
+    .level-num {
+        font-size: 1.1rem;
+    }
+
+    .command-btn {
+        width: 50px;
+        height: 50px;
+    }
+
+    .command-icon {
+        font-size: 1.5rem;
+    }
+
+    .control-btn {
+        width: 52px;
+        height: 52px;
+    }
+
+    .play-btn {
+        width: 60px;
+        height: 60px;
+    }
+
+    .control-icon {
+        font-size: 1.5rem;
+    }
+
+    .play-btn .control-icon {
+        font-size: 1.8rem;
+    }
+
+    .cmd-block {
+        width: 66px;
+        padding-top: 16px;
+    }
+
+    .sequence-area {
+        min-height: 78px;
+    }
+}
+
+/* Narrow phones (iPhone portrait) */
+@media (max-width: 430px) and (orientation: portrait) {
+    .command-btn {
+        width: 54px;
+        height: 54px;
+    }
+
+    .command-icon {
+        font-size: 1.6rem;
+    }
+
+    .leaf-icon img {
+        width: 30px;
+        height: 30px;
+    }
+
+    .cmd-block {
+        width: 68px;
+    }
+
+    .tracker-leaf {
+        width: 24px;
+        height: 24px;
+    }
+
+    .control-section {
+        gap: var(--spacing-md);
+    }
+}
+
+/* Big screens (iPad): roomier touch targets */
+@media (min-width: 1024px) and (min-height: 700px) {
+    .command-btn {
+        width: 74px;
+        height: 74px;
+    }
+
+    .command-icon {
+        font-size: 2.2rem;
+    }
+
+    .cmd-block {
+        width: 88px;
+    }
+
+    .block-icon {
+        font-size: 2rem;
+        height: 40px;
+    }
+
+    .count-btn {
+        width: 30px;
+        height: 30px;
+    }
+
+    .block-count {
+        font-size: 1.35rem;
+    }
+
+    .grid-container {
+        gap: 4px;
+        padding: 8px;
+    }
+}
