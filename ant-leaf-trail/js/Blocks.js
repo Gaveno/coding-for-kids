@@ -2,7 +2,7 @@
  * Blocks - Builds DOM for command blocks in the sequence area.
  * Every block carries its own count with +/- controls directly on it.
  */
-const EMOJI_ICONS = { forward: '⬆️', right: '↪️', left: '↩️' };
+const EMOJI_ICONS = { forward: '⬆️', right: '↩️', left: '↪️' };
 
 /** Icon element for an action (emoji for moves, leaf art for pickup/drop) */
 export function makeIcon(action) {
