@@ -73,6 +73,7 @@ export class Game {
 
     applyLevelData(levelData) {
         this.sequence.clear();
+        this.updateTabs();
         this.renderSequence();
         this.refreshBoard(levelData);
     }
@@ -141,10 +142,25 @@ export class Game {
     renderSequence() {
         renderSequence(this.elements.sequenceArea, this.elements.sequencePlaceholder,
             this.sequence, {
-                onCountChange: (i, d, c) => this.editSequence(() => this.sequence.changeCount(i, d, c), 'click'),
-                onRemove: (i, c) => this.editSequence(() => this.sequence.removeAt(i, c), 'clear'),
-                onToggleLoop: (i) => this.editSequence(() => { this.sequence.setActiveLoop(i); return true; })
+                onCountChange: (i, d) => this.editSequence(() => this.sequence.changeCount(i, d), 'click'),
+                onRemove: (i) => this.editSequence(() => this.sequence.removeAt(i), 'clear')
             });
+    }
+
+    /** Switch which list (main program or function) is being edited */
+    setActiveList(list) {
+        if (this.isPlaying) return;
+        this.sequence.setActiveList(list);
+        this.updateTabs();
+        this.renderSequence();
+        this.audio.play('click');
+    }
+
+    updateTabs() {
+        const list = this.sequence.activeList;
+        document.querySelectorAll('.seq-tab').forEach(tab =>
+            tab.classList.toggle('active', tab.dataset.list === list));
+        document.body.classList.toggle('editing-function', list === 'function');
     }
 
     editSequence(fn, sound) {
@@ -156,7 +172,7 @@ export class Game {
     }
 
     highlightBlock(index) {
-        this.elements.sequenceArea.querySelectorAll(':scope > .cmd-block, :scope > .loop-block')
+        this.elements.sequenceArea.querySelectorAll(':scope > .cmd-block')
             .forEach(el => el.classList.toggle('executing', Number(el.dataset.index) === index));
         const active = this.elements.sequenceArea.querySelector('.executing');
         if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
@@ -164,14 +180,21 @@ export class Game {
 
     addCommand(action) {
         if (this.isPlaying) return;
-        if (action === 'loop') this.sequence.addLoop();
-        else this.sequence.add(action);
+        if (action === 'call') {
+            if (this.sequence.activeList !== 'main') return;
+            this.sequence.addCall();
+        } else {
+            this.sequence.add(action);
+        }
         this.renderSequence();
         this.audio.play('click');
     }
 
     async play() {
         if (this.isPlaying || this.sequence.totalSteps() === 0) return;
+        this.sequence.setActiveList('main');
+        this.updateTabs();
+        this.renderSequence();
         this.isPlaying = true;
         this.elements.playBtn.disabled = true;
         this.sprite.stopIdleLoop();

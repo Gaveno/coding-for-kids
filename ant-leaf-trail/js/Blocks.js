@@ -1,8 +1,9 @@
 /**
- * Blocks - Builds DOM for command blocks and loop blocks in the sequence area.
+ * Blocks - Builds DOM for command blocks in the sequence area.
  * Every block carries its own count with +/- controls directly on it.
+ * The "call" block runs the reusable function.
  */
-const EMOJI_ICONS = { forward: '⬆️', right: '↩️', left: '↪️' };
+const EMOJI_ICONS = { forward: '⬆️', right: '↩️', left: '↪️', call: '💾' };
 
 /** Icon element for an action (emoji for moves, leaf art for pickup/drop) */
 export function makeIcon(action) {
@@ -11,11 +12,9 @@ export function makeIcon(action) {
     icon.setAttribute('aria-hidden', 'true');
 
     if (action === 'pickup' || action === 'drop') {
-        const leaf = document.createElement('img');
+        const leaf = document.createElement('span');
         leaf.className = 'block-leaf';
-        leaf.src = '../art/leaf.png';
-        leaf.alt = '';
-        leaf.draggable = false;
+        leaf.textContent = '🥬';
         icon.appendChild(leaf);
         const badge = document.createElement('span');
         badge.className = 'leaf-badge ' + (action === 'pickup' ? 'badge-up' : 'badge-down');
@@ -48,66 +47,26 @@ function makeCounter(cmd, onChange) {
     return counter;
 }
 
-/**
- * Create a command block. childIndex is non-null for blocks inside a loop
- * (then index refers to the loop's top-level position).
- */
-export function createCommandBlock(cmd, index, handlers, childIndex = null) {
+/** Create a command block (movement, leaf action, or function call) */
+export function createCommandBlock(cmd, index, handlers) {
     const block = document.createElement('div');
-    block.className = `cmd-block cmd-${cmd.action}` + (childIndex !== null ? ' loop-child' : '');
+    block.className = `cmd-block cmd-${cmd.action}`;
     block.appendChild(makeButton('block-remove', 'Remove block', '✕',
-        () => handlers.onRemove(index, childIndex)));
+        () => handlers.onRemove(index)));
     block.appendChild(makeIcon(cmd.action));
-    block.appendChild(makeCounter(cmd, (d) => handlers.onCountChange(index, d, childIndex)));
-    return block;
-}
-
-/** Create a loop container block with iteration counter and child blocks */
-export function createLoopBlock(cmd, index, handlers, isActive) {
-    const block = document.createElement('div');
-    block.className = 'loop-block' + (isActive ? ' active' : '');
-
-    const header = document.createElement('div');
-    header.className = 'loop-header';
-    const icon = document.createElement('span');
-    icon.className = 'loop-icon';
-    icon.textContent = '🔁';
-    header.appendChild(icon);
-    header.appendChild(makeCounter(cmd, (d) => handlers.onCountChange(index, d, null)));
-    header.appendChild(makeButton('block-remove', 'Remove loop', '✕',
-        () => handlers.onRemove(index, null)));
-    block.appendChild(header);
-
-    const body = document.createElement('div');
-    body.className = 'loop-body';
-    if (cmd.children.length === 0) {
-        const hint = document.createElement('div');
-        hint.className = 'loop-placeholder';
-        hint.textContent = '👆';
-        body.appendChild(hint);
-    } else {
-        cmd.children.forEach((child, ci) => {
-            body.appendChild(createCommandBlock(child, index, handlers, ci));
-        });
+    // Leaf pickup/drop can't repeat (only one leaf can be carried)
+    if (cmd.action !== 'pickup' && cmd.action !== 'drop') {
+        block.appendChild(makeCounter(cmd, (d) => handlers.onCountChange(index, d)));
     }
-    block.appendChild(body);
-
-    block.addEventListener('click', (e) => {
-        if (!e.target.closest('button') && !e.target.closest('.cmd-block')) {
-            handlers.onToggleLoop(index);
-        }
-    });
     return block;
 }
 
-/** Render the full sequence into the sequence area */
+/** Render the active command list into the sequence area */
 export function renderSequence(area, placeholder, sequence, handlers) {
-    area.querySelectorAll('.cmd-block, .loop-block').forEach(el => el.remove());
+    area.querySelectorAll('.cmd-block').forEach(el => el.remove());
     placeholder.style.display = sequence.isEmpty() ? 'flex' : 'none';
-    sequence.commands.forEach((cmd, index) => {
-        const el = cmd.action === 'loop'
-            ? createLoopBlock(cmd, index, handlers, sequence.activeLoop === index)
-            : createCommandBlock(cmd, index, handlers);
+    sequence.active().forEach((cmd, index) => {
+        const el = createCommandBlock(cmd, index, handlers);
         el.dataset.index = index;
         area.appendChild(el);
     });

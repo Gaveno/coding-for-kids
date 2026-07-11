@@ -10,9 +10,8 @@ export class Hud {
         const tracker = this.elements.leafTracker;
         tracker.innerHTML = '';
         for (let i = 0; i < grid.totalLeaves; i++) {
-            const leaf = document.createElement('img');
-            leaf.src = '../art/leaf.png';
-            leaf.alt = 'Leaf';
+            const leaf = document.createElement('span');
+            leaf.textContent = '🥬';
             leaf.className = 'tracker-leaf' + (i < grid.delivered ? ' delivered' : '');
             tracker.appendChild(leaf);
         }

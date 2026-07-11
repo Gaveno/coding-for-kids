@@ -51,9 +51,8 @@
 /* Leaves on the ground */
 .cell-leaf {
     position: absolute;
-    width: 68%;
-    height: 68%;
-    object-fit: contain;
+    font-size: calc(var(--cell-size, 60px) * 0.6);
+    line-height: 1;
     filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.4));
     animation: leafSway 2.4s ease-in-out infinite;
 }
@@ -114,7 +113,7 @@
 }
 
 .ant-img {
-    height: 88%;
+    height: 99%;
     width: auto;
     transition: transform var(--turn-duration) ease-in-out;
     filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));

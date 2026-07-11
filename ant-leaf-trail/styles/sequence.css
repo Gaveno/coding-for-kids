@@ -10,14 +10,40 @@
     min-height: 0;
 }
 
-.sequence-header {
+.sequence-tabs {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: var(--spacing-xs);
 }
 
-.sequence-label {
+.seq-tab {
     font-size: 1.3rem;
+    width: 46px;
+    height: 40px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: var(--color-panel-light);
+    border: 2px solid transparent;
+    border-bottom: none;
+    opacity: 0.6;
+    transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.seq-tab.active {
+    opacity: 1;
+    background: rgba(156, 89, 182, 0.5);
+    border-color: #ffe66d;
+}
+
+.seq-tab[data-list="main"].active {
+    background: var(--color-panel);
+}
+
+.seq-tab:active {
+    transform: scale(0.9);
+}
+
+.sequence-tabs .clear-btn {
+    margin-left: auto;
 }
 
 .clear-btn {
@@ -74,6 +100,7 @@
 .cmd-left { background: var(--color-block-rotate); }
 .cmd-pickup,
 .cmd-drop { background: var(--color-block-leaf); }
+.cmd-call { background: #9c59b6; }
 
 .cmd-block.executing {
     transform: scale(1.1);
@@ -91,9 +118,8 @@
 }
 
 .block-leaf {
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
+    font-size: 1.7rem;
+    line-height: 1;
 }
 
 .leaf-badge {
@@ -112,68 +138,7 @@
     justify-content: center;
 }
 
-/* ===== Loop Blocks ===== */
-.loop-block {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 6px;
-    border-radius: var(--radius-md);
-    border: 2px dashed rgba(255, 255, 255, 0.5);
-    background: rgba(156, 89, 182, 0.55);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    cursor: pointer;
-}
-
-.loop-block.active {
-    border-color: #ffe66d;
-    border-style: solid;
-    box-shadow: 0 0 0 3px rgba(255, 230, 109, 0.45);
-}
-
-.loop-block.executing {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 4px rgba(255, 236, 120, 0.85);
-}
-
-.loop-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.loop-icon {
-    font-size: 1.3rem;
-}
-
-.loop-header .block-remove {
-    position: static;
-    margin-left: 2px;
-}
-
-.loop-body {
-    display: flex;
-    gap: 6px;
-    min-height: 70px;
-    align-items: center;
-    padding: 4px;
-    border-radius: var(--radius-sm);
-    background: rgba(0, 0, 0, 0.22);
-}
-
-.loop-placeholder {
-    padding: 0 14px;
-    font-size: 1.3rem;
-    opacity: 0.7;
-}
-
-.cmd-block.loop-child {
-    width: 62px;
-    padding-top: 18px;
-}
-
+/* ===== Block remove + counter ===== */
 .block-remove {
     position: absolute;
     top: 2px;

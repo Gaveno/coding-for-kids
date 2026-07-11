@@ -7,6 +7,10 @@ export function bindControls(game) {
     document.querySelectorAll('.command-btn').forEach(btn =>
         btn.addEventListener('click', () => game.addCommand(btn.dataset.command)));
 
+    // Sequence list tabs (main program / function)
+    document.querySelectorAll('.seq-tab').forEach(tab =>
+        tab.addEventListener('click', () => game.setActiveList(tab.dataset.list)));
+
     // Sandbox editor tools
     document.querySelectorAll('.tool-btn').forEach(btn =>
         btn.addEventListener('click', () => {
@@ -28,7 +32,7 @@ export function bindControls(game) {
         if (!game.isPlaying) { game.restoreLevelState(); game.highlightBlock(-1); }
     });
     els.clearBtn.addEventListener('click', () =>
-        game.editSequence(() => { game.sequence.clear(); return true; }, 'clear'));
+        game.editSequence(() => game.sequence.clearActive(), 'clear'));
 
     // Overlays
     els.helpBtn.addEventListener('click', () => els.helpOverlay.classList.add('active'));

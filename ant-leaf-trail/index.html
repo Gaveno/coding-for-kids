@@ -46,15 +46,16 @@
                     <button class="tool-btn" data-tool="nest" aria-label="Place nest">🕳️</button>
                     <button class="tool-btn active" data-tool="rock" aria-label="Place rock">🪨</button>
                     <button class="tool-btn" data-tool="leaf" aria-label="Place leaf">
-                        <img src="../art/leaf.png" alt="" draggable="false">
+                        <span class="tool-leaf" aria-hidden="true">🥬</span>
                     </button>
                     <button class="tool-btn" data-tool="crumb" aria-label="Place crumb">🍪</button>
                     <button class="tool-btn" data-tool="erase" aria-label="Erase">🧽</button>
                 </section>
                 <section class="sequence-section" aria-label="Command Sequence">
-                    <div class="sequence-header">
-                        <div class="sequence-label" aria-hidden="true">📝</div>
-                        <button class="clear-btn" id="clearBtn" aria-label="Clear sequence">🧹</button>
+                    <div class="sequence-tabs" role="tablist">
+                        <button class="seq-tab active" data-list="main" role="tab" aria-label="Main program">📝</button>
+                        <button class="seq-tab" data-list="function" role="tab" aria-label="Edit function">💾</button>
+                        <button class="clear-btn" id="clearBtn" aria-label="Clear list">🧹</button>
                     </div>
                     <div class="sequence-area" id="sequenceArea" role="list">
                         <div class="sequence-placeholder" id="sequencePlaceholder" aria-hidden="true">
@@ -74,18 +75,18 @@
                     <button class="command-btn" data-command="right" aria-label="Rotate Right">
                         <span class="command-icon" aria-hidden="true">↩️</span>
                     </button>
-                    <button class="command-btn loop-cmd" data-command="loop" aria-label="Add Repeat Loop">
-                        <span class="command-icon" aria-hidden="true">🔁</span>
+                    <button class="command-btn call-cmd" data-command="call" aria-label="Call Function">
+                        <span class="command-icon" aria-hidden="true">💾</span>
                     </button>
                     <button class="command-btn leaf-btn" data-command="pickup" aria-label="Pick Up Leaf">
                         <span class="command-icon leaf-icon" aria-hidden="true">
-                            <img src="../art/leaf.png" alt="" draggable="false">
+                            <span class="leaf-emoji">🥬</span>
                             <span class="leaf-badge badge-up">⬆</span>
                         </span>
                     </button>
                     <button class="command-btn leaf-btn" data-command="drop" aria-label="Set Down Leaf">
                         <span class="command-icon leaf-icon" aria-hidden="true">
-                            <img src="../art/leaf.png" alt="" draggable="false">
+                            <span class="leaf-emoji">🥬</span>
                             <span class="leaf-badge badge-down">⬇</span>
                         </span>
                     </button>

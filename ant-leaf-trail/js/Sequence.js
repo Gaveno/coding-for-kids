@@ -1,7 +1,7 @@
 /**
- * Sequence - Ordered command blocks, each carrying a repeat count (1-9).
- * Supports one level of loop blocks: { action:'loop', count, children:[...] }
- * When a loop is active (selected), new commands are added inside it.
+ * Sequence - Two editable command lists: the main program and a single
+ * reusable function. Each block carries a repeat count (1-9).
+ * The main program may include "call" blocks that run the function.
  */
 export const ACTIONS = ['forward', 'right', 'left', 'pickup', 'drop'];
 export const MAX_COUNT = 9;
@@ -13,54 +13,44 @@ export class Sequence {
 
     clear() {
         this.commands = [];
-        this.activeLoop = null;
+        this.functionCommands = [];
+        this.activeList = 'main';
+    }
+
+    /** The list currently being edited and displayed */
+    active() {
+        return this.activeList === 'function' ? this.functionCommands : this.commands;
+    }
+
+    setActiveList(list) {
+        this.activeList = list === 'function' ? 'function' : 'main';
     }
 
     add(action) {
         if (!ACTIONS.includes(action)) return false;
-        const cmd = { action, count: 1 };
-        const loop = this.commands[this.activeLoop];
-        if (loop && loop.action === 'loop') loop.children.push(cmd);
-        else this.commands.push(cmd);
+        this.active().push({ action, count: 1 });
         return true;
     }
 
-    addLoop() {
-        this.commands.push({ action: 'loop', count: 2, children: [] });
-        this.activeLoop = this.commands.length - 1;
+    /** Add a "call the function" block to the main program */
+    addCall() {
+        this.commands.push({ action: 'call', count: 1 });
         return true;
     }
 
-    /** Toggle which loop receives new commands (null deactivates) */
-    setActiveLoop(index) {
-        const cmd = this.commands[index];
-        this.activeLoop = (cmd && cmd.action === 'loop' && this.activeLoop !== index)
-            ? index : null;
+    getCommand(index) {
+        return this.active()[index] || null;
     }
 
-    getCommand(index, childIndex = null) {
-        const cmd = this.commands[index];
-        if (!cmd) return null;
-        if (childIndex === null) return cmd;
-        return cmd.action === 'loop' ? cmd.children[childIndex] || null : null;
-    }
-
-    removeAt(index, childIndex = null) {
-        if (childIndex !== null) {
-            const loop = this.commands[index];
-            if (!loop || loop.action !== 'loop' || childIndex >= loop.children.length) return false;
-            loop.children.splice(childIndex, 1);
-            return true;
-        }
-        if (index < 0 || index >= this.commands.length) return false;
-        if (this.activeLoop === index) this.activeLoop = null;
-        else if (this.activeLoop !== null && this.activeLoop > index) this.activeLoop--;
-        this.commands.splice(index, 1);
+    removeAt(index) {
+        const list = this.active();
+        if (index < 0 || index >= list.length) return false;
+        list.splice(index, 1);
         return true;
     }
 
-    changeCount(index, delta, childIndex = null) {
-        const cmd = this.getCommand(index, childIndex);
+    changeCount(index, delta) {
+        const cmd = this.getCommand(index);
         if (!cmd) return false;
         const next = Math.min(MAX_COUNT, Math.max(1, cmd.count + delta));
         if (next === cmd.count) return false;
@@ -68,30 +58,39 @@ export class Sequence {
         return true;
     }
 
+    /** Empty the list currently being edited */
+    clearActive() {
+        if (this.activeList === 'function') this.functionCommands = [];
+        else this.commands = [];
+        return true;
+    }
+
     isEmpty() {
-        return this.commands.length === 0;
+        return this.active().length === 0;
     }
 
-    /** Number of blocks used (a loop counts as itself plus its children) */
+    /** Total blocks used across the program and the function */
     countBlocks() {
-        return this.commands.reduce((sum, cmd) =>
-            sum + 1 + (cmd.action === 'loop' ? cmd.children.length : 0), 0);
+        return this.commands.length + this.functionCommands.length;
     }
 
-    /** Total unit steps with counts and loop iterations expanded */
+    /** Total unit steps with counts and function calls expanded */
     totalSteps() {
         return this.expand().length;
     }
 
-    /** Flatten to unit actions, each tagged with its top-level block index */
+    /**
+     * Flatten the main program to unit actions, inlining the function body
+     * for each call. Every step is tagged with its main-list block index.
+     */
     expand() {
         const steps = [];
         this.commands.forEach((cmd, blockIndex) => {
-            if (cmd.action === 'loop') {
+            if (cmd.action === 'call') {
                 for (let i = 0; i < cmd.count; i++) {
-                    cmd.children.forEach(child => {
-                        for (let j = 0; j < child.count; j++) {
-                            steps.push({ action: child.action, blockIndex });
+                    this.functionCommands.forEach(fc => {
+                        for (let j = 0; j < fc.count; j++) {
+                            steps.push({ action: fc.action, blockIndex });
                         }
                     });
                 }

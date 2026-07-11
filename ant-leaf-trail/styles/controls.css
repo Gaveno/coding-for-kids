@@ -32,7 +32,13 @@
 .command-btn[data-command="left"] { background: var(--color-block-rotate); }
 .command-btn[data-command="pickup"],
 .command-btn[data-command="drop"] { background: var(--color-block-leaf); }
-.command-btn[data-command="loop"] { background: #9c59b6; }
+.command-btn[data-command="call"] { background: #9c59b6; }
+
+/* No calling the function while editing it (avoids recursion) */
+body.editing-function .command-btn[data-command="call"] {
+    opacity: 0.35;
+    pointer-events: none;
+}
 
 .command-icon {
     font-size: 1.8rem;
@@ -46,10 +52,9 @@
     justify-content: center;
 }
 
-.leaf-icon img {
-    width: 34px;
-    height: 34px;
-    object-fit: contain;
+.leaf-icon .leaf-emoji {
+    font-size: 2rem;
+    line-height: 1;
 }
 
 /* ===== Sandbox Editor Toolbar ===== */

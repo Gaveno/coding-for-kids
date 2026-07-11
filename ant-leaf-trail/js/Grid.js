@@ -74,10 +74,9 @@ export class Grid {
                     cell.appendChild(hole);
                 }
                 if (this.hasLeaf(key)) {
-                    const leaf = document.createElement('img');
+                    const leaf = document.createElement('span');
                     leaf.className = 'cell-leaf';
-                    leaf.src = '../art/leaf.png';
-                    leaf.alt = 'Leaf';
+                    leaf.textContent = '🥬';
                     cell.appendChild(leaf);
                 }
                 if (this.hasCrumb(key)) {
@@ -105,9 +104,14 @@ export class Grid {
         if (!cell) return null;
         const containerRect = container.getBoundingClientRect();
         const cellRect = cell.getBoundingClientRect();
+        // The overlay is positioned from the container's padding box, so
+        // discount the container border to keep the ant centered in its cell.
+        const cs = getComputedStyle(container);
+        const borderLeft = parseFloat(cs.borderLeftWidth) || 0;
+        const borderTop = parseFloat(cs.borderTopWidth) || 0;
         return {
-            left: cellRect.left - containerRect.left + cellRect.width / 2,
-            top: cellRect.top - containerRect.top + cellRect.height / 2,
+            left: cellRect.left - containerRect.left - borderLeft + cellRect.width / 2,
+            top: cellRect.top - containerRect.top - borderTop + cellRect.height / 2,
             width: cellRect.width,
             height: cellRect.height
         };
