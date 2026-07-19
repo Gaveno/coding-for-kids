@@ -26,6 +26,13 @@ Stack colorful blocks to create music patterns that a character dances to.
 
 **[Play Now →](music-box-composer/index.html)**
 
+### 🎣 Robo Go Fish
+Play Go Fish against a friendly robot — collect sets of 4 matching parts to build your robot first!
+
+**Skills taught:** Categorization & sets, counting, working memory, strategic thinking
+
+**[Play Now →](robo-go-fish/index.html)**
+
 ### 🌻 Magic Garden *(Coming Soon)*
 Create spell recipes to grow a magical garden.
 

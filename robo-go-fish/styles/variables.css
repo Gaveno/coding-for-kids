@@ -1,0 +1,54 @@
+/* ===== CSS Variables for Robo Go Fish ===== */
+:root {
+    /* Colors - Ocean/Workshop Theme */
+    --color-primary: #1B6CA8;
+    --color-primary-light: #2E86C1;
+    --color-secondary: #E67E22;
+    --color-secondary-light: #F39C12;
+    --color-accent: #4ECDC4;
+    --color-success: #2ECC71;
+    --color-warning: #FFE66D;
+    --color-danger: #FF6B6B;
+
+    /* Backgrounds */
+    --color-bg: #10243A;
+    --color-surface: #1C3A57;
+    --color-surface-light: #2A4A6B;
+    --color-text: #FFFFFF;
+
+    /* Special colors */
+    --color-pond: #2471A3;
+    --color-pond-light: #5DADE2;
+    --color-card: #F7F1E3;
+    --color-card-back: #34495E;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-full: 50%;
+
+    /* Shadows */
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
+    /* Dimensions */
+    --hand-card-size: 72px;
+    --mini-card-size: 34px;
+    --chassis-slot-size: 44px;
+    --pond-size: 96px;
+    --robot-size: 72px;
+}

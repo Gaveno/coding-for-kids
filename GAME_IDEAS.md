@@ -76,6 +76,21 @@ A collection of visual, no-reading-required browser games to teach programming f
 
 ---
 
+### 6. 🎣 Robo Go Fish
+**Concept:** Classic Go Fish against a friendly robot — completed sets of 4 matching part cards install onto your robot. Build yours first!
+
+**How it works:**
+- Tap a part card in your hand to ask the robot for it (⚙️ 🔋 💡 🛞 🔩 🧲)
+- Robot hands over matches, or says 🎣 — tap the pond to draw
+- Collect 4 of a kind to install a part on your robot
+- The robot *remembers what you asked for* and uses it — kids discover that asking reveals information
+
+**Skills taught:** Categorization & sets, counting, working memory, deduction, probability intuition, turn-taking logic
+
+**Status:** ✅ Playable POC
+
+---
+
 ## 📚 Learning Progression
 
 Each game can introduce concepts in this order:

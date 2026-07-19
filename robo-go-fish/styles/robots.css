@@ -1,0 +1,61 @@
+/* ===== Robot avatar and build-your-robot chassis ===== */
+
+.robot-avatar {
+    width: var(--robot-size);
+    height: var(--robot-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    background: var(--color-surface-light);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow);
+    animation: bob 2.4s ease-in-out infinite;
+}
+
+/* Chassis: the 6 part slots each side fills */
+.chassis {
+    position: relative;
+}
+
+.chassis-slots {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: center;
+    transition: transform var(--transition-normal);
+}
+
+.chassis-slots.pop {
+    animation: chassis-pop 0.6s ease;
+}
+
+.chassis-slot {
+    width: var(--chassis-slot-size);
+    height: var(--chassis-slot-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px dashed var(--color-surface-light);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
+}
+
+.chassis-slot.filled {
+    background: var(--color-surface-light);
+    border: 2px solid var(--color-accent);
+    box-shadow: 0 0 12px rgba(78, 205, 196, 0.4);
+}
+
+/* Sparkle burst when a set is installed */
+.set-burst {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.2rem;
+    z-index: 50;
+    pointer-events: none;
+    animation: burst 1.4s ease forwards;
+}

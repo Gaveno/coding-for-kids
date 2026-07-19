@@ -1,0 +1,42 @@
+/* ===== Responsive tweaks ===== */
+
+/* Short screens (landscape phones) */
+@media (max-height: 620px) {
+    :root {
+        --hand-card-size: 58px;
+        --mini-card-size: 26px;
+        --chassis-slot-size: 34px;
+        --pond-size: 72px;
+        --robot-size: 56px;
+    }
+
+    .robot-avatar { font-size: 2.2rem; }
+    .hand-emoji { font-size: 1.7rem; }
+    .turn-indicator { font-size: 1.5rem; }
+    .game-header { padding: var(--spacing-xs); }
+}
+
+/* Narrow screens */
+@media (max-width: 380px) {
+    :root {
+        --hand-card-size: 60px;
+        --chassis-slot-size: 38px;
+    }
+
+    .pond-area { gap: var(--spacing-md); }
+    .logo { font-size: 1.4rem; }
+}
+
+/* Larger screens / tablets */
+@media (min-width: 600px) and (min-height: 800px) {
+    :root {
+        --hand-card-size: 88px;
+        --mini-card-size: 42px;
+        --chassis-slot-size: 56px;
+        --pond-size: 120px;
+        --robot-size: 92px;
+    }
+
+    .hand-emoji { font-size: 2.8rem; }
+    .bubble { font-size: 2.2rem; }
+}
