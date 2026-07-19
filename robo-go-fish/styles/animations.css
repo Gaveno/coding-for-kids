@@ -21,6 +21,17 @@
     50% { box-shadow: 0 0 0 8px rgba(78, 205, 196, 0); }
 }
 
+@keyframes askable-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 230, 109, 0.7);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(255, 230, 109, 0);
+        transform: scale(1.04);
+    }
+}
+
 @keyframes chassis-pop {
     0% { transform: scale(1); }
     40% { transform: scale(1.12); }

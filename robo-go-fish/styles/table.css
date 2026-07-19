@@ -1,6 +1,5 @@
-/* ===== Table areas: robot side, pond, player side ===== */
+/* ===== Table areas: pond, player side, speech bubbles ===== */
 
-.robot-area,
 .player-area {
     display: flex;
     flex-direction: column;
@@ -9,13 +8,9 @@
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
     box-shadow: var(--shadow);
-}
-
-.robot-row {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    min-height: calc(var(--robot-size) + 8px);
+    position: relative;
+    border: 3px solid var(--color-accent);
+    transition: box-shadow var(--transition-fast);
 }
 
 /* ===== Pond ===== */
@@ -107,12 +102,25 @@
     border: 10px solid transparent;
 }
 
+/* Robot bubbles float over their panel */
+.robot-bubble {
+    position: absolute;
+    top: var(--spacing-xs);
+    left: 50%;
+    transform: translateX(-50%) scale(0.5);
+    z-index: 40;
+}
+
 .robot-bubble::after {
-    left: -14px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-right-color: var(--color-card);
-    border-left: none;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: var(--color-card);
+    border-bottom: none;
+}
+
+.robot-bubble.visible {
+    transform: translateX(-50%) scale(1);
 }
 
 .player-bubble {
@@ -131,4 +139,8 @@
 .bubble.visible {
     opacity: 1;
     transform: scale(1);
+}
+
+.robot-bubble.visible {
+    opacity: 1;
 }

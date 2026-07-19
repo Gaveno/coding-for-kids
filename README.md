@@ -27,7 +27,7 @@ Stack colorful blocks to create music patterns that a character dances to.
 **[Play Now →](music-box-composer/index.html)**
 
 ### 🎣 Robo Go Fish
-Play Go Fish against a friendly robot — collect sets of 4 matching parts to build your robot first!
+Play Go Fish with a real 52-card deck against 1-3 friendly robots — collect sets of 4 matching parts to build the best robot! Three difficulty levels change how well the robots remember your asks.
 
 **Skills taught:** Categorization & sets, counting, working memory, strategic thinking
 

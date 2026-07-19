@@ -4,42 +4,52 @@
  * leaves -> multiple trips -> patrol bug -> tunnels -> grand finale
  */
 export const LEVELS = [
-    // Level 1: Walk straight ahead to the nest 
+    // Level 1
     { gridSize: 6, start: { x: 2, y: 3 }, heading: 'up', nest: '2,2' },
-    // Level 2: Longer straight walk (learn the number on the block)
+    // Level 2
     { gridSize: 6, start: { x: 2, y: 4 }, heading: 'up', nest: '2,1' },
+    // Level 3
     { gridSize: 5, start: { x: 1, y: 2 }, heading: 'right', nest: '3,2' },
-    // Level 3: First turn
-    { gridSize: 5, start: { x: 0, y: 4 }, heading: 'up', nest: '3,1' },
-    // Level 4: Two turns
-    { gridSize: 6, start: { x: 0, y: 5 }, heading: 'up', nest: '3,1' },
-    // Level 5: Rocks appear, but the straight path still works
-    { gridSize: 5, start: { x: 0, y: 2 }, heading: 'right', nest: '4,2', obstacles: ['2,1', '2,3'] },
-    // Level 6: A rock blocks the way - walk around it
+    // Level 4
+    { gridSize: 5, start: { x: 2, y: 1 }, heading: 'down', nest: '2,4' },
+    // Level 5
+    { gridSize: 5, start: { x: 2, y: 2 }, heading: 'up', nest: '3,1' },
+    // Level 6
+    { gridSize: 6, start: { x: 5, y: 1 }, heading: 'left', nest: '1,3' },
+    // Level 7
+    { gridSize: 6, start: { x: 1, y: 4 }, heading: 'down', nest: '3,1' },
+    // Level 8
+    { gridSize: 6, start: { x: 5, y: 4 }, heading: 'down', nest: '0,3' },
+    // Level 9
+    { gridSize: 5, start: { x: 0, y: 2 }, heading: 'right', nest: '4,2', obstacles: ['2,1'] },
+    // Level 10
     { gridSize: 5, start: { x: 0, y: 2 }, heading: 'right', nest: '4,2', obstacles: ['2,2'] },
-    // Level 7: Weave between several rocks
-    { gridSize: 6, start: { x: 0, y: 3 }, heading: 'right', nest: '5,3', obstacles: ['2,2', '2,3', '4,3', '4,4'] },
-    // Level 8: First leaf - pick it up on the way, drop it at the nest
+    // Level 11
+    { gridSize: 6, start: { x: 0, y: 3 }, heading: 'right', nest: '5,3', obstacles: ['2,3', '5,2', '5,4'] },
+    // Level 12
+    { gridSize: 6, start: { x: 1, y: 4 }, heading: 'right', nest: '1,1', obstacles: ['0,2', '1,2', '2,2', '3,2', '3,3', '2,3', '1,3', '0,3'] },
+    // Level 13
+    { gridSize: 6, start: { x: 5, y: 5 }, heading: 'down', nest: '5,1', obstacles: ['2,4', '4,4', '3,4', '0,2', '1,0', '5,4', '2,2', '3,2', '4,2', '5,2'] },
+    // Level 14
+    { gridSize: 6, start: { x: 2, y: 0 }, heading: 'left', nest: '4,0', obstacles: ['2,4', '4,4', '3,4', '0,2', '5,4', '2,2', '3,2', '4,2', '3,0', '3,1'] },
+    // Level 15
     { gridSize: 5, start: { x: 2, y: 4 }, heading: 'up', nest: '2,0', leaves: ['2,2'] },
-    // Level 9: Leaf, then a turn to reach the nest
+    // Level 16
     { gridSize: 6, start: { x: 0, y: 5 }, heading: 'up', nest: '4,2', leaves: ['0,2'] },
-    // Level 10: Leaf plus rocks in the way
+    // Level 17
     { gridSize: 6, start: { x: 0, y: 3 }, heading: 'right', nest: '5,3', leaves: ['2,3'], obstacles: ['3,2', '3,3'] },
-    // Level 11: Two leaves - deliver one, turn around, fetch the other
+    // Level 18
     { gridSize: 6, start: { x: 0, y: 3 }, heading: 'right', nest: '5,3', leaves: ['2,3', '4,3'] },
-    // Level 12: A spider guards the middle - go around its territory!
-    { gridSize: 5, start: { x: 0, y: 2 }, heading: 'right', nest: '4,2', crumbs: ['2,0'],
-      patrol: { path: ['2,1', '2,2', '2,3'], start: 1, dir: -1 } },
-    // Level 13: A wall of rocks - the tunnel is the only way through
-    { gridSize: 6, start: { x: 0, y: 3 }, heading: 'right', nest: '5,1', crumbs: ['5,5'],
-      obstacles: ['3,0', '3,1', '3,2', '3,3', '3,4', '3,5'], tunnels: ['2,3', '4,3'] },
-    // Level 14: Grand finale - leaf, spider, and bonus crumbs
-    { gridSize: 6, start: { x: 0, y: 3 }, heading: 'right', nest: '5,3', leaves: ['2,3'],
-      crumbs: ['2,5', '5,5'], patrol: { path: ['4,2', '4,3', '4,4'], start: 1, dir: -1 } }
+    // Level 19
+    { gridSize: 5, start: { x: 0, y: 2 }, heading: 'right', nest: '4,2', crumbs: ['2,0'], patrol: { path: ['2,1', '2,2', '2,3'], start: 1, dir: -1 } },
+    // Level 20
+    { gridSize: 6, start: { x: 0, y: 3 }, heading: 'right', nest: '5,1', obstacles: ['3,0', '3,1', '3,2', '3,3', '3,4', '3,5'], crumbs: ['5,5'], tunnels: ['2,3', '4,3'] },
+    // Level 21
+    { gridSize: 6, start: { x: 0, y: 3 }, heading: 'right', nest: '5,3', leaves: ['2,3'], crumbs: ['2,5', '5,5'], patrol: { path: ['4,2', '4,3', '4,4'], start: 1, dir: -1 } }
 ];
 
 /** Fewest blocks needed per level (3 stars at or under par) */
-export const PAR = [1, 1, 3, 5, 1, 9, 11, 4, 5, 11, 10, 9, 3, 9];
+export const PAR = [1, 1, 3, 3, 5, 1, 1, 1, 9, 11, 4, 4, 4, 4, 5, 11, 10, 9, 3, 9];
 
 export function starsFor(levelNum, blocksUsed) {
     const par = PAR[levelNum - 1] || 1;

@@ -2,11 +2,27 @@
  * Deck - Card definitions and pure deck operations for Robo Go Fish
  */
 
-/** The six robot part types (one card face each) */
-export const PART_TYPES = ['⚙️', '🔋', '💡', '🛞', '🔩', '🧲'];
+/**
+ * The thirteen robot part types (one card face each).
+ * 13 types x 4 copies = 52 cards, just like a real deck!
+ */
+export const PART_TYPES = [
+    '⚙️', '🔋', '💡', '🛞', '🔩', '🧲',
+    '📡', '🔧', '🪛', '🔌', '⚡', '🦾', '📷'
+];
 
 /** Copies of each part in the deck (a full set) */
 export const COPIES_PER_TYPE = 4;
+
+/**
+ * How many cards each player is dealt.
+ * House rules: everyone starts with 7, no matter the player count.
+ * @param {number} playerCount - total players (human + robots)
+ * @returns {number}
+ */
+export function dealSize(playerCount) {
+    return 7;
+}
 
 /**
  * Build an unshuffled deck: COPIES_PER_TYPE copies of every part type.

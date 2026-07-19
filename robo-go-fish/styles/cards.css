@@ -7,6 +7,9 @@
     gap: var(--spacing-sm);
     justify-content: center;
     min-height: calc(var(--hand-card-size) + 8px);
+    max-height: calc((var(--hand-card-size) + 12px) * 2.4);
+    overflow-y: auto;
+    padding-top: 10px; /* room for the selected card to pop up */
 }
 
 .hand-group {
@@ -55,12 +58,18 @@
     animation: invite-pulse 1.4s ease-in-out infinite;
 }
 
-/* Robot's face-down cards */
-.robot-cards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    min-height: calc(var(--mini-card-size) + 4px);
+/* The picked card pops up; the rest step back */
+.hand-group.selected {
+    border-color: var(--color-warning);
+    transform: translateY(-8px) scale(1.08);
+    animation: none;
+    box-shadow: 0 0 16px var(--color-warning);
+    z-index: 5;
+}
+
+.hand-group.dimmed {
+    opacity: 0.4;
+    animation: none;
 }
 
 .mini-card {

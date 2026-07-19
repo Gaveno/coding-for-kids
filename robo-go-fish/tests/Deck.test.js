@@ -1,7 +1,7 @@
 /**
  * Tests for Deck module
  */
-import { PART_TYPES, COPIES_PER_TYPE, buildDeck, shuffle, draw } from '../js/Deck.js';
+import { PART_TYPES, COPIES_PER_TYPE, buildDeck, shuffle, draw, dealSize } from '../js/Deck.js';
 
 export function runDeckTests() {
     const results = [];
@@ -27,8 +27,18 @@ export function runDeckTests() {
         }
     }
 
-    test('There are 6 part types', () => {
-        assertEqual(PART_TYPES.length, 6);
+    test('There are 13 part types (a real 52-card deck)', () => {
+        assertEqual(PART_TYPES.length, 13);
+    });
+
+    test('Full deck is 52 cards', () => {
+        assertEqual(buildDeck().length, 52);
+    });
+
+    test('dealSize is 7 for everyone (house rules)', () => {
+        assertEqual(dealSize(2), 7, '2 players:');
+        assertEqual(dealSize(3), 7, '3 players:');
+        assertEqual(dealSize(4), 7, '4 players:');
     });
 
     test('Part types are unique', () => {
@@ -101,3 +111,4 @@ export function runDeckTests() {
 
     return results;
 }
+// house rules: everyone is dealt 7 cards
