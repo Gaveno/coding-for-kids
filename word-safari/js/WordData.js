@@ -112,6 +112,6 @@ export const DECOYS = [
     'turtle', 'window',
     // Look-alike fillers for the newer picture words
     'ham', 'hop', 'wet', 'wig', 'nap', 'lock', 'leaf', 'neck', 'gate',
-    'goat', 'plate', 'paint', 'glass', 'water', 'wheel', 'garlic',
+    'goat', 'plate', 'paint', 'glass', 'grass', 'water', 'wheel', 'garlic',
     'donkey', 'dinner', 'pepper'
 ];
