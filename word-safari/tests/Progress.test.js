@@ -2,7 +2,7 @@
  * Tests for Progress module
  */
 import { Progress } from '../js/Progress.js';
-import { TOTAL_LEVELS } from '../js/Words.js';
+import { modeRange } from '../js/Words.js';
 
 export function runProgressTests() {
     const results = [];
@@ -38,64 +38,106 @@ export function runProgressTests() {
         };
     }
 
-    test('New player starts at level 1 with 0 stars', () => {
+    const READ = modeRange('read');
+    const WRITE = modeRange('write');
+
+    test('Read mode starts at its first level with 0 stars', () => {
         const p = new Progress(fakeStorage());
-        assertEqual(p.getLevel(), 1);
+        p.startMode('read');
+        assertEqual(p.getLevel(), READ.start);
         assertEqual(p.getStars(), 0);
         assertEqual(p.isFinished(), false);
     });
 
+    test('Write mode starts at its own first level', () => {
+        const p = new Progress(fakeStorage());
+        p.startMode('write');
+        assertEqual(p.getLevel(), WRITE.start);
+    });
+
     test('Completing a level earns a star and advances', () => {
         const p = new Progress(fakeStorage());
+        p.startMode('read');
         p.completeLevel();
-        assertEqual(p.getLevel(), 2);
+        assertEqual(p.getLevel(), READ.start + 1);
         assertEqual(p.getStars(), 1);
     });
 
-    test('Progress persists through storage', () => {
+    test('Progress persists per mode through storage', () => {
         const storage = fakeStorage();
         const p1 = new Progress(storage);
+        p1.startMode('read');
         p1.completeLevel();
         p1.completeLevel();
         const p2 = new Progress(storage);
-        assertEqual(p2.getLevel(), 3);
+        p2.startMode('read');
+        assertEqual(p2.getLevel(), READ.start + 2);
         assertEqual(p2.getStars(), 2);
     });
 
-    test('Level never advances past the last level', () => {
-        const p = new Progress(fakeStorage());
-        for (let i = 0; i < TOTAL_LEVELS + 5; i++) p.completeLevel();
-        assertEqual(p.getLevel(), TOTAL_LEVELS);
+    test('Each mode keeps its own separate level', () => {
+        const storage = fakeStorage();
+        const p = new Progress(storage);
+        p.startMode('read');
+        p.completeLevel();
+        p.startMode('write');
+        assertEqual(p.getLevel(), WRITE.start);
+        p.startMode('read');
+        assertEqual(p.getLevel(), READ.start + 1);
     });
 
-    test('isFinished becomes true after completing all levels', () => {
+    test('Level never advances past the mode last level', () => {
         const p = new Progress(fakeStorage());
-        for (let i = 0; i < TOTAL_LEVELS; i++) p.completeLevel();
+        p.startMode('read');
+        const span = READ.end - READ.start + 5;
+        for (let i = 0; i < span; i++) p.completeLevel();
+        assertEqual(p.getLevel(), READ.end);
+    });
+
+    test('isFinished becomes true after completing all mode levels', () => {
+        const p = new Progress(fakeStorage());
+        p.startMode('write');
+        for (let i = 0; i <= WRITE.end - WRITE.start; i++) p.completeLevel();
         assertTrue(p.isFinished());
     });
 
-    test('restart returns to level 1 but keeps stars', () => {
+    test('Re-selecting a finished mode restarts it', () => {
         const p = new Progress(fakeStorage());
+        p.startMode('read');
+        for (let i = 0; i <= READ.end - READ.start; i++) p.completeLevel();
+        assertTrue(p.isFinished());
+        p.startMode('read');
+        assertEqual(p.getLevel(), READ.start);
+        assertEqual(p.isFinished(), false);
+    });
+
+    test('restart returns to the mode first level but keeps stars', () => {
+        const p = new Progress(fakeStorage());
+        p.startMode('read');
         p.completeLevel();
         p.completeLevel();
         p.restart();
-        assertEqual(p.getLevel(), 1);
+        assertEqual(p.getLevel(), READ.start);
         assertEqual(p.getStars(), 2);
     });
 
     test('Corrupt saved data falls back to defaults', () => {
-        const storage = fakeStorage({ 'word-safari-progress-v1': '{not json!' });
+        const storage = fakeStorage({ 'word-safari-progress-v2': '{not json!' });
         const p = new Progress(storage);
-        assertEqual(p.getLevel(), 1);
+        p.startMode('read');
+        assertEqual(p.getLevel(), READ.start);
         assertEqual(p.getStars(), 0);
     });
 
-    test('Out-of-range saved level is clamped', () => {
+    test('Out-of-range saved level is clamped to the mode', () => {
         const storage = fakeStorage({
-            'word-safari-progress-v1': JSON.stringify({ level: 999, stars: 3 })
+            'word-safari-progress-v2': JSON.stringify({
+                levels: { read: 999, write: 999 }, stars: 3
+            })
         });
         const p = new Progress(storage);
-        assertEqual(p.getLevel(), TOTAL_LEVELS);
+        p.startMode('read');
+        assertEqual(p.getLevel(), READ.end);
         assertEqual(p.getStars(), 3);
     });
 

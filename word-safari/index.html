@@ -54,21 +54,19 @@
             </section>
         </main>
 
-        <!-- Start overlay -->
+        <!-- Start overlay: pick a game mode -->
         <div class="overlay visible" id="startOverlay">
             <div class="overlay-content">
                 <img class="mascot" src="../art/reading/owl.svg" alt="Word Safari owl">
                 <h1 class="overlay-title" aria-label="Word Safari">📖✨</h1>
-                <button class="big-btn" id="startBtn" aria-label="Start game">▶️</button>
-            </div>
-        </div>
-
-        <!-- Typing phase intro overlay -->
-        <div class="overlay" id="typingOverlay">
-            <div class="overlay-content">
-                <div class="overlay-icon">🔊➡️⌨️</div>
-                <div class="overlay-hint" aria-label="Now you spell the words!">✏️✨</div>
-                <button class="big-btn" id="typingGoBtn" aria-label="Start spelling">▶️</button>
+                <div class="mode-choices">
+                    <button class="mode-btn" id="readModeBtn" aria-label="Read mode: tap the matching word">
+                        <span class="mode-emoji">👆📖</span>
+                    </button>
+                    <button class="mode-btn" id="writeModeBtn" aria-label="Write mode: spell the word yourself">
+                        <span class="mode-emoji">⌨️✏️</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -89,20 +87,20 @@
                 <div class="help-section">
                     <div class="help-icons">
                         <div class="help-icon">
+                            <span>�📖</span>
+                            <span>Read mode: tap the matching word</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>⌨️✏️</span>
+                            <span>Write mode: spell the word yourself</span>
+                        </div>
+                        <div class="help-icon">
                             <span>🖼️🔊</span>
                             <span>See the picture, hear the word</span>
                         </div>
                         <div class="help-icon">
-                            <span>👆✅</span>
-                            <span>Tap the matching word</span>
-                        </div>
-                        <div class="help-icon">
                             <span>👀🔤</span>
-                            <span>Tricky round: words look alike!</span>
-                        </div>
-                        <div class="help-icon">
-                            <span>⌨️✏️</span>
-                            <span>Later: spell it yourself!</span>
+                            <span>Read mode gets tricky: words look alike!</span>
                         </div>
                         <div class="help-icon">
                             <span>🔊🔁</span>

@@ -1,7 +1,7 @@
 /**
  * Game - Main controller for Word Safari
  */
-import { getLevel, getMode, TOTAL_LEVELS, PHASE_SIZE } from './Words.js';
+import { getLevel, getMode, PHASE_SIZE } from './Words.js';
 import { Progress } from './Progress.js';
 import { Speech } from './Speech.js';
 import { Audio } from './Audio.js';
@@ -14,7 +14,6 @@ export class Game {
         this.progress = new Progress();
         this.speech = new Speech();
         this.audio = new Audio();
-        this.shownTypingIntro = false;
 
         this.els = {
             picture: document.getElementById('picture'),
@@ -26,7 +25,6 @@ export class Game {
             slots: document.getElementById('slots'),
             keyboard: document.getElementById('keyboard'),
             startOverlay: document.getElementById('startOverlay'),
-            typingOverlay: document.getElementById('typingOverlay'),
             winOverlay: document.getElementById('winOverlay'),
             helpOverlay: document.getElementById('helpOverlay')
         };
@@ -70,28 +68,22 @@ export class Game {
     }
 
     bindButtons() {
-        document.getElementById('startBtn').addEventListener('pointerdown', e => {
+        document.getElementById('readModeBtn').addEventListener('pointerdown', e => {
             e.preventDefault();
-            this.audio.init(); // Needs a user gesture (browser policy)
-            this.els.startOverlay.classList.remove('visible');
-            this.startLevel();
+            this.chooseMode('read');
+        });
+        document.getElementById('writeModeBtn').addEventListener('pointerdown', e => {
+            e.preventDefault();
+            this.chooseMode('write');
         });
         this.els.speakBtn.addEventListener('pointerdown', e => {
             e.preventDefault();
             this.sayCurrentWord();
         });
-        document.getElementById('typingGoBtn').addEventListener('pointerdown', e => {
-            e.preventDefault();
-            this.els.typingOverlay.classList.remove('visible');
-            this.startLevel();
-        });
         document.getElementById('replayBtn').addEventListener('pointerdown', e => {
             e.preventDefault();
             this.els.winOverlay.classList.remove('visible');
-            this.shownTypingIntro = false;
-            this.progress.restart();
-            this.updateHud();
-            this.startLevel();
+            this.els.startOverlay.classList.add('visible');
         });
         document.getElementById('helpBtn').addEventListener('pointerdown', e => {
             e.preventDefault();
@@ -103,17 +95,18 @@ export class Game {
         });
     }
 
+    /** Player picked a game mode - start (or resume) that mode's levels */
+    chooseMode(mode) {
+        this.audio.init(); // Needs a user gesture (browser policy)
+        this.progress.startMode(mode);
+        this.els.startOverlay.classList.remove('visible');
+        this.startLevel();
+    }
+
     startLevel() {
         const level = this.progress.getLevel();
         this.entry = getLevel(level);
         const mode = getMode(level);
-
-        // First typing level gets a friendly "now you spell it!" intro
-        if (mode === 'typing' && !this.shownTypingIntro) {
-            this.shownTypingIntro = true;
-            this.els.typingOverlay.classList.add('visible');
-            return;
-        }
 
         this.els.picture.textContent = this.entry.emoji;
         this.els.picture.classList.remove('pop');
@@ -147,7 +140,7 @@ export class Game {
         this.audio.correct();
         this.speech.celebrate(this.entry.word);
         this.spawnStar();
-        const wasLast = this.progress.getLevel() === TOTAL_LEVELS;
+        const wasLast = this.progress.isLastLevel();
         this.progress.completeLevel();
         this.updateHud();
         setTimeout(() => {

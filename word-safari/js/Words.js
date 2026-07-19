@@ -80,6 +80,21 @@ const DECOYS = [
 export const PHASE_SIZE = CHOICE_WORDS.length;
 export const TOTAL_LEVELS = PHASE_SIZE * 2 + TYPING_WORDS.length;
 
+/**
+ * The two player-chosen game modes and the level range each one covers:
+ *   'read'  - tap the matching word (choice + review sub-phases, levels 1-40)
+ *   'write' - spell the word yourself on the keyboard (levels 41-60)
+ */
+export const GAME_MODES = {
+    read:  { start: 1, end: PHASE_SIZE * 2 },
+    write: { start: PHASE_SIZE * 2 + 1, end: TOTAL_LEVELS }
+};
+
+/** Get the { start, end } level range for a game mode, defaulting to 'read' */
+export function modeRange(gameMode) {
+    return GAME_MODES[gameMode] || GAME_MODES.read;
+}
+
 /** Which play mode a level (1-based) uses: 'choice' | 'review' | 'typing' */
 export function getMode(level) {
     if (level < 1 || level > TOTAL_LEVELS) return null;
