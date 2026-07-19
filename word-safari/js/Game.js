@@ -1,7 +1,7 @@
 /**
  * Game - Main controller for Word Safari
  */
-import { getLevel, isChoiceLevel, TOTAL_LEVELS, CHOICE_WORDS } from './Words.js';
+import { getLevel, getMode, TOTAL_LEVELS, PHASE_SIZE } from './Words.js';
 import { Progress } from './Progress.js';
 import { Speech } from './Speech.js';
 import { Audio } from './Audio.js';
@@ -51,7 +51,22 @@ export class Game {
         });
 
         this.bindButtons();
+        this.bindAudioUnlock();
         this.updateHud();
+    }
+
+    /**
+     * iOS Safari only unlocks audio/speech from a completed touch gesture
+     * (touchend/click, not pointerdown) - prime both on the first one.
+     */
+    bindAudioUnlock() {
+        const unlock = () => {
+            this.audio.init();
+            this.speech.unlock();
+        };
+        ['touchend', 'pointerup', 'click'].forEach(evt =>
+            document.addEventListener(evt, unlock, { once: true, passive: true })
+        );
     }
 
     bindButtons() {
@@ -91,10 +106,10 @@ export class Game {
     startLevel() {
         const level = this.progress.getLevel();
         this.entry = getLevel(level);
-        const choicePhase = isChoiceLevel(level);
+        const mode = getMode(level);
 
         // First typing level gets a friendly "now you spell it!" intro
-        if (!choicePhase && !this.shownTypingIntro) {
+        if (mode === 'typing' && !this.shownTypingIntro) {
             this.shownTypingIntro = true;
             this.els.typingOverlay.classList.add('visible');
             return;
@@ -105,14 +120,15 @@ export class Game {
         void this.els.picture.offsetWidth;
         this.els.picture.classList.add('pop');
 
-        if (choicePhase) {
-            this.typingMode.hide();
-            this.keyboard.setActive(false);
-            this.choiceMode.start(this.entry);
-        } else {
+        if (mode === 'typing') {
             this.choiceMode.hide();
             this.typingMode.start(this.entry);
             this.keyboard.setActive(true);
+        } else {
+            this.typingMode.hide();
+            this.keyboard.setActive(false);
+            // Review phase: decoys share the first letter - sound it out!
+            this.choiceMode.start(this.entry, { sameStart: mode === 'review' });
         }
 
         this.audio.pop();
@@ -161,13 +177,13 @@ export class Game {
 
     updateHud() {
         const level = this.progress.getLevel();
+        const icons = { choice: '👆', review: '👀', typing: '⌨️' };
         this.els.starCount.textContent = this.progress.getStars();
-        this.els.phaseIcon.textContent = isChoiceLevel(level) ? '👆' : '⌨️';
+        this.els.phaseIcon.textContent = icons[getMode(level)] || '👆';
 
         // Progress bar fills across the current phase
-        const phaseSize = CHOICE_WORDS.length;
-        const inPhase = isChoiceLevel(level) ? level - 1 : level - phaseSize - 1;
-        this.els.progressFill.style.width = `${(inPhase / phaseSize) * 100}%`;
+        const inPhase = (level - 1) % PHASE_SIZE;
+        this.els.progressFill.style.width = `${(inPhase / PHASE_SIZE) * 100}%`;
     }
 
     showHelp() {

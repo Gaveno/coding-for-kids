@@ -1,5 +1,5 @@
 /**
- * ChoiceMode - Pick the word that matches the picture (levels 1-20)
+ * ChoiceMode - Pick the word that matches the picture (phases 1 & 2)
  */
 import { getChoices } from './Words.js';
 
@@ -19,14 +19,15 @@ export class ChoiceMode {
     /**
      * Show 3 word choices for a level
      * @param {Object} entry - { word, emoji }
+     * @param {Object} [options] - { sameStart } for the tricky review phase
      */
-    start(entry) {
+    start(entry, options = {}) {
         this.word = entry.word;
         this.locked = false;
         this.container.innerHTML = '';
         this.container.classList.remove('hidden');
 
-        getChoices(entry.word).forEach(choice => {
+        getChoices(entry.word, { sameStart: !!options.sameStart }).forEach(choice => {
             const btn = document.createElement('button');
             btn.className = 'choice-word';
             btn.textContent = choice;

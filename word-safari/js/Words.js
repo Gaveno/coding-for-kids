@@ -1,12 +1,14 @@
 /**
  * Words - Level data for Word Safari
  *
- * Two phases, each ramping from 2-3 letter words up to 5-6 letter words:
- *   Phase 1 (choice): see the picture, pick the right word from 3 choices
- *   Phase 2 (typing): see the picture, spell the word with the keyboard
+ * Three phases of 20 levels, each ramping 2-3 letter words up to 5-6:
+ *   'choice' (1-20):  pick the right word from 3 - decoys are any words
+ *   'review' (21-40): same words again, but decoys START WITH THE SAME
+ *                     LETTER, so the first letter alone isn't enough
+ *   'typing' (41-60): fresh words, spell them with the keyboard
  */
 
-/** Phase 1 - pick the matching word (levels 1-20) */
+/** Phases 1 & 2 - pick the matching word */
 export const CHOICE_WORDS = [
     { word: 'ox',     emoji: '🐂' },
     { word: 'cat',    emoji: '🐱' },
@@ -30,7 +32,7 @@ export const CHOICE_WORDS = [
     { word: 'rocket', emoji: '🚀' }
 ];
 
-/** Phase 2 - type the word (levels 21-40) */
+/** Phase 3 - type the word */
 export const TYPING_WORDS = [
     { word: 'ax',     emoji: '🪓' },
     { word: 'cow',    emoji: '🐮' },
@@ -54,27 +56,45 @@ export const TYPING_WORDS = [
     { word: 'orange', emoji: '🍊' }
 ];
 
-/** Extra words used only as wrong answers in choice levels */
+/**
+ * Extra words used only as wrong answers. Stocked so every choice word
+ * has at least 2 decoys sharing its first letter AND length (for the
+ * review phase - e.g. ball vs bell vs bath).
+ */
 const DECOYS = [
-    'ant', 'bed', 'cup', 'eye', 'jam', 'leg', 'map', 'net', 'owl', 'pen',
-    'bird', 'boat', 'corn', 'door', 'kite', 'nose', 'ring', 'sock', 'wolf',
-    'bread', 'chair', 'cloud', 'mouse', 'sheep', 'tiger', 'whale',
-    'candle', 'castle', 'garden', 'pencil', 'turtle', 'window',
-    'go', 'in', 'up', 'me', 'we'
+    'on', 'of', 'or', 'go', 'in', 'up', 'me', 'we',
+    'ant', 'bat', 'bed', 'big', 'bug', 'can', 'cap', 'cot', 'cub', 'cup',
+    'den', 'dig', 'dot', 'ear', 'eat', 'elf', 'eye', 'jam', 'leg', 'map',
+    'net', 'owl', 'pan', 'pen', 'pin', 'pot', 'sea', 'sit', 'six',
+    'bath', 'bell', 'bird', 'boat', 'boot', 'corn', 'dark', 'desk', 'door',
+    'dust', 'farm', 'five', 'fork', 'kite', 'nose', 'ring', 'sand', 'sock',
+    'step', 'stop', 'wolf',
+    'alarm', 'ankle', 'apron', 'bread', 'chair', 'cloud', 'hands', 'happy',
+    'heart', 'mouse', 'sheep', 'smile', 'snail', 'stone', 'table', 'teeth',
+    'tiger', 'truck', 'whale',
+    'basket', 'bottle', 'bubble', 'button', 'candle', 'castle', 'garden',
+    'market', 'mitten', 'mother', 'pencil', 'rabbit', 'ribbon', 'rubber',
+    'turtle', 'window'
 ];
 
-export const TOTAL_LEVELS = CHOICE_WORDS.length + TYPING_WORDS.length;
+export const PHASE_SIZE = CHOICE_WORDS.length;
+export const TOTAL_LEVELS = PHASE_SIZE * 2 + TYPING_WORDS.length;
 
-/** True when a level (1-based) is a word-choice level */
-export function isChoiceLevel(level) {
-    return level >= 1 && level <= CHOICE_WORDS.length;
+/** Which play mode a level (1-based) uses: 'choice' | 'review' | 'typing' */
+export function getMode(level) {
+    if (level < 1 || level > TOTAL_LEVELS) return null;
+    if (level <= PHASE_SIZE) return 'choice';
+    if (level <= PHASE_SIZE * 2) return 'review';
+    return 'typing';
 }
 
 /** Get the { word, emoji } entry for a level (1-based), or null */
 export function getLevel(level) {
-    if (isChoiceLevel(level)) return CHOICE_WORDS[level - 1];
-    const i = level - CHOICE_WORDS.length - 1;
-    return TYPING_WORDS[i] || null;
+    const mode = getMode(level);
+    if (mode === 'choice') return CHOICE_WORDS[level - 1];
+    if (mode === 'review') return CHOICE_WORDS[level - PHASE_SIZE - 1];
+    if (mode === 'typing') return TYPING_WORDS[level - PHASE_SIZE * 2 - 1];
+    return null;
 }
 
 /** Every word that can appear as a wrong answer */
@@ -85,22 +105,36 @@ function decoyPool() {
 }
 
 /**
- * Build 3 shuffled choices (1 correct + 2 same-length decoys).
+ * Build 3 shuffled choices (1 correct + 2 decoys).
+ * Decoys prefer the answer's length; with `sameStart` they must also
+ * begin with the answer's first letter, so the player has to sound
+ * through more than the first letter.
  * @param {string} word - The correct word
- * @param {Function} random - RNG returning [0,1), injectable for tests
+ * @param {Object} [options] - { random, sameStart }
  * @returns {string[]} Array of 3 words including `word`
  */
-export function getChoices(word, random = Math.random) {
-    const sameLength = decoyPool().filter(w => w !== word && w.length === word.length);
-    const anyLength = decoyPool().filter(w => w !== word);
-    const pool = sameLength.length >= 2 ? sameLength : anyLength;
+export function getChoices(word, { random = Math.random, sameStart = false } = {}) {
+    const pool = decoyPool().filter(w => w !== word);
+    const tiers = sameStart
+        ? [
+            pool.filter(w => w[0] === word[0] && w.length === word.length),
+            pool.filter(w => w[0] === word[0]),
+            pool.filter(w => w.length === word.length),
+            pool
+        ]
+        : [
+            pool.filter(w => w.length === word.length),
+            pool
+        ];
 
     const decoys = [];
-    const copy = pool.slice();
-    while (decoys.length < 2 && copy.length > 0) {
-        const i = Math.floor(random() * copy.length);
-        const pick = copy.splice(i, 1)[0];
-        if (!decoys.includes(pick)) decoys.push(pick);
+    for (const tier of tiers) {
+        const copy = tier.filter(w => !decoys.includes(w));
+        while (decoys.length < 2 && copy.length > 0) {
+            const i = Math.floor(random() * copy.length);
+            decoys.push(copy.splice(i, 1)[0]);
+        }
+        if (decoys.length >= 2) break;
     }
 
     const choices = [word, ...decoys];

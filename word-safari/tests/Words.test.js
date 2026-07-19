@@ -1,9 +1,9 @@
 /**
- * Tests for Words module
+ * Tests for the Words module
  */
 import {
-    CHOICE_WORDS, TYPING_WORDS, TOTAL_LEVELS,
-    isChoiceLevel, getLevel, getChoices
+    CHOICE_WORDS, TYPING_WORDS, TOTAL_LEVELS, PHASE_SIZE,
+    getMode, getLevel, getChoices
 } from '../js/Words.js';
 
 export function runWordsTests() {
@@ -39,10 +39,11 @@ export function runWordsTests() {
         };
     }
 
-    test('There are 20 choice levels and 20 typing levels', () => {
+    test('There are 3 phases of 20 levels (60 total)', () => {
         assertEqual(CHOICE_WORDS.length, 20);
         assertEqual(TYPING_WORDS.length, 20);
-        assertEqual(TOTAL_LEVELS, 40);
+        assertEqual(PHASE_SIZE, 20);
+        assertEqual(TOTAL_LEVELS, 60);
     });
 
     test('Every level has a lowercase word and an emoji', () => {
@@ -77,28 +78,37 @@ export function runWordsTests() {
         }
     });
 
-    test('No word appears in both phases', () => {
+    test('No word appears in both choice and typing phases', () => {
         const choice = new Set(CHOICE_WORDS.map(e => e.word));
         TYPING_WORDS.forEach(e => {
             assertTrue(!choice.has(e.word), `"${e.word}" appears in both phases.`);
         });
     });
 
-    test('isChoiceLevel splits the phases at level 20/21', () => {
-        assertTrue(isChoiceLevel(1));
-        assertTrue(isChoiceLevel(20));
-        assertEqual(isChoiceLevel(21), false);
-        assertEqual(isChoiceLevel(40), false);
-        assertEqual(isChoiceLevel(0), false);
+    test('getMode splits the phases at 20/21 and 40/41', () => {
+        assertEqual(getMode(1), 'choice');
+        assertEqual(getMode(20), 'choice');
+        assertEqual(getMode(21), 'review');
+        assertEqual(getMode(40), 'review');
+        assertEqual(getMode(41), 'typing');
+        assertEqual(getMode(60), 'typing');
+        assertEqual(getMode(0), null);
+        assertEqual(getMode(61), null);
+    });
+
+    test('Review levels repeat the choice words in order', () => {
+        for (let i = 0; i < PHASE_SIZE; i++) {
+            assertEqual(getLevel(21 + i).word, CHOICE_WORDS[i].word, `Review level ${21 + i}:`);
+        }
     });
 
     test('getLevel returns null past the last level', () => {
-        assertEqual(getLevel(41), null);
+        assertEqual(getLevel(61), null);
     });
 
     test('getChoices returns 3 unique options including the answer', () => {
         for (let seed = 1; seed <= 30; seed++) {
-            const choices = getChoices('cat', seededRandom(seed));
+            const choices = getChoices('cat', { random: seededRandom(seed) });
             assertEqual(choices.length, 3, 'Wrong choice count.');
             assertEqual(new Set(choices).size, 3, 'Choices not unique.');
             assertTrue(choices.includes('cat'), 'Answer missing from choices.');
@@ -107,17 +117,31 @@ export function runWordsTests() {
 
     test('Decoys match the answer word length for every choice level', () => {
         CHOICE_WORDS.forEach(({ word }) => {
-            const choices = getChoices(word, seededRandom(7));
+            const choices = getChoices(word, { random: seededRandom(7) });
             choices.forEach(c => {
                 assertEqual(c.length, word.length, `Decoy "${c}" length differs from "${word}".`);
             });
         });
     });
 
+    test('Review decoys share first letter AND length for every word', () => {
+        CHOICE_WORDS.forEach(({ word }) => {
+            for (let seed = 1; seed <= 10; seed++) {
+                const choices = getChoices(word, { random: seededRandom(seed), sameStart: true });
+                assertEqual(choices.length, 3, `"${word}" wrong choice count.`);
+                assertTrue(choices.includes(word), `"${word}" missing from its choices.`);
+                choices.forEach(c => {
+                    assertEqual(c[0], word[0], `Decoy "${c}" starts differently from "${word}".`);
+                    assertEqual(c.length, word.length, `Decoy "${c}" length differs from "${word}".`);
+                });
+            }
+        });
+    });
+
     test('The answer position varies (choices are shuffled)', () => {
         const positions = new Set();
         for (let seed = 1; seed <= 50; seed++) {
-            positions.add(getChoices('dog', seededRandom(seed)).indexOf('dog'));
+            positions.add(getChoices('dog', { random: seededRandom(seed) }).indexOf('dog'));
         }
         assertTrue(positions.size > 1, 'Answer is always in the same slot.');
     });

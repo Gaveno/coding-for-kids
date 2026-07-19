@@ -8,17 +8,33 @@ export class Audio {
     }
 
     init() {
-        if (this.context) return;
+        if (this.context) {
+            this.resume();
+            return;
+        }
         try {
             this.context = new (window.AudioContext || window.webkitAudioContext)();
+            this.resume();
         } catch (e) {
             console.warn('Web Audio not supported');
             this.enabled = false;
         }
     }
 
+    /** iOS Safari starts (and re-suspends) contexts in 'suspended' state */
+    resume() {
+        try {
+            if (this.context && this.context.state === 'suspended') {
+                this.context.resume();
+            }
+        } catch (e) {
+            // Ignore
+        }
+    }
+
     playTone(frequency, duration = 0.1, type = 'sine', delay = 0) {
         if (!this.enabled || !this.context) return;
+        this.resume();
         try {
             const oscillator = this.context.createOscillator();
             const gainNode = this.context.createGain();
