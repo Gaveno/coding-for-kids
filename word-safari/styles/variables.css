@@ -1,0 +1,54 @@
+/* ===== CSS Variables for Word Safari ===== */
+:root {
+    /* Colors - Jungle/Safari Theme */
+    --color-primary: #2E8B57;
+    --color-primary-light: #3CB371;
+    --color-secondary: #E67E22;
+    --color-secondary-light: #F39C12;
+    --color-accent: #4ECDC4;
+    --color-success: #2ECC71;
+    --color-warning: #FFE66D;
+    --color-danger: #FF6B6B;
+
+    /* Backgrounds */
+    --color-bg: #1B3B2F;
+    --color-bg-dark: #0F251C;
+    --color-surface: #2A5744;
+    --color-surface-light: #396F57;
+    --color-text: #FFFFFF;
+
+    /* Special colors */
+    --color-card: #FFF8E7;
+    --color-card-text: #34495E;
+    --color-key: #FDF6EC;
+    --color-key-text: #2C3E50;
+    --color-slot: #24483A;
+    --color-hint: rgba(255, 255, 255, 0.28);
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 50%;
+
+    /* Shadows */
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+
+    /* Dimensions */
+    --picture-size: 140px;
+    --slot-size: 52px;
+    --key-size: 44px;
+    --word-font: 'Comic Sans MS', 'Segoe UI', system-ui, sans-serif;
+}

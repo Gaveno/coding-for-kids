@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📖 Word Safari</title>
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/picture.css">
+    <link rel="stylesheet" href="styles/choices.css">
+    <link rel="stylesheet" href="styles/typing.css">
+    <link rel="stylesheet" href="styles/overlays.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <header class="game-header">
+            <a href="../index.html" class="home-btn" aria-label="Back to Home">🏠</a>
+            <div class="logo" aria-label="Word Safari game">🦉📖</div>
+            <div class="star-indicator">
+                <span class="star" aria-hidden="true">⭐</span>
+                <span class="star-num" id="starCount" aria-label="Stars earned">0</span>
+            </div>
+            <button class="help-btn" id="helpBtn" aria-label="Help">❓</button>
+        </header>
+
+        <!-- Phase progress -->
+        <div class="progress-row" aria-label="Level progress">
+            <span class="phase-icon" id="phaseIcon" aria-hidden="true">👆</span>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- Main game area -->
+        <main class="game-main">
+            <!-- The picture to read -->
+            <section class="picture-area" aria-label="Picture to match">
+                <div class="picture-card">
+                    <div class="picture" id="picture" aria-live="polite">🐱</div>
+                </div>
+                <button class="speak-btn" id="speakBtn" aria-label="Hear the word">🔊</button>
+            </section>
+
+            <!-- Phase 1: pick the word -->
+            <section class="choices hidden" id="choices" aria-label="Word choices"></section>
+
+            <!-- Phase 2: spell the word -->
+            <section class="typing-area" aria-label="Spell the word">
+                <div class="slots hidden" id="slots"></div>
+                <div class="keyboard hidden" id="keyboard" aria-label="Letter keyboard"></div>
+            </section>
+        </main>
+
+        <!-- Start overlay -->
+        <div class="overlay visible" id="startOverlay">
+            <div class="overlay-content">
+                <img class="mascot" src="../art/reading/owl.svg" alt="Word Safari owl">
+                <h1 class="overlay-title" aria-label="Word Safari">📖✨</h1>
+                <button class="big-btn" id="startBtn" aria-label="Start game">▶️</button>
+            </div>
+        </div>
+
+        <!-- Typing phase intro overlay -->
+        <div class="overlay" id="typingOverlay">
+            <div class="overlay-content">
+                <div class="overlay-icon">🔊➡️⌨️</div>
+                <div class="overlay-hint" aria-label="Now you spell the words!">✏️✨</div>
+                <button class="big-btn" id="typingGoBtn" aria-label="Start spelling">▶️</button>
+            </div>
+        </div>
+
+        <!-- Win overlay -->
+        <div class="overlay" id="winOverlay">
+            <div class="overlay-content">
+                <div class="overlay-icon">🏆🎉</div>
+                <div class="overlay-hint">🦉⭐📖</div>
+                <button class="big-btn" id="replayBtn" aria-label="Play again">🔄</button>
+            </div>
+        </div>
+
+        <!-- Help overlay -->
+        <div class="overlay" id="helpOverlay">
+            <div class="overlay-content help-content">
+                <h2 class="help-title">🦉 Word Safari 📖</h2>
+
+                <div class="help-section">
+                    <div class="help-icons">
+                        <div class="help-icon">
+                            <span>🖼️🔊</span>
+                            <span>See the picture, hear the word</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>👆✅</span>
+                            <span>Tap the matching word</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>⌨️✏️</span>
+                            <span>Later: spell it yourself!</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>🔊🔁</span>
+                            <span>Tap the speaker to hear it again</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>⭐🏆</span>
+                            <span>Earn a star for every word</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="big-btn" id="closeHelpBtn" aria-label="Close help">👍</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

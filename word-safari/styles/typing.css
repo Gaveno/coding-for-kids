@@ -1,0 +1,101 @@
+/* ===== Letter slots and keyboard (phase 2) ===== */
+.typing-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+    width: 100%;
+}
+
+/* --- Letter slots --- */
+.slots {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    min-height: var(--slot-size);
+}
+
+.slots.shake {
+    animation: shake 0.5s ease;
+}
+
+.letter-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--slot-size);
+    height: calc(var(--slot-size) * 1.15);
+    font-family: var(--word-font);
+    font-size: 2rem;
+    font-weight: bold;
+    background: var(--color-slot);
+    border: 3px dashed var(--color-surface-light);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+}
+
+.letter-slot.filled {
+    background: var(--color-card);
+    border: 3px solid var(--color-primary-light);
+    color: var(--color-card-text);
+    animation: pop-in 0.2s ease;
+}
+
+.letter-slot.hint {
+    color: var(--color-hint);
+}
+
+.letter-slot.next {
+    border-color: var(--color-warning);
+    animation: pulse-border 1.2s ease infinite;
+}
+
+.letter-slot.right {
+    background: var(--color-success);
+    border-color: var(--color-success);
+    color: #fff;
+    animation: bounce 0.5s ease;
+}
+
+/* --- On-screen keyboard --- */
+.keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    align-items: center;
+    padding-bottom: var(--spacing-sm);
+}
+
+.kb-row {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: center;
+}
+
+.kb-key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--key-size);
+    height: calc(var(--key-size) * 1.15);
+    font-family: var(--word-font);
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--color-key-text);
+    background: var(--color-key);
+    border: none;
+    border-bottom: 4px solid #C9BBA4;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.kb-key.pressed {
+    animation: key-press 0.15s ease;
+}
+
+.kb-key.kb-erase {
+    width: calc(var(--key-size) * 1.6);
+    background: var(--color-danger);
+    border-bottom-color: #C0392B;
+    color: #fff;
+}

@@ -1,0 +1,59 @@
+/* ===== Responsive tweaks for Word Safari ===== */
+
+/* Small phones */
+@media (max-width: 380px) {
+    :root {
+        --picture-size: 110px;
+        --slot-size: 42px;
+        --key-size: 38px;
+    }
+
+    .choice-word {
+        font-size: 1.6rem;
+        padding: var(--spacing-md);
+    }
+
+    .speak-btn {
+        width: 54px;
+        height: 54px;
+        font-size: 1.6rem;
+    }
+}
+
+/* Short screens (landscape phones) */
+@media (max-height: 520px) {
+    :root {
+        --picture-size: 84px;
+        --slot-size: 40px;
+        --key-size: 36px;
+    }
+
+    .game-main {
+        gap: var(--spacing-sm);
+    }
+
+    .choices {
+        flex-direction: row;
+        max-width: none;
+        justify-content: center;
+    }
+
+    .choice-word {
+        font-size: 1.5rem;
+        padding: var(--spacing-md);
+        flex: 0 1 160px;
+    }
+}
+
+/* Big tablets */
+@media (min-width: 700px) and (min-height: 800px) {
+    :root {
+        --picture-size: 180px;
+        --slot-size: 64px;
+        --key-size: 56px;
+    }
+
+    .choice-word {
+        font-size: 2.4rem;
+    }
+}
