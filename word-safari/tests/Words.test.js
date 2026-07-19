@@ -3,7 +3,7 @@
  */
 import {
     CHOICE_WORDS, TYPING_WORDS, TOTAL_LEVELS, PHASE_SIZE,
-    getMode, getLevel, getChoices
+    getMode, getLevel, getChoices, makeOrder
 } from '../js/Words.js';
 
 export function runWordsTests() {
@@ -39,11 +39,11 @@ export function runWordsTests() {
         };
     }
 
-    test('There are 3 phases of 20 levels (60 total)', () => {
-        assertEqual(CHOICE_WORDS.length, 20);
-        assertEqual(TYPING_WORDS.length, 20);
-        assertEqual(PHASE_SIZE, 20);
-        assertEqual(TOTAL_LEVELS, 60);
+    test('Read and write modes share a phase size, doubled read + write total', () => {
+        assertEqual(CHOICE_WORDS.length, 35);
+        assertEqual(TYPING_WORDS.length, 35);
+        assertEqual(PHASE_SIZE, 35);
+        assertEqual(TOTAL_LEVELS, PHASE_SIZE * 2 + TYPING_WORDS.length);
     });
 
     test('Every level has a lowercase word and an emoji', () => {
@@ -58,7 +58,7 @@ export function runWordsTests() {
 
     test('Choice phase ramps from short words to long words', () => {
         assertTrue(CHOICE_WORDS[0].word.length <= 3, 'First choice word too long.');
-        assertTrue(CHOICE_WORDS[19].word.length >= 5, 'Last choice word too short.');
+        assertTrue(CHOICE_WORDS[CHOICE_WORDS.length - 1].word.length >= 5, 'Last choice word too short.');
         for (let i = 1; i < CHOICE_WORDS.length; i++) {
             assertTrue(
                 CHOICE_WORDS[i].word.length >= CHOICE_WORDS[i - 1].word.length,
@@ -69,7 +69,7 @@ export function runWordsTests() {
 
     test('Typing phase resets to short words then ramps up again', () => {
         assertTrue(TYPING_WORDS[0].word.length <= 3, 'Typing phase should restart short.');
-        assertTrue(TYPING_WORDS[19].word.length >= 5, 'Last typing word too short.');
+        assertTrue(TYPING_WORDS[TYPING_WORDS.length - 1].word.length >= 5, 'Last typing word too short.');
         for (let i = 1; i < TYPING_WORDS.length; i++) {
             assertTrue(
                 TYPING_WORDS[i].word.length >= TYPING_WORDS[i - 1].word.length,
@@ -85,25 +85,53 @@ export function runWordsTests() {
         });
     });
 
-    test('getMode splits the phases at 20/21 and 40/41', () => {
+    test('getMode splits choice/review/typing at the phase edges', () => {
         assertEqual(getMode(1), 'choice');
-        assertEqual(getMode(20), 'choice');
-        assertEqual(getMode(21), 'review');
-        assertEqual(getMode(40), 'review');
-        assertEqual(getMode(41), 'typing');
-        assertEqual(getMode(60), 'typing');
+        assertEqual(getMode(PHASE_SIZE), 'choice');
+        assertEqual(getMode(PHASE_SIZE + 1), 'review');
+        assertEqual(getMode(PHASE_SIZE * 2), 'review');
+        assertEqual(getMode(PHASE_SIZE * 2 + 1), 'typing');
+        assertEqual(getMode(TOTAL_LEVELS), 'typing');
         assertEqual(getMode(0), null);
-        assertEqual(getMode(61), null);
+        assertEqual(getMode(TOTAL_LEVELS + 1), null);
     });
 
     test('Review levels repeat the choice words in order', () => {
         for (let i = 0; i < PHASE_SIZE; i++) {
-            assertEqual(getLevel(21 + i).word, CHOICE_WORDS[i].word, `Review level ${21 + i}:`);
+            assertEqual(
+                getLevel(PHASE_SIZE + 1 + i).word, CHOICE_WORDS[i].word,
+                `Review level ${PHASE_SIZE + 1 + i}:`
+            );
         }
     });
 
     test('getLevel returns null past the last level', () => {
-        assertEqual(getLevel(61), null);
+        assertEqual(getLevel(TOTAL_LEVELS + 1), null);
+    });
+
+    test('getLevel maps positions through a supplied word order', () => {
+        const reverse = CHOICE_WORDS.map((_, i) => CHOICE_WORDS.length - 1 - i);
+        assertEqual(getLevel(1, reverse).word, CHOICE_WORDS[reverse[0]].word);
+        // Review reuses the same order, so it lines up with the choice sub-phase
+        assertEqual(getLevel(PHASE_SIZE + 1, reverse).word, CHOICE_WORDS[reverse[0]].word);
+    });
+
+    test('makeOrder shuffles within length bands but keeps the ramp', () => {
+        const order = makeOrder('read', seededRandom(3));
+        assertEqual(order.length, CHOICE_WORDS.length, 'Order length differs.');
+        assertEqual(new Set(order).size, CHOICE_WORDS.length, 'Order is not a permutation.');
+        let prev = 0;
+        order.forEach(idx => {
+            const len = CHOICE_WORDS[idx].word.length;
+            assertTrue(len >= prev, 'Length ramp broken by the shuffle.');
+            prev = len;
+        });
+    });
+
+    test('makeOrder varies the order between sessions', () => {
+        const a = makeOrder('read', seededRandom(1)).join(',');
+        const b = makeOrder('read', seededRandom(9)).join(',');
+        assertTrue(a !== b, 'Order did not change between sessions.');
     });
 
     test('getChoices returns 3 unique options including the answer', () => {

@@ -2,7 +2,7 @@
  * Tests for Progress module
  */
 import { Progress } from '../js/Progress.js';
-import { modeRange } from '../js/Words.js';
+import { modeRange, phaseWordCount } from '../js/Words.js';
 
 export function runProgressTests() {
     const results = [];
@@ -109,6 +109,15 @@ export function runProgressTests() {
         p.startMode('read');
         assertEqual(p.getLevel(), READ.start);
         assertEqual(p.isFinished(), false);
+    });
+
+    test('startMode produces a valid shuffled word order', () => {
+        const p = new Progress(fakeStorage());
+        p.startMode('read');
+        const order = p.getOrder();
+        assertTrue(Array.isArray(order), 'Order should be an array.');
+        assertEqual(order.length, phaseWordCount('read'));
+        assertEqual(new Set(order).size, order.length, 'Order should be a permutation.');
     });
 
     test('restart returns to the mode first level but keeps stars', () => {

@@ -105,7 +105,7 @@ export class Game {
 
     startLevel() {
         const level = this.progress.getLevel();
-        this.entry = getLevel(level);
+        this.entry = getLevel(level, this.progress.getOrder());
         const mode = getMode(level);
 
         this.els.picture.textContent = this.entry.emoji;

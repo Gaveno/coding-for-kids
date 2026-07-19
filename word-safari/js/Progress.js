@@ -5,10 +5,18 @@
  * keeps its own current level so kids can resume either one. Stars are a
  * shared trophy count across both modes.
  */
-import { modeRange } from './Words.js';
+import { modeRange, makeOrder, phaseWordCount } from './Words.js';
 
 const STORAGE_KEY = 'word-safari-progress-v2';
 const MODES = ['read', 'write'];
+
+/** True if `order` is a permutation of 0..count-1 */
+function isValidOrder(order, count) {
+    if (!Array.isArray(order) || order.length !== count) return false;
+    const seen = new Set(order);
+    if (seen.size !== count) return false;
+    return order.every(n => Number.isInteger(n) && n >= 0 && n < count);
+}
 
 export class Progress {
     constructor(storage) {
@@ -29,8 +37,9 @@ export class Progress {
         if (typeof data.stars !== 'number') data.stars = 0;
         if (!data.levels || typeof data.levels !== 'object') data.levels = {};
         if (!data.done || typeof data.done !== 'object') data.done = {};
+        if (!data.order || typeof data.order !== 'object') data.order = {};
 
-        // Clamp each mode's saved level into its own range
+        // Clamp each mode's saved level into its own range; drop bad orders
         for (const mode of MODES) {
             const { start, end } = modeRange(mode);
             const level = Math.floor(data.levels[mode]);
@@ -38,6 +47,9 @@ export class Progress {
                 ? Math.max(start, Math.min(end, level))
                 : start;
             data.done[mode] = data.done[mode] === true;
+            if (!isValidOrder(data.order[mode], phaseWordCount(mode))) {
+                data.order[mode] = null;
+            }
         }
         return data;
     }
@@ -59,7 +71,21 @@ export class Progress {
     startMode(mode) {
         this.mode = MODES.includes(mode) ? mode : 'read';
         if (this.data.done[this.mode]) this.restart();
+        else this.ensureOrder();
         return this.mode;
+    }
+
+    /** Make sure the active mode has a play order, generating one if needed */
+    ensureOrder() {
+        if (!this.data.order[this.mode]) {
+            this.data.order[this.mode] = makeOrder(this.mode);
+            this.save();
+        }
+    }
+
+    /** The shuffled word order for the active mode (for getLevel) */
+    getOrder() {
+        return this.data.order[this.mode];
     }
 
     /** The currently selected game mode ('read' | 'write') */
@@ -107,6 +133,7 @@ export class Progress {
     restart() {
         this.data.levels[this.mode] = this.range().start;
         this.data.done[this.mode] = false;
+        this.data.order[this.mode] = makeOrder(this.mode);
         this.save();
     }
 }

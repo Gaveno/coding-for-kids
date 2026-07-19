@@ -1,81 +1,20 @@
 /**
- * Words - Level data for Word Safari
+ * Words - Level logic for Word Safari (word data lives in WordData.js)
  *
- * Three phases of 20 levels, each ramping 2-3 letter words up to 5-6:
- *   'choice' (1-20):  pick the right word from 3 - decoys are any words
- *   'review' (21-40): same words again, but decoys START WITH THE SAME
- *                     LETTER, so the first letter alone isn't enough
- *   'typing' (41-60): fresh words, spell them with the keyboard
+ * Two player-chosen modes, each ramping 2-3 letter words up to 6:
+ *   'read'  - tap the matching word. Runs a 'choice' sub-phase (decoys are
+ *             any words) then a tricky 'review' sub-phase where decoys START
+ *             WITH THE SAME LETTER, so the first letter alone isn't enough.
+ *   'write' - fresh words, spell them with the keyboard.
+ *
+ * Word lists are kept in ascending length order (easy -> hard). The play
+ * order is shuffled WITHIN each length band every session (see makeOrder),
+ * so kids can't just memorise the sequence but the difficulty still ramps.
  */
+import { CHOICE_WORDS, TYPING_WORDS, DECOYS } from './WordData.js';
 
-/** Phases 1 & 2 - pick the matching word */
-export const CHOICE_WORDS = [
-    { word: 'ox',     emoji: '🐂' },
-    { word: 'cat',    emoji: '🐱' },
-    { word: 'dog',    emoji: '🐶' },
-    { word: 'sun',    emoji: '☀️' },
-    { word: 'bee',    emoji: '🐝' },
-    { word: 'pig',    emoji: '🐷' },
-    { word: 'egg',    emoji: '🥚' },
-    { word: 'fish',   emoji: '🐟' },
-    { word: 'frog',   emoji: '🐸' },
-    { word: 'duck',   emoji: '🦆' },
-    { word: 'star',   emoji: '⭐' },
-    { word: 'book',   emoji: '📖' },
-    { word: 'ball',   emoji: '⚽' },
-    { word: 'apple',  emoji: '🍎' },
-    { word: 'house',  emoji: '🏠' },
-    { word: 'snake',  emoji: '🐍' },
-    { word: 'train',  emoji: '🚂' },
-    { word: 'banana', emoji: '🍌' },
-    { word: 'monkey', emoji: '🐵' },
-    { word: 'rocket', emoji: '🚀' }
-];
-
-/** Phase 3 - type the word */
-export const TYPING_WORDS = [
-    { word: 'ax',     emoji: '🪓' },
-    { word: 'cow',    emoji: '🐮' },
-    { word: 'fox',    emoji: '🦊' },
-    { word: 'hat',    emoji: '🎩' },
-    { word: 'car',    emoji: '🚗' },
-    { word: 'bus',    emoji: '🚌' },
-    { word: 'key',    emoji: '🔑' },
-    { word: 'moon',   emoji: '🌙' },
-    { word: 'cake',   emoji: '🎂' },
-    { word: 'tree',   emoji: '🌳' },
-    { word: 'milk',   emoji: '🥛' },
-    { word: 'lion',   emoji: '🦁' },
-    { word: 'ship',   emoji: '🚢' },
-    { word: 'horse',  emoji: '🐴' },
-    { word: 'pizza',  emoji: '🍕' },
-    { word: 'robot',  emoji: '🤖' },
-    { word: 'clock',  emoji: '⏰' },
-    { word: 'flower', emoji: '🌸' },
-    { word: 'spider', emoji: '🕷️' },
-    { word: 'orange', emoji: '🍊' }
-];
-
-/**
- * Extra words used only as wrong answers. Stocked so every choice word
- * has at least 2 decoys sharing its first letter AND length (for the
- * review phase - e.g. ball vs bell vs bath).
- */
-const DECOYS = [
-    'on', 'of', 'or', 'go', 'in', 'up', 'me', 'we',
-    'ant', 'bat', 'bed', 'big', 'bug', 'can', 'cap', 'cot', 'cub', 'cup',
-    'den', 'dig', 'dot', 'ear', 'eat', 'elf', 'eye', 'jam', 'leg', 'map',
-    'net', 'owl', 'pan', 'pen', 'pin', 'pot', 'sea', 'sit', 'six',
-    'bath', 'bell', 'bird', 'boat', 'boot', 'corn', 'dark', 'desk', 'door',
-    'dust', 'farm', 'five', 'fork', 'kite', 'nose', 'ring', 'sand', 'sock',
-    'step', 'stop', 'wolf',
-    'alarm', 'ankle', 'apron', 'bread', 'chair', 'cloud', 'hands', 'happy',
-    'heart', 'mouse', 'sheep', 'smile', 'snail', 'stone', 'table', 'teeth',
-    'tiger', 'truck', 'whale',
-    'basket', 'bottle', 'bubble', 'button', 'candle', 'castle', 'garden',
-    'market', 'mitten', 'mother', 'pencil', 'rabbit', 'ribbon', 'rubber',
-    'turtle', 'window'
-];
+// Re-export the word lists so callers can keep importing from Words.js
+export { CHOICE_WORDS, TYPING_WORDS } from './WordData.js';
 
 export const PHASE_SIZE = CHOICE_WORDS.length;
 export const TOTAL_LEVELS = PHASE_SIZE * 2 + TYPING_WORDS.length;
@@ -95,6 +34,38 @@ export function modeRange(gameMode) {
     return GAME_MODES[gameMode] || GAME_MODES.read;
 }
 
+/** How many unique picture words a game mode draws from */
+export function phaseWordCount(gameMode) {
+    return gameMode === 'write' ? TYPING_WORDS.length : CHOICE_WORDS.length;
+}
+
+/**
+ * Build a play order for a mode's words: a permutation of word indices
+ * shuffled WITHIN each word-length band. Every play-through varies, but
+ * because the lists are stored shortest-first the easy->hard ramp survives.
+ * @param {'read'|'write'} gameMode
+ * @param {Function} [random] - injectable RNG (defaults to Math.random)
+ * @returns {number[]} permutation of 0..count-1
+ */
+export function makeOrder(gameMode, random = Math.random) {
+    const words = gameMode === 'write' ? TYPING_WORDS : CHOICE_WORDS;
+    const bands = new Map();
+    words.forEach((entry, i) => {
+        const len = entry.word.length;
+        if (!bands.has(len)) bands.set(len, []);
+        bands.get(len).push(i);
+    });
+    const order = [];
+    for (const idxs of bands.values()) {
+        for (let i = idxs.length - 1; i > 0; i--) {
+            const j = Math.floor(random() * (i + 1));
+            [idxs[i], idxs[j]] = [idxs[j], idxs[i]];
+        }
+        order.push(...idxs);
+    }
+    return order;
+}
+
 /** Which play mode a level (1-based) uses: 'choice' | 'review' | 'typing' */
 export function getMode(level) {
     if (level < 1 || level > TOTAL_LEVELS) return null;
@@ -103,13 +74,25 @@ export function getMode(level) {
     return 'typing';
 }
 
-/** Get the { word, emoji } entry for a level (1-based), or null */
-export function getLevel(level) {
+/**
+ * Get the { word, emoji } entry for a level (1-based), or null.
+ * Pass a play `order` (from makeOrder) to walk the words in a shuffled
+ * sequence; omit it to use the natural shortest-first order.
+ */
+export function getLevel(level, order = null) {
     const mode = getMode(level);
-    if (mode === 'choice') return CHOICE_WORDS[level - 1];
-    if (mode === 'review') return CHOICE_WORDS[level - PHASE_SIZE - 1];
-    if (mode === 'typing') return TYPING_WORDS[level - PHASE_SIZE * 2 - 1];
+    if (mode === 'choice') return orderedEntry(CHOICE_WORDS, level - 1, order);
+    if (mode === 'review') return orderedEntry(CHOICE_WORDS, level - PHASE_SIZE - 1, order);
+    if (mode === 'typing') return orderedEntry(TYPING_WORDS, level - PHASE_SIZE * 2 - 1, order);
     return null;
+}
+
+/** Look up a phase word by position, remapped through an optional order */
+function orderedEntry(words, position, order) {
+    const index = Array.isArray(order) && order.length === words.length
+        ? order[position]
+        : position;
+    return words[index];
 }
 
 /** Every word that can appear as a wrong answer */
