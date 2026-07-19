@@ -106,6 +106,35 @@ body.sandbox-mode .next-btn {
     background: rgba(255, 230, 109, 0.25);
 }
 
+/* Export tool: hidden unless running locally (dev-only level authoring) */
+.local-only {
+    display: none;
+}
+
+body.local-mode .local-only {
+    display: flex;
+}
+
+.export-btn {
+    background: rgba(109, 200, 255, 0.25);
+    border-color: #6dc8ff;
+}
+
+.save-btn {
+    background: rgba(157, 255, 109, 0.25);
+    border-color: #9dff6d;
+}
+
+.dir-btn {
+    background: rgba(255, 209, 102, 0.25);
+    border-color: #ffd166;
+}
+
+.open-btn {
+    background: rgba(157, 255, 109, 0.25);
+    border-color: #9dff6d;
+}
+
 /* ===== Control Buttons ===== */
 .control-section {
     display: flex;

@@ -6,6 +6,7 @@
 const MOVE_MS = 380;
 const TURN_MS = 260;
 const ACTION_MS = 300;
+const BUMP_MS = 200;
 
 export class Runner {
     constructor(game) {
@@ -52,14 +53,13 @@ export class Runner {
     async stepForward() {
         const g = this.game;
         const next = g.ant.getForwardPosition();
-        if (g.grid.hasObstacle(`${next.x},${next.y}`)) {
-            g.sprite.shake();
-            return this.fail('💥🪨');
+        const offGrid = next.x < 0 || next.y < 0 ||
+            next.x >= g.grid.size || next.y >= g.grid.size;
+        if (offGrid || g.grid.hasObstacle(`${next.x},${next.y}`)) {
+            return this.crashForward(next, offGrid ? '💥' : '💥🪨');
         }
 
         g.ant.moveForward();
-        if (g.ant.isOutOfBounds(g.grid.size)) return this.fail('💥');
-
         g.sprite.startWalk();
         g.moveSpriteToAnt(true);
         g.audio.play('move');
@@ -69,6 +69,18 @@ export class Runner {
         await this.checkTunnel();
         this.collectCrumb();
         return true;
+    }
+
+    /** Walk halfway into the blocked cell, then shake and play the death anim. */
+    async crashForward(target, feedback) {
+        const g = this.game;
+        g.sprite.startWalk();
+        g.bumpAntForward(target);
+        g.audio.play('move');
+        await this.delay(BUMP_MS);
+        g.sprite.stopWalk();
+        g.sprite.shake();
+        return this.fail(feedback);
     }
 
     async checkTunnel() {

@@ -21,12 +21,13 @@ export class AntSprite {
         this.busy = false;
         this.carrying = false;
         this.frameIndex = 0;
+        this._imageCache = [];
         this.buildFrames();
         this.createElements();
-        // Preload walk/base eagerly, the rest in the background
+        // Preload walk/base eagerly into memory cache, rest in background
         [...this.frames.move.plain, this.idle.plain, this.idle.leaf]
-            .forEach(src => { new Image().src = src; });
-        setTimeout(() => this.preloadAll(), 1500);
+            .forEach(src => this._preloadOne(src));
+        setTimeout(() => this.preloadAll(), 3000);
     }
 
     buildFrames() {
@@ -39,9 +40,24 @@ export class AntSprite {
         this.idle = { plain: `${ART}base_000.png`, leaf: `${ART}with_leaf_base_000.png` };
     }
 
-    preloadAll() {
-        Object.values(this.frames).forEach(set =>
-            [...set.plain, ...set.leaf].forEach(src => { new Image().src = src; }));
+    _preloadOne(src) {
+        const img = new Image();
+        img.src = src;
+        this._imageCache.push(img);
+    }
+
+    async preloadAll() {
+        const all = Object.values(this.frames)
+            .flatMap(set => [...set.plain, ...set.leaf]);
+        for (let i = 0; i < all.length; i += 4) {
+            await Promise.all(all.slice(i, i + 4).map(src => new Promise(resolve => {
+                const img = new Image();
+                img.onload = img.onerror = resolve;
+                img.src = src;
+                this._imageCache.push(img);
+            })));
+            await new Promise(r => setTimeout(r, 50));
+        }
     }
 
     createElements() {
@@ -91,6 +107,18 @@ export class AntSprite {
             this.img.offsetHeight;
             this.img.style.transition = '';
         }
+    }
+
+    /**
+     * Slide the overlay to a point over a custom duration (used for the
+     * half-cell lunge into a wall/rock before dying). Restores the default
+     * CSS transition afterwards so normal steps are unaffected.
+     */
+    nudge(pos, ms = 200) {
+        this.overlay.style.transition = `left ${ms}ms ease-out, top ${ms}ms ease-out`;
+        this.overlay.style.left = `${pos.left}px`;
+        this.overlay.style.top = `${pos.top}px`;
+        setTimeout(() => { this.overlay.style.transition = ''; }, ms);
     }
 
     startWalk() {

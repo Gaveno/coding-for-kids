@@ -35,7 +35,7 @@ export class Game {
             'leafTracker', 'playBtn', 'resetBtn', 'clearBtn', 'helpBtn', 'closeHelpBtn',
             'nextBtn', 'successOverlay', 'helpOverlay', 'levelNum', 'successStars',
             'successCrumbs', 'successMapBtn', 'mapBtn', 'mapOverlay', 'mapNodes',
-            'closeMapBtn', 'sandboxBar'];
+            'closeMapBtn', 'sandboxBar', 'dirBtn'];
         this.elements = {};
         ids.forEach(id => { this.elements[id] = document.getElementById(id); });
     }
@@ -71,6 +71,12 @@ export class Game {
         this.applyLevelData(this.sandbox.toLevelData());
     }
 
+    /** Load a campaign level object into the sandbox editor for tweaking. */
+    openLevelInSandbox(level) {
+        this.sandbox.loadFrom(level);
+        this.enterSandbox();
+    }
+
     applyLevelData(levelData) {
         this.sequence.clear();
         this.updateTabs();
@@ -87,7 +93,33 @@ export class Game {
             levelData.leaves.length > 0 || this.mode === 'sandbox');
         this.hud.updateLeafTracker(this.grid);
         this.renderGrid();
+        if (this.mode === 'sandbox') {
+            this.markPatrolPath();
+            this.updateDirButton(levelData.heading);
+        }
         requestAnimationFrame(() => requestAnimationFrame(() => this.syncSprite()));
+    }
+
+    /** Reflect the ant's start facing on the editor's direction button. */
+    updateDirButton(heading) {
+        const arrows = { up: '⬆️', right: '➡️', down: '⬇️', left: '⬅️' };
+        if (this.elements.dirBtn) this.elements.dirBtn.textContent = arrows[heading] || arrows.up;
+    }
+
+    /** In the editor, badge each spider-path cell with its walk order. */
+    markPatrolPath() {
+        const patrol = this.levelData.patrol;
+        if (!patrol) return;
+        patrol.path.forEach((key, i) => {
+            const [x, y] = key.split(',').map(Number);
+            const cell = this.elements.gridContainer.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (!cell) return;
+            cell.classList.add('patrol-path');
+            const badge = document.createElement('span');
+            badge.className = 'patrol-order';
+            badge.textContent = i + 1;
+            cell.appendChild(badge);
+        });
     }
 
     renderGrid() {
@@ -115,6 +147,24 @@ export class Game {
         const pos = this.grid.getCellPosition(
             this.elements.gridContainer, this.ant.position.x, this.ant.position.y);
         this.sprite.setPosition(pos, animate);
+    }
+
+    /** Lunge the ant halfway into a blocked cell (wall/rock) before it dies. */
+    bumpAntForward(target) {
+        const cur = this.ant.position;
+        const from = this.grid.getCellPosition(this.elements.gridContainer, cur.x, cur.y);
+        if (!from) return;
+        const dest = this.grid.getCellPosition(this.elements.gridContainer, target.x, target.y);
+        let left, top;
+        if (dest) {
+            left = (from.left + dest.left) / 2;
+            top = (from.top + dest.top) / 2;
+        } else {
+            const pitch = from.width + 3; // cell size + grid gap
+            left = from.left + Math.sign(target.x - cur.x) * pitch / 2;
+            top = from.top + Math.sign(target.y - cur.y) * pitch / 2;
+        }
+        this.sprite.nudge({ left, top }, 200);
     }
 
     movePatrolOverlay(animate = true) {

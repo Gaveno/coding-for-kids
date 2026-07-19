@@ -13,8 +13,8 @@
     <link rel="stylesheet" href="styles/overlays.css">
     <link rel="stylesheet" href="styles/animations.css">
     <link rel="stylesheet" href="styles/levelmap.css">
-    <link rel="stylesheet" href="styles/responsive.css">
-</head>
+    <link rel="stylesheet" href="styles/editor.css">
+    <link rel="stylesheet" href="styles/responsive.css"></head>
 <body>
     <div class="game-container">
         <!-- Header with level indicator -->
@@ -43,13 +43,19 @@
                 <!-- Sandbox editor tools (visible only in sandbox mode) -->
                 <section class="sandbox-bar" id="sandboxBar" aria-label="Level Editor Tools">
                     <button class="tool-btn" data-tool="start" aria-label="Place ant start">🐜</button>
+                    <button class="tool-btn dir-btn" id="dirBtn" aria-label="Turn ant start direction">⬆️</button>
                     <button class="tool-btn" data-tool="nest" aria-label="Place nest">🕳️</button>
                     <button class="tool-btn active" data-tool="rock" aria-label="Place rock">🪨</button>
                     <button class="tool-btn" data-tool="leaf" aria-label="Place leaf">
                         <span class="tool-leaf" aria-hidden="true">🥬</span>
                     </button>
                     <button class="tool-btn" data-tool="crumb" aria-label="Place crumb">🍪</button>
+                    <button class="tool-btn" data-tool="tunnel" aria-label="Place tunnel">🌀</button>
+                    <button class="tool-btn" data-tool="patrol" aria-label="Place spider path">🕷️</button>
                     <button class="tool-btn" data-tool="erase" aria-label="Erase">🧽</button>
+                    <button class="tool-btn open-btn local-only" id="openBtn" aria-label="Open campaign level">📂</button>
+                    <button class="tool-btn save-btn local-only" id="saveBtn" aria-label="Save level to Levels.js">💾</button>
+                    <button class="tool-btn export-btn local-only" id="exportBtn" aria-label="Copy level JSON">📋</button>
                 </section>
                 <section class="sequence-section" aria-label="Command Sequence">
                     <div class="sequence-tabs" role="tablist">

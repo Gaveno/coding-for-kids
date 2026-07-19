@@ -4,10 +4,11 @@
  * leaves -> multiple trips -> patrol bug -> tunnels -> grand finale
  */
 export const LEVELS = [
-    // Level 1: Walk straight ahead to the nest
-    { gridSize: 5, start: { x: 2, y: 4 }, heading: 'up', nest: '2,1' },
+    // Level 1: Walk straight ahead to the nest 
+    { gridSize: 6, start: { x: 2, y: 3 }, heading: 'up', nest: '2,2' },
     // Level 2: Longer straight walk (learn the number on the block)
-    { gridSize: 6, start: { x: 2, y: 5 }, heading: 'up', nest: '2,0' },
+    { gridSize: 6, start: { x: 2, y: 4 }, heading: 'up', nest: '2,1' },
+    { gridSize: 5, start: { x: 1, y: 2 }, heading: 'right', nest: '3,2' },
     // Level 3: First turn
     { gridSize: 5, start: { x: 0, y: 4 }, heading: 'up', nest: '3,1' },
     // Level 4: Two turns

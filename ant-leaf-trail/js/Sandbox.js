@@ -2,6 +2,8 @@
  * Sandbox - Build-your-own-level mode. Tap a tool, then tap grid cells.
  * Tapping the ant again rotates its starting direction.
  */
+import { formatLevel } from './LevelIO.js';
+
 const HEADINGS = ['up', 'right', 'down', 'left'];
 
 const DEFAULT_LAYOUT = {
@@ -11,7 +13,9 @@ const DEFAULT_LAYOUT = {
     nest: '5,0',
     leaves: [],
     obstacles: [],
-    crumbs: []
+    crumbs: [],
+    tunnels: [],
+    patrol: null
 };
 
 export class Sandbox {
@@ -20,6 +24,9 @@ export class Sandbox {
         const saved = progress.getSandbox();
         this.layout = saved ? JSON.parse(JSON.stringify(saved))
                             : JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+        // Fill in fields missing from layouts saved by older versions
+        if (!this.layout.tunnels) this.layout.tunnels = [];
+        if (this.layout.patrol === undefined) this.layout.patrol = null;
         this.tool = 'rock';
     }
 
@@ -31,10 +38,48 @@ export class Sandbox {
         return `${this.layout.start.x},${this.layout.start.y}`;
     }
 
+    /** Cycle the ant's starting facing direction (up -> right -> down -> left). */
+    rotateStart() {
+        const i = HEADINGS.indexOf(this.layout.heading);
+        this.layout.heading = HEADINGS[(i + 1) % HEADINGS.length];
+        this.progress.saveSandbox(this.layout);
+    }
+
     removeFromAll(key) {
-        ['leaves', 'obstacles', 'crumbs'].forEach(list => {
+        ['leaves', 'obstacles', 'crumbs', 'tunnels'].forEach(list => {
             this.layout[list] = this.layout[list].filter(k => k !== key);
         });
+        if (this.layout.patrol) {
+            this.layout.patrol.path = this.layout.patrol.path.filter(k => k !== key);
+            if (!this.layout.patrol.path.length) this.layout.patrol = null;
+        }
+    }
+
+    /** Add/remove one end of the tunnel pair; keeps at most two ends. */
+    editTunnel(key) {
+        const had = this.layout.tunnels.includes(key);
+        this.removeFromAll(key);
+        if (!had) {
+            if (this.layout.tunnels.length >= 2) this.layout.tunnels.shift();
+            this.layout.tunnels.push(key);
+        }
+    }
+
+    /** Append a cell to the spider path, or remove it if already on the path. */
+    editPatrol(key) {
+        const path = this.layout.patrol ? this.layout.patrol.path : [];
+        const at = path.indexOf(key);
+        if (at !== -1) {
+            path.splice(at, 1);
+            if (!path.length) this.layout.patrol = null;
+            return;
+        }
+        this.removeFromAll(key);
+        if (!this.layout.patrol) this.layout.patrol = { path: [], start: 0, dir: 1 };
+        this.layout.patrol.path.push(key);
+        if (this.layout.patrol.start >= this.layout.patrol.path.length) {
+            this.layout.patrol.start = 0;
+        }
     }
 
     toggle(list, key) {
@@ -77,6 +122,14 @@ export class Sandbox {
                 this.toggle(list, key);
                 break;
             }
+            case 'tunnel':
+                if (isStart || isNest) return false;
+                this.editTunnel(key);
+                break;
+            case 'patrol':
+                if (isStart || isNest) return false;
+                this.editPatrol(key);
+                break;
             case 'erase':
                 if (isStart || isNest) return false;
                 this.removeFromAll(key);
@@ -97,7 +150,45 @@ export class Sandbox {
             nest: this.layout.nest,
             leaves: [...this.layout.leaves],
             obstacles: [...this.layout.obstacles],
-            crumbs: [...this.layout.crumbs]
+            crumbs: [...this.layout.crumbs],
+            tunnels: [...this.layout.tunnels],
+            patrol: this.layout.patrol ? {
+                path: [...this.layout.patrol.path],
+                start: this.layout.patrol.start,
+                dir: this.layout.patrol.dir
+            } : null
         };
+    }
+
+    /**
+     * Load an existing level (e.g. from the LEVELS constant) into the editor.
+     * All fields, including tunnels and patrol, are copied so any campaign
+     * level can be iterated on.
+     */
+    loadFrom(level) {
+        this.layout = {
+            gridSize: level.gridSize,
+            start: { ...level.start },
+            heading: level.heading,
+            nest: level.nest,
+            leaves: [...(level.leaves || [])],
+            obstacles: [...(level.obstacles || [])],
+            crumbs: [...(level.crumbs || [])],
+            tunnels: [...(level.tunnels || [])],
+            patrol: level.patrol ? {
+                path: [...level.patrol.path],
+                start: level.patrol.start ?? 0,
+                dir: level.patrol.dir ?? 1
+            } : null
+        };
+        this.progress.saveSandbox(this.layout);
+    }
+
+    /**
+     * Format the current layout as a LEVELS-constant entry (single quotes,
+     * empty lists omitted) for pasting into Levels.js.
+     */
+    toLevelString() {
+        return formatLevel(this.toLevelData());
     }
 }
