@@ -1,9 +1,10 @@
 /**
- * Progress - Saves per-mode level progress and stars to localStorage
+ * Progress - Tracks per-mode level and stars for the current session
  *
  * The player picks a game mode ('read' or 'write') at the start; each mode
- * keeps its own current level so kids can resume either one. Stars are a
- * shared trophy count across both modes.
+ * keeps its own current level. Progress is NOT persisted across page loads so
+ * kids always start fresh and the word order is newly randomised each visit.
+ * Tests can inject a storage object to verify save/load behaviour in isolation.
  */
 import { modeRange, makeOrder, phaseWordCount } from './Words.js';
 
@@ -20,8 +21,8 @@ function isValidOrder(order, count) {
 
 export class Progress {
     constructor(storage) {
-        // Injectable storage for tests; falls back to localStorage
-        this.storage = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
+        // Injectable storage for tests; defaults to null (no persistence) in the game
+        this.storage = storage || null;
         this.data = this.load();
         this.mode = 'read';
     }

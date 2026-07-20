@@ -1,14 +1,19 @@
 /**
- * WordData - Raw picture-word lists for Word Safari
+ * WordData - Master picture-word list for Word Safari
  *
- * Kept separate from the game logic in Words.js. Lists are in ascending
- * length order (easy -> hard); the play order is shuffled per session.
+ * A single list of words is shared by BOTH game modes: kids first learn to
+ * RECOGNISE each word in read mode, then SPELL the very same words in write
+ * mode, so reading practice feeds spelling success. Words are in ascending
+ * length order (easy -> hard); the play order is shuffled within each length
+ * band per session.
  */
 
-/** Read mode - pick the matching word (used for choice + review sub-phases) */
-export const CHOICE_WORDS = [
-    // 2-3 letters - easiest
+/** Every picture word, shortest-first (used by both read and write modes) */
+export const WORDS = [
+    // 2 letters - easiest
     { word: 'ox',     emoji: '🐂' },
+    { word: 'ax',     emoji: '🪓' },
+    // 3 letters
     { word: 'cat',    emoji: '🐱' },
     { word: 'dog',    emoji: '🐶' },
     { word: 'sun',    emoji: '☀️' },
@@ -18,40 +23,6 @@ export const CHOICE_WORDS = [
     { word: 'hen',    emoji: '🐔' },
     { word: 'web',    emoji: '🕸️' },
     { word: 'nut',    emoji: '🥜' },
-    // 4 letters
-    { word: 'fish',   emoji: '🐟' },
-    { word: 'frog',   emoji: '🐸' },
-    { word: 'duck',   emoji: '🦆' },
-    { word: 'star',   emoji: '⭐' },
-    { word: 'book',   emoji: '📖' },
-    { word: 'ball',   emoji: '⚽' },
-    { word: 'lamp',   emoji: '💡' },
-    { word: 'nest',   emoji: '🪺' },
-    { word: 'gift',   emoji: '🎁' },
-    // 5 letters
-    { word: 'apple',  emoji: '🍎' },
-    { word: 'house',  emoji: '🏠' },
-    { word: 'snake',  emoji: '🐍' },
-    { word: 'train',  emoji: '🚂' },
-    { word: 'plant',  emoji: '🌱' },
-    { word: 'grape',  emoji: '🍇' },
-    { word: 'crown',  emoji: '👑' },
-    { word: 'whale',  emoji: '🐳' },
-    // 6 letters - hardest
-    { word: 'banana', emoji: '🍌' },
-    { word: 'monkey', emoji: '🐵' },
-    { word: 'rocket', emoji: '🚀' },
-    { word: 'guitar', emoji: '🎸' },
-    { word: 'dragon', emoji: '🐉' },
-    { word: 'cheese', emoji: '🧀' },
-    { word: 'planet', emoji: '🪐' },
-    { word: 'bridge', emoji: '🌉' }
-];
-
-/** Write mode - type the word */
-export const TYPING_WORDS = [
-    // 2-3 letters
-    { word: 'ax',     emoji: '🪓' },
     { word: 'cow',    emoji: '🐮' },
     { word: 'fox',    emoji: '🦊' },
     { word: 'hat',    emoji: '🎩' },
@@ -62,6 +33,15 @@ export const TYPING_WORDS = [
     { word: 'jet',    emoji: '✈️' },
     { word: 'mug',    emoji: '🍺' },
     // 4 letters
+    { word: 'fish',   emoji: '🐟' },
+    { word: 'frog',   emoji: '🐸' },
+    { word: 'duck',   emoji: '🦆' },
+    { word: 'star',   emoji: '⭐' },
+    { word: 'book',   emoji: '📖' },
+    { word: 'ball',   emoji: '⚽' },
+    { word: 'lamp',   emoji: '💡' },
+    { word: 'nest',   emoji: '🪺' },
+    { word: 'gift',   emoji: '🎁' },
     { word: 'moon',   emoji: '🌙' },
     { word: 'cake',   emoji: '🎂' },
     { word: 'tree',   emoji: '🌳' },
@@ -72,6 +52,14 @@ export const TYPING_WORDS = [
     { word: 'drum',   emoji: '🥁' },
     { word: 'kite',   emoji: '🪁' },
     // 5 letters
+    { word: 'apple',  emoji: '🍎' },
+    { word: 'house',  emoji: '🏠' },
+    { word: 'snake',  emoji: '🐍' },
+    { word: 'train',  emoji: '🚂' },
+    { word: 'plant',  emoji: '🌱' },
+    { word: 'grape',  emoji: '🍇' },
+    { word: 'crown',  emoji: '👑' },
+    { word: 'whale',  emoji: '🐳' },
     { word: 'horse',  emoji: '🐴' },
     { word: 'pizza',  emoji: '🍕' },
     { word: 'robot',  emoji: '🤖' },
@@ -80,7 +68,15 @@ export const TYPING_WORDS = [
     { word: 'sword',  emoji: '⚔️' },
     { word: 'tooth',  emoji: '🦷' },
     { word: 'bread',  emoji: '🍞' },
-    // 6 letters
+    // 6 letters - hardest
+    { word: 'banana', emoji: '🍌' },
+    { word: 'monkey', emoji: '🐵' },
+    { word: 'rocket', emoji: '🚀' },
+    { word: 'guitar', emoji: '🎸' },
+    { word: 'dragon', emoji: '🐉' },
+    { word: 'cheese', emoji: '🧀' },
+    { word: 'planet', emoji: '🪐' },
+    { word: 'bridge', emoji: '🌉' },
     { word: 'flower', emoji: '🌸' },
     { word: 'spider', emoji: '🕷️' },
     { word: 'orange', emoji: '🍊' },
@@ -91,27 +87,33 @@ export const TYPING_WORDS = [
     { word: 'window', emoji: '🪟' }
 ];
 
+// Both modes draw from the same master list so recognition feeds spelling.
+export const CHOICE_WORDS = WORDS;
+export const TYPING_WORDS = WORDS;
+
 /**
- * Extra words used only as wrong answers. Stocked so every choice word
- * has at least 2 decoys sharing its first letter AND length (for the
- * review phase - e.g. ball vs bell vs bath).
+ * Extra words used only as wrong answers. Words that share a first letter AND
+ * length already cover each other (the decoy pool includes every picture
+ * word), so these fillers exist for the letter+length groups that have only a
+ * single picture word - guaranteeing every review level has 2 tricky decoys.
  */
 export const DECOYS = [
-    'on', 'of', 'or', 'go', 'in', 'up', 'me', 'we',
+    'on', 'of', 'or', 'go', 'in', 'up', 'me', 'we', 'am', 'an',
     'ant', 'bat', 'bed', 'big', 'bug', 'can', 'cap', 'cot', 'cub', 'cup',
-    'den', 'dig', 'dot', 'ear', 'eat', 'elf', 'eye', 'jam', 'leg', 'map',
-    'net', 'owl', 'pan', 'pen', 'pin', 'pot', 'sea', 'sit', 'six',
+    'den', 'dig', 'dot', 'ear', 'eat', 'elf', 'eye', 'jam', 'jog', 'jar',
+    'leg', 'map', 'mud', 'mat', 'net', 'owl', 'pan', 'pen', 'pin', 'pot',
+    'sea', 'sit', 'six', 'ham', 'hop', 'wet', 'wig', 'nap', 'fan', 'fig',
+    'kid', 'keg',
     'bath', 'bell', 'bird', 'boat', 'boot', 'corn', 'dark', 'desk', 'door',
-    'dust', 'farm', 'five', 'fork', 'kite', 'nose', 'ring', 'sand', 'sock',
-    'step', 'stop', 'wolf',
-    'alarm', 'ankle', 'apron', 'bread', 'chair', 'cloud', 'hands', 'happy',
-    'heart', 'mouse', 'sheep', 'smile', 'snail', 'stone', 'table', 'teeth',
-    'tiger', 'truck', 'whale',
-    'basket', 'bottle', 'bubble', 'button', 'candle', 'castle', 'garden',
-    'market', 'mitten', 'mother', 'pencil', 'rabbit', 'ribbon', 'rubber',
-    'turtle', 'window',
-    // Look-alike fillers for the newer picture words
-    'ham', 'hop', 'wet', 'wig', 'nap', 'lock', 'leaf', 'neck', 'gate',
-    'goat', 'plate', 'paint', 'glass', 'grass', 'water', 'wheel', 'garlic',
-    'donkey', 'dinner', 'pepper'
+    'dust', 'farm', 'five', 'fork', 'nose', 'ring', 'sand', 'sock', 'step',
+    'stop', 'wolf', 'lock', 'leaf', 'neck', 'gate', 'goat', 'moth', 'mask',
+    'cave', 'coat', 'tent', 'tail', 'king', 'kiwi',
+    'alarm', 'ankle', 'apron', 'chair', 'cloud', 'hands', 'happy', 'heart',
+    'sheep', 'smile', 'snail', 'stone', 'table', 'teeth', 'tiger', 'truck',
+    'plate', 'paint', 'glass', 'grass', 'water', 'wheel', 'robin', 'river',
+    'money', 'music', 'brush', 'beach',
+    'basket', 'bottle', 'bubble', 'button', 'candle', 'garden', 'market',
+    'mitten', 'mother', 'ribbon', 'rubber', 'garlic', 'donkey', 'dinner',
+    'pepper', 'forest', 'fridge', 'shadow', 'saddle', 'orchid', 'oyster',
+    'ticket', 'tunnel', 'winter', 'wizard'
 ];

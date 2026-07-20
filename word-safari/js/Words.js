@@ -1,11 +1,11 @@
 /**
  * Words - Level logic for Word Safari (word data lives in WordData.js)
  *
- * Two player-chosen modes, each ramping 2-3 letter words up to 6:
+ * Both modes cover the SAME master word list so recognition feeds spelling:
  *   'read'  - tap the matching word. Runs a 'choice' sub-phase (decoys are
  *             any words) then a tricky 'review' sub-phase where decoys START
  *             WITH THE SAME LETTER, so the first letter alone isn't enough.
- *   'write' - fresh words, spell them with the keyboard.
+ *   'write' - spell those same words with the keyboard.
  *
  * Word lists are kept in ascending length order (easy -> hard). The play
  * order is shuffled WITHIN each length band every session (see makeOrder),
@@ -21,8 +21,8 @@ export const TOTAL_LEVELS = PHASE_SIZE * 2 + TYPING_WORDS.length;
 
 /**
  * The two player-chosen game modes and the level range each one covers:
- *   'read'  - tap the matching word (choice + review sub-phases, levels 1-40)
- *   'write' - spell the word yourself on the keyboard (levels 41-60)
+ *   'read'  - tap the matching word (choice + review sub-phases)
+ *   'write' - spell the word yourself on the keyboard
  */
 export const GAME_MODES = {
     read:  { start: 1, end: PHASE_SIZE * 2 },

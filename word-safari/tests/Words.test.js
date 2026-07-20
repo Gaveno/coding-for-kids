@@ -39,10 +39,10 @@ export function runWordsTests() {
         };
     }
 
-    test('Read and write modes share a phase size, doubled read + write total', () => {
-        assertEqual(CHOICE_WORDS.length, 35);
-        assertEqual(TYPING_WORDS.length, 35);
-        assertEqual(PHASE_SIZE, 35);
+    test('Read and write modes share one master word list', () => {
+        assertEqual(CHOICE_WORDS.length, 70);
+        assertEqual(TYPING_WORDS.length, 70);
+        assertEqual(PHASE_SIZE, 70);
         assertEqual(TOTAL_LEVELS, PHASE_SIZE * 2 + TYPING_WORDS.length);
     });
 
@@ -78,10 +78,11 @@ export function runWordsTests() {
         }
     });
 
-    test('No word appears in both choice and typing phases', () => {
-        const choice = new Set(CHOICE_WORDS.map(e => e.word));
-        TYPING_WORDS.forEach(e => {
-            assertTrue(!choice.has(e.word), `"${e.word}" appears in both phases.`);
+    test('Every word appears in both reading and writing sets', () => {
+        assertEqual(CHOICE_WORDS.length, TYPING_WORDS.length, 'Sets differ in size.');
+        const typing = new Set(TYPING_WORDS.map(e => e.word));
+        CHOICE_WORDS.forEach(e => {
+            assertTrue(typing.has(e.word), `"${e.word}" missing from writing set.`);
         });
     });
 
