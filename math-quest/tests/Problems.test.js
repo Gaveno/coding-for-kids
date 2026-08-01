@@ -17,6 +17,23 @@ export function runProblemsTests() {
         }
     });
 
+    test('add1 answers never go past 10 - the starter track', () => {
+        for (let i = 0; i < RUNS * 5; i++) {
+            const p = generateProblem('add1');
+            assertTrue(p.result <= 10, `Total within 10 (got ${p.a}+${p.b}=${p.result}).`);
+        }
+    });
+
+    test('add1 still reaches the whole 2..10 range of totals', () => {
+        const totals = new Set();
+        for (let i = 0; i < RUNS * 10; i++) {
+            totals.add(generateProblem('add1').result);
+        }
+        for (let total = 2; total <= 10; total++) {
+            assertTrue(totals.has(total), `Total ${total} appears.`);
+        }
+    });
+
     test('add2 uses two-digit operands', () => {
         for (let i = 0; i < RUNS; i++) {
             const p = generateProblem('add2');

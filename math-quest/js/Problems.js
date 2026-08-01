@@ -27,7 +27,8 @@ export function generateProblem(opId, rng = Math.random) {
     let a, b, q;
     switch (opId) {
         case 'add1':
-            a = randInt(rng, 1, 9); b = randInt(rng, 1, 9);
+            // The starter track caps the total at 10 - countable on two hands
+            a = randInt(rng, 1, 9); b = randInt(rng, 1, 10 - a);
             return build(opId, a, b, a + b);
         case 'add2':
             a = randInt(rng, 10, 99); b = randInt(rng, 10, 99);

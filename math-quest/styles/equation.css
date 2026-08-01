@@ -14,7 +14,8 @@
 
 .equation {
     display: flex;
-    align-items: center;
+    /* Terms hang their emoji counters below, so line them up from the top */
+    align-items: flex-start;
     justify-content: center;
     gap: var(--spacing-md);
     flex-wrap: wrap;
@@ -24,12 +25,47 @@
     color: var(--color-card-text);
 }
 
+/* A numeral plus its emoji counter */
+.eq-term {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* Matching the answer slot height keeps every numeral on the same line */
+.eq-num,
+.eq-op {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--digit-slot-size);
+}
+
 .eq-num {
     animation: pop var(--transition-normal);
 }
 
 .eq-op {
     color: var(--color-primary);
+}
+
+/* ===== Countable emojis (see js/CountDots.js) ===== */
+.count-dots {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.dot-row {
+    display: flex;
+    gap: 2px;
+}
+
+.dot-emoji {
+    font-size: var(--dot-size);
+    line-height: 1;
 }
 
 /* The unknown part of the equation */

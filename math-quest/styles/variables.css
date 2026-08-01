@@ -47,6 +47,7 @@
 
     /* Dimensions */
     --eq-size: 2.8rem;
+    --dot-size: 16px;
     --digit-slot-size: 56px;
     --pad-key-size: 60px;
     --choice-size: 76px;

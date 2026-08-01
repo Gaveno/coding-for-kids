@@ -4,6 +4,7 @@
 @media (max-height: 700px) {
     :root {
         --eq-size: 2.2rem;
+        --dot-size: 13px;
         --digit-slot-size: 46px;
         --pad-key-size: 50px;
         --choice-size: 62px;
@@ -30,6 +31,7 @@
 @media (max-height: 580px) {
     :root {
         --eq-size: 1.8rem;
+        --dot-size: 11px;
         --digit-slot-size: 40px;
         --pad-key-size: 42px;
         --choice-size: 52px;
