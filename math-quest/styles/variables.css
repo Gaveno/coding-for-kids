@@ -1,0 +1,54 @@
+/* ===== CSS Variables for Math Quest ===== */
+:root {
+    /* Colors - Night Sky / Fox Theme */
+    --color-primary: #7C4DFF;
+    --color-primary-light: #9E7BFF;
+    --color-secondary: #FF8A3D;
+    --color-accent: #4ECDC4;
+    --color-success: #2ECC71;
+    --color-warning: #FFD54F;
+    --color-danger: #FF6B6B;
+
+    /* Backgrounds */
+    --color-bg: #241B4D;
+    --color-bg-dark: #160F33;
+    --color-surface: #37296B;
+    --color-surface-light: #473689;
+    --color-text: #FFFFFF;
+
+    /* Special colors */
+    --color-card: #FFF8E7;
+    --color-card-text: #2C3E50;
+    --color-key: #FDF6EC;
+    --color-key-text: #2C3E50;
+    --color-slot: #2C2158;
+    --color-hint: rgba(255, 255, 255, 0.28);
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 50%;
+
+    /* Shadows */
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+
+    /* Dimensions */
+    --eq-size: 2.8rem;
+    --digit-slot-size: 56px;
+    --pad-key-size: 60px;
+    --choice-size: 76px;
+    --num-font: 'Comic Sans MS', 'Segoe UI', system-ui, sans-serif;
+}

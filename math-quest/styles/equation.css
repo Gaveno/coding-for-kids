@@ -1,0 +1,87 @@
+/* ===== The big equation card ===== */
+.equation-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 130px;
+    padding: var(--spacing-lg);
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+}
+
+.equation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    font-family: var(--num-font);
+    font-size: var(--eq-size);
+    font-weight: bold;
+    color: var(--color-card-text);
+}
+
+.eq-num {
+    animation: pop var(--transition-normal);
+}
+
+.eq-op {
+    color: var(--color-primary);
+}
+
+/* The unknown part of the equation */
+.eq-answer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    min-width: var(--digit-slot-size);
+    min-height: var(--digit-slot-size);
+    padding: 0 var(--spacing-xs);
+    background: rgba(124, 77, 255, 0.12);
+    border: 3px dashed var(--color-primary);
+    border-radius: var(--radius-sm);
+}
+
+.eq-answer.solved {
+    background: rgba(46, 204, 113, 0.18);
+    border-color: var(--color-success);
+    border-style: solid;
+    color: var(--color-success);
+    animation: pop var(--transition-normal);
+}
+
+/* ===== Digit slots (typing mode) ===== */
+.digit-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--digit-slot-size) - 12px);
+    height: var(--digit-slot-size);
+    font-size: 2rem;
+    background: rgba(44, 33, 88, 0.08);
+    border-bottom: 4px solid var(--color-primary-light);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.digit-slot.filled {
+    color: var(--color-card-text);
+    animation: pop var(--transition-fast);
+}
+
+.digit-slot.hint {
+    color: rgba(44, 62, 80, 0.3);
+}
+
+.digit-slot.next {
+    border-bottom-color: var(--color-secondary);
+    animation: blink 1s ease infinite;
+}
+
+.digit-slot.right {
+    color: var(--color-success);
+    border-bottom-color: var(--color-success);
+}

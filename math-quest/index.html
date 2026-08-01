@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧮 Math Quest</title>
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/tracks.css">
+    <link rel="stylesheet" href="styles/equation.css">
+    <link rel="stylesheet" href="styles/choices.css">
+    <link rel="stylesheet" href="styles/numberpad.css">
+    <link rel="stylesheet" href="styles/overlays.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <header class="game-header">
+            <a href="../index.html" class="home-btn" aria-label="Back to Home">🏠</a>
+            <div class="logo" aria-label="Math Quest game">🦊🧮</div>
+            <div class="star-indicator">
+                <span class="star" aria-hidden="true">⭐</span>
+                <span class="star-num" id="totalStars" aria-label="Stars earned">0</span>
+            </div>
+            <button class="help-btn" id="helpBtn" aria-label="Help">❓</button>
+        </header>
+
+        <!-- Track map: pick an operation and mode -->
+        <section class="track-screen" id="trackScreen" aria-label="Choose a track"></section>
+
+        <!-- Play screen: solve 10 problems -->
+        <section class="play-screen hidden" id="playScreen" aria-label="Solve the problems">
+            <div class="play-hud">
+                <button class="back-btn" id="backBtn" aria-label="Back to track map">🗺️</button>
+                <span class="mode-icon" id="modeIcon" aria-hidden="true">👆</span>
+                <div class="dots" id="dots" aria-label="Track progress"></div>
+            </div>
+
+            <div class="equation-card" id="equationCard">
+                <div class="equation" id="equation" aria-live="polite"></div>
+            </div>
+
+            <section class="choices hidden" id="choices" aria-label="Answer choices"></section>
+            <section class="numberpad hidden" id="numberpad" aria-label="Number pad"></section>
+        </section>
+
+        <!-- Track finished overlay -->
+        <div class="overlay" id="winOverlay">
+            <div class="overlay-content">
+                <div class="overlay-icon">🏆🎉</div>
+                <div class="win-stars" id="winStars">⭐⭐⭐</div>
+                <div class="overlay-buttons">
+                    <button class="big-btn" id="winMapBtn" aria-label="Back to track map">🗺️</button>
+                    <button class="big-btn" id="winReplayBtn" aria-label="Play this track again">🔄</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help overlay -->
+        <div class="overlay" id="helpOverlay">
+            <div class="overlay-content help-content">
+                <h2 class="help-title">🦊 Math Quest 🧮</h2>
+
+                <div class="help-section">
+                    <div class="help-icons">
+                        <div class="help-icon">
+                            <span>👆</span>
+                            <span>Tap the number that answers the problem</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>⌨️</span>
+                            <span>Type the answer one digit at a time</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>🧩</span>
+                            <span>Find the missing number in the equation</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>🔒</span>
+                            <span>Finish a track to unlock the next one</span>
+                        </div>
+                        <div class="help-icon">
+                            <span>⭐</span>
+                            <span>Fewer mistakes means more stars</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="big-btn" id="closeHelpBtn" aria-label="Close help">👍</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

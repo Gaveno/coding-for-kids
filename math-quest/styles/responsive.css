@@ -1,0 +1,77 @@
+/* ===== Responsive tweaks ===== */
+
+/* Short portrait phones - shrink the big pieces so nothing scrolls */
+@media (max-height: 700px) {
+    :root {
+        --eq-size: 2.2rem;
+        --digit-slot-size: 46px;
+        --pad-key-size: 50px;
+        --choice-size: 62px;
+    }
+
+    .equation-card {
+        min-height: 100px;
+        padding: var(--spacing-md);
+    }
+
+    .track-row {
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .track-btn {
+        min-height: 52px;
+    }
+
+    .track-label {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-height: 580px) {
+    :root {
+        --eq-size: 1.8rem;
+        --digit-slot-size: 40px;
+        --pad-key-size: 42px;
+        --choice-size: 52px;
+    }
+
+    .track-icon {
+        font-size: 1.3rem;
+    }
+}
+
+/* Landscape - equation and input side by side */
+@media (orientation: landscape) and (max-height: 500px) {
+    .game-container {
+        max-width: 900px;
+    }
+
+    .play-screen {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .play-hud {
+        width: 100%;
+    }
+
+    .equation-card {
+        width: auto;
+        flex: 1;
+        min-width: 260px;
+    }
+
+    .choices,
+    .numberpad {
+        flex: 1;
+        min-width: 240px;
+    }
+
+    .track-screen {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-content: center;
+    }
+}

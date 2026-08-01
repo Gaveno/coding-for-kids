@@ -33,6 +33,13 @@ Play Go Fish with a real 52-card deck against 1-3 friendly robots — collect se
 
 **[Play Now →](robo-go-fish/index.html)**
 
+### 🧮 Math Quest
+Solve arithmetic problems along unlockable tracks — addition, subtraction, multiplication, and division. Finish a tap-the-answer track to unlock typing the answer digit by digit, then fill-in-the-blank equations like `4 + _ = 6`.
+
+**Skills taught:** Addition, subtraction, multiplication, division, number sense
+
+**[Play Now →](math-quest/index.html)**
+
 ### 🌻 Magic Garden *(Coming Soon)*
 Create spell recipes to grow a magical garden.
 

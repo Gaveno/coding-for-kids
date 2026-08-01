@@ -91,6 +91,20 @@ A collection of visual, no-reading-required browser games to teach programming f
 
 ---
 
+### 7. 🧮 Math Quest
+**Concept:** Arithmetic practice on unlockable tracks — each operation is learned three ways in a row.
+
+**How it works:**
+- Six operation tracks: single-digit addition → multi-digit addition → single-digit subtraction → multi-digit subtraction → single-digit multiplication → single-digit division
+- Each operation has three modes that unlock in order: tap the right answer (👆), type the answer digit by digit (⌨️), then find the missing number in `4 + _ = 6` (🧩)
+- Finishing a track earns 1-3 stars (fewer mistakes = more stars) and unlocks the next
+
+**Skills taught:** Addition, subtraction, multiplication, division, number sense, inverse operations
+
+**Status:** ✅ Playable POC
+
+---
+
 ## 📚 Learning Progression
 
 Each game can introduce concepts in this order:

@@ -1,0 +1,47 @@
+/* ===== Number pad (typing mode) ===== */
+.numberpad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+}
+
+.pad-row {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.pad-key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--pad-key-size);
+    height: var(--pad-key-size);
+    font-family: var(--num-font);
+    font-size: 1.7rem;
+    font-weight: bold;
+    color: var(--color-key-text);
+    background: var(--color-key);
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.pad-key:active {
+    transform: scale(0.92);
+}
+
+.pad-key.pressed {
+    animation: keyPress 0.2s ease;
+}
+
+.pad-erase {
+    background: var(--color-secondary);
+    color: white;
+    /* Wide erase key balances the 0 on the bottom row */
+    width: calc(var(--pad-key-size) * 2 + var(--spacing-sm));
+}
